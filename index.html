@@ -96,20 +96,9 @@
                     <i class="ri-menu-2-fill"></i>
                 </button>
                 <h1 class="page-title" id="pageTitle">Plan Média</h1>
-                <span class="page-badge" id="pageBadge">Calendrier</span>
+                <span class="page-badge" id="pageBadge">Timeline</span>
             </div>
             <div class="topbar-right">
-                <div class="view-toggle">
-                    <button class="view-btn active" data-view="month" title="Vue Mois">
-                        <i class="ri-calendar-fill"></i>
-                    </button>
-                    <button class="view-btn" data-view="timeline" title="Vue Timeline">
-                        <i class="ri-bar-chart-horizontal-fill"></i>
-                    </button>
-                    <button class="view-btn" data-view="list" title="Vue Liste">
-                        <i class="ri-list-check-3"></i>
-                    </button>
-                </div>
                 <div class="month-nav">
                     <button class="month-btn" id="prevMonth"><i class="ri-arrow-left-s-line"></i></button>
                     <span class="month-label" id="monthLabel">Mars 2026</span>
@@ -123,19 +112,10 @@
             </div>
         </header>
 
-        <!-- Calendar Section (for 8 first items) -->
+        <!-- Content Area -->
         <div class="content-area" id="contentArea">
-            <!-- Calendar View -->
-            <div class="calendar-container" id="calendarContainer">
-                <div class="calendar-header" id="calendarHeader"></div>
-                <div class="calendar-grid" id="calendarGrid"></div>
-            </div>
-
-            <!-- Timeline View -->
-            <div class="timeline-container hidden" id="timelineContainer"></div>
-
-            <!-- List View -->
-            <div class="list-container hidden" id="listContainer"></div>
+            <!-- Horizontal Timeline (default for 8 sections) -->
+            <div class="htimeline-container" id="htimelineContainer"></div>
 
             <!-- KPI Section -->
             <div class="kpi-container hidden" id="kpiContainer">
@@ -243,9 +223,24 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="eventDesc">Description</label>
-                        <textarea id="eventDesc" rows="3" placeholder="Détails de l'action..."></textarea>
+                        <textarea id="eventDesc" rows="2" placeholder="Détails de l'action..."></textarea>
                     </div>
                 </div>
+
+                <!-- Tasks / Checklist -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tâches à finaliser</label>
+                        <div class="tasks-list" id="tasksList"></div>
+                        <div class="task-add-row">
+                            <input type="text" id="newTaskInput" placeholder="Nouvelle tâche..." class="task-input">
+                            <button type="button" class="btn btn-small btn-ghost" id="addTaskBtn">
+                                <i class="ri-add-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-danger hidden" id="deleteEventBtn">
                         <i class="ri-delete-bin-6-line"></i> Supprimer
@@ -259,6 +254,15 @@
                 </div>
             </form>
         </div>
+    </div>
+
+    <!-- Task Detail Panel (slides in from right) -->
+    <div class="detail-panel hidden" id="detailPanel">
+        <div class="detail-panel-header">
+            <h3 id="detailTitle">Détail</h3>
+            <button class="modal-close" id="detailClose"><i class="ri-close-line"></i></button>
+        </div>
+        <div class="detail-panel-body" id="detailBody"></div>
     </div>
 
     <!-- Toast Notification -->
