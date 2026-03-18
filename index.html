@@ -114,7 +114,6 @@
 
         <!-- Content Area -->
         <div class="content-area" id="contentArea">
-            <!-- Horizontal Timeline (default for 8 sections) -->
             <div class="htimeline-container" id="htimelineContainer"></div>
 
             <!-- KPI Section -->
@@ -148,8 +147,8 @@
                 </div>
             </div>
 
-            <!-- All View -->
-            <div class="all-container hidden" id="allContainer"></div>
+            <!-- All View (now also timeline) -->
+            <div class="htimeline-container hidden" id="allTimelineContainer"></div>
         </div>
     </main>
 
@@ -220,10 +219,28 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-row">
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label for="eventBarColor">Couleur de la barre</label>
+                        <div class="color-picker-row">
+                            <input type="color" id="eventBarColor" class="color-input" value="#8b5cf6">
+                            <div class="color-presets" id="colorPresets">
+                                <button type="button" class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="Violet"></button>
+                                <button type="button" class="color-swatch" data-color="#3b82f6" style="background:#3b82f6" title="Bleu"></button>
+                                <button type="button" class="color-swatch" data-color="#06b6d4" style="background:#06b6d4" title="Cyan"></button>
+                                <button type="button" class="color-swatch" data-color="#10b981" style="background:#10b981" title="Vert"></button>
+                                <button type="button" class="color-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Jaune"></button>
+                                <button type="button" class="color-swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
+                                <button type="button" class="color-swatch" data-color="#ef4444" style="background:#ef4444" title="Rouge"></button>
+                                <button type="button" class="color-swatch" data-color="#ec4899" style="background:#ec4899" title="Rose"></button>
+                                <button type="button" class="color-swatch" data-color="#6366f1" style="background:#6366f1" title="Indigo"></button>
+                                <button type="button" class="color-swatch" data-color="#a855f7" style="background:#a855f7" title="Pourpre"></button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="eventDesc">Description</label>
-                        <textarea id="eventDesc" rows="2" placeholder="Détails de l'action..."></textarea>
+                        <textarea id="eventDesc" rows="2" placeholder="Détails..."></textarea>
                     </div>
                 </div>
 
@@ -234,6 +251,7 @@
                         <div class="tasks-list" id="tasksList"></div>
                         <div class="task-add-row">
                             <input type="text" id="newTaskInput" placeholder="Nouvelle tâche..." class="task-input">
+                            <input type="text" id="newTaskAssignee" placeholder="Responsable..." class="task-input task-input-assignee">
                             <button type="button" class="btn btn-small btn-ghost" id="addTaskBtn">
                                 <i class="ri-add-line"></i>
                             </button>
@@ -256,7 +274,7 @@
         </div>
     </div>
 
-    <!-- Task Detail Panel (slides in from right) -->
+    <!-- Detail Panel -->
     <div class="detail-panel hidden" id="detailPanel">
         <div class="detail-panel-header">
             <h3 id="detailTitle">Détail</h3>
@@ -265,7 +283,7 @@
         <div class="detail-panel-body" id="detailBody"></div>
     </div>
 
-    <!-- Toast Notification -->
+    <!-- Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
