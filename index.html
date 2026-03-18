@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Communication — Picard Serrures & Eliot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="ri-shield-keyhole-fill"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title">Picard · Eliot</span>
+                    <span class="logo-subtitle">Communication Hub</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item active" data-section="plan-media">
+                    <i class="ri-broadcast-fill"></i>
+                    <span>Plan Média</span>
+                </li>
+                <li class="nav-item" data-section="plan-digital">
+                    <i class="ri-global-fill"></i>
+                    <span>Plan Digital</span>
+                </li>
+                <li class="nav-item" data-section="newsletters">
+                    <i class="ri-mail-send-fill"></i>
+                    <span>Newsletters</span>
+                </li>
+                <li class="nav-item" data-section="reseaux-sociaux">
+                    <i class="ri-twitter-x-fill"></i>
+                    <span>Réseaux Sociaux</span>
+                </li>
+                <li class="nav-item" data-section="salons-foires">
+                    <i class="ri-store-3-fill"></i>
+                    <span>Salons · Foires</span>
+                </li>
+                <li class="nav-item" data-section="usine-interne">
+                    <i class="ri-building-4-fill"></i>
+                    <span>Usine · Interne</span>
+                </li>
+                <li class="nav-item" data-section="produits">
+                    <i class="ri-box-3-fill"></i>
+                    <span>Produits</span>
+                </li>
+                <li class="nav-item" data-section="ressources">
+                    <i class="ri-folder-5-fill"></i>
+                    <span>Ressources</span>
+                </li>
+                <li class="nav-separator"></li>
+                <li class="nav-item" data-section="kpi">
+                    <i class="ri-bar-chart-grouped-fill"></i>
+                    <span>KPI</span>
+                </li>
+                <li class="nav-separator"></li>
+                <li class="nav-item" data-section="all">
+                    <i class="ri-layout-grid-fill"></i>
+                    <span>Vue Globale</span>
+                </li>
+                <li class="nav-item" data-section="budget">
+                    <i class="ri-money-euro-circle-fill"></i>
+                    <span>Budget</span>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="brand-filter">
+                <button class="brand-btn active" data-brand="all">Toutes</button>
+                <button class="brand-btn" data-brand="picard">
+                    <span class="brand-dot picard"></span> Picard
+                </button>
+                <button class="brand-btn" data-brand="eliot">
+                    <span class="brand-dot eliot"></span> Eliot
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="ri-menu-2-fill"></i>
+                </button>
+                <h1 class="page-title" id="pageTitle">Plan Média</h1>
+                <span class="page-badge" id="pageBadge">Calendrier</span>
+            </div>
+            <div class="topbar-right">
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="month" title="Vue Mois">
+                        <i class="ri-calendar-fill"></i>
+                    </button>
+                    <button class="view-btn" data-view="timeline" title="Vue Timeline">
+                        <i class="ri-bar-chart-horizontal-fill"></i>
+                    </button>
+                    <button class="view-btn" data-view="list" title="Vue Liste">
+                        <i class="ri-list-check-3"></i>
+                    </button>
+                </div>
+                <div class="month-nav">
+                    <button class="month-btn" id="prevMonth"><i class="ri-arrow-left-s-line"></i></button>
+                    <span class="month-label" id="monthLabel">Mars 2026</span>
+                    <button class="month-btn" id="nextMonth"><i class="ri-arrow-right-s-line"></i></button>
+                    <button class="month-btn today-btn" id="todayBtn">Aujourd'hui</button>
+                </div>
+                <button class="add-event-btn" id="addEventBtn">
+                    <i class="ri-add-line"></i>
+                    <span>Ajouter</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Calendar Section (for 8 first items) -->
+        <div class="content-area" id="contentArea">
+            <!-- Calendar View -->
+            <div class="calendar-container" id="calendarContainer">
+                <div class="calendar-header" id="calendarHeader"></div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+
+            <!-- Timeline View -->
+            <div class="timeline-container hidden" id="timelineContainer"></div>
+
+            <!-- List View -->
+            <div class="list-container hidden" id="listContainer"></div>
+
+            <!-- KPI Section -->
+            <div class="kpi-container hidden" id="kpiContainer">
+                <div class="kpi-cards" id="kpiCards"></div>
+                <div class="kpi-charts">
+                    <div class="chart-card">
+                        <h3>Activité par catégorie</h3>
+                        <canvas id="chartCategory"></canvas>
+                        <div class="chart-glow"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Répartition par marque</h3>
+                        <canvas id="chartBrand"></canvas>
+                        <div class="chart-glow"></div>
+                    </div>
+                    <div class="chart-card wide">
+                        <h3>Évolution mensuelle</h3>
+                        <canvas id="chartTimeline"></canvas>
+                        <div class="chart-glow"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Statut des actions</h3>
+                        <canvas id="chartStatus"></canvas>
+                        <div class="chart-glow"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Prochaines échéances</h3>
+                        <div class="upcoming-list" id="upcomingList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All View -->
+            <div class="all-container hidden" id="allContainer"></div>
+        </div>
+    </main>
+
+    <!-- Event Modal -->
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal" id="eventModal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nouvel Événement</h2>
+                <button class="modal-close" id="modalClose"><i class="ri-close-line"></i></button>
+            </div>
+            <form id="eventForm" class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventName">Titre</label>
+                        <input type="text" id="eventName" placeholder="Nom de l'action..." required>
+                    </div>
+                </div>
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label for="eventCategory">Catégorie</label>
+                        <select id="eventCategory">
+                            <option value="plan-media">Plan Média</option>
+                            <option value="plan-digital">Plan Digital</option>
+                            <option value="newsletters">Newsletters</option>
+                            <option value="reseaux-sociaux">Réseaux Sociaux</option>
+                            <option value="salons-foires">Salons · Foires</option>
+                            <option value="usine-interne">Usine · Interne</option>
+                            <option value="produits">Produits</option>
+                            <option value="ressources">Ressources</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventBrand">Marque</label>
+                        <select id="eventBrand">
+                            <option value="picard">Picard Serrures</option>
+                            <option value="eliot">Eliot</option>
+                            <option value="both">Les deux</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label for="eventStart">Date début</label>
+                        <input type="date" id="eventStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventEnd">Date fin</label>
+                        <input type="date" id="eventEnd">
+                    </div>
+                </div>
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label for="eventStatus">Statut</label>
+                        <select id="eventStatus">
+                            <option value="planned">Planifié</option>
+                            <option value="in-progress">En cours</option>
+                            <option value="completed">Terminé</option>
+                            <option value="cancelled">Annulé</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventPriority">Priorité</label>
+                        <select id="eventPriority">
+                            <option value="low">Basse</option>
+                            <option value="medium" selected>Moyenne</option>
+                            <option value="high">Haute</option>
+                            <option value="urgent">Urgente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventDesc">Description</label>
+                        <textarea id="eventDesc" rows="3" placeholder="Détails de l'action..."></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger hidden" id="deleteEventBtn">
+                        <i class="ri-delete-bin-6-line"></i> Supprimer
+                    </button>
+                    <div class="form-actions-right">
+                        <button type="button" class="btn btn-ghost" id="cancelBtn">Annuler</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ri-check-line"></i> <span id="submitLabel">Créer</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
