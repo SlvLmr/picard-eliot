@@ -464,6 +464,35 @@ function wouldCreateCycle(parentId, childId) {
     return check(parentId);
 }
 
+/* ─── Add a free (unconnected) block ─── */
+function addFreeNode() {
+    const id = 'jn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+    // Place it in a visible area — find the scroll position of the canvas
+    const canvas = document.getElementById('journeyCanvas');
+    const scrollLeft = canvas ? canvas.scrollLeft : 0;
+    const scrollTop = canvas ? canvas.scrollTop : 0;
+
+    const colors = ['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#f97316'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    JOURNEY.nodes.push({
+        id,
+        text: 'Nouveau bloc',
+        desc: 'Description...',
+        icon: 'ri-arrow-right-line',
+        color,
+        x: scrollLeft + 200 + Math.round(Math.random() * 100),
+        y: scrollTop + 200 + Math.round(Math.random() * 80),
+        parentIds: [],
+        isLead: false,
+    });
+
+    saveJourney();
+    renderJourney();
+    showToast('Bloc libre ajouté — reliez-le avec le bouton chaîne', 'success');
+}
+
 function addChildNode(parentId) {
     const parent = JOURNEY.nodes.find(n => n.id === parentId);
     if (!parent) return;
@@ -641,6 +670,11 @@ function initJourneyToolbar() {
                 showToast('Parcours réinitialisé', 'info');
             }
         });
+    }
+
+    const addFreeBtn = document.getElementById('journeyAddFreeBtn');
+    if (addFreeBtn) {
+        addFreeBtn.addEventListener('click', () => addFreeNode());
     }
 }
 
