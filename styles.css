@@ -808,6 +808,81 @@ body {
 
 .journey-node:hover .journey-node-glow { opacity: 0.8; }
 
+/* ─── Linking mode ─── */
+#linkingBanner {
+    display: none; align-items: center; gap: 10px;
+    padding: 10px 18px; margin-bottom: 8px;
+    background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 10px; color: var(--text-main); font-size: 13px;
+    animation: linkPulse 1.5s ease-in-out infinite;
+}
+#linkingBanner i { color: #818cf8; font-size: 16px; }
+#linkingBanner .btn { margin-left: auto; }
+
+@keyframes linkPulse {
+    0%, 100% { background: rgba(99,102,241,0.12); }
+    50% { background: rgba(99,102,241,0.22); }
+}
+
+.journey-node.link-target {
+    cursor: pointer !important;
+    outline: 2px dashed rgba(99,102,241,0.6);
+    outline-offset: 4px;
+    animation: linkTargetPulse 1s ease-in-out infinite;
+}
+
+.journey-node.linking-source {
+    outline: 2px solid #818cf8;
+    outline-offset: 4px;
+}
+
+@keyframes linkTargetPulse {
+    0%, 100% { outline-color: rgba(99,102,241,0.3); }
+    50% { outline-color: rgba(99,102,241,0.8); }
+}
+
+/* ─── Node meta row ─── */
+.journey-node-meta {
+    display: flex; align-items: center; gap: 6px;
+}
+
+.journey-node-parent-count {
+    font-size: 10px; color: var(--text-muted); font-weight: 600;
+    padding: 2px 6px; border-radius: 8px; background: rgba(99,102,241,0.12);
+    display: inline-flex; align-items: center; gap: 2px;
+}
+
+/* ─── Link button style ─── */
+.journey-node-btn.link-btn { color: #818cf8; }
+.journey-node-btn.link-btn:hover { color: #a5b4fc; background: rgba(99,102,241,0.15); }
+
+/* ─── Parent connections list in modal ─── */
+.node-parents-list {
+    display: flex; flex-direction: column; gap: 6px; margin-top: 4px;
+}
+
+.parent-link-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.parent-link-color {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+
+.parent-link-name {
+    flex: 1; color: var(--text-main);
+}
+
+.parent-link-remove {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    padding: 2px 4px; border-radius: 4px; font-size: 14px; line-height: 1;
+    transition: var(--transition);
+}
+.parent-link-remove:hover { color: #ef4444; background: rgba(239,68,68,0.12); }
+
 /* ============================================
    RESPONSIVE
    ============================================ */
