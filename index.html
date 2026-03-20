@@ -58,6 +58,11 @@
                     <span>Ressources</span>
                 </li>
                 <li class="nav-separator"></li>
+                <li class="nav-item" data-section="parcours-client">
+                    <i class="ri-route-fill"></i>
+                    <span>Parcours Client</span>
+                </li>
+                <li class="nav-separator"></li>
                 <li class="nav-item" data-section="kpi">
                     <i class="ri-bar-chart-grouped-fill"></i>
                     <span>KPI</span>
@@ -149,6 +154,28 @@
 
             <!-- All View (now also timeline) -->
             <div class="htimeline-container hidden" id="allTimelineContainer"></div>
+
+            <!-- Parcours Client -->
+            <div class="journey-container hidden" id="journeyContainer">
+                <div class="journey-toolbar">
+                    <button class="btn btn-ghost btn-small" id="journeyResetBtn"><i class="ri-refresh-line"></i> Réinitialiser</button>
+                </div>
+                <div class="journey-canvas" id="journeyCanvas">
+                    <svg class="journey-svg" id="journeySvg">
+                        <defs>
+                            <filter id="glowFilter" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="6" result="blur"/>
+                                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                            </filter>
+                            <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="10" result="blur"/>
+                                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                            </filter>
+                        </defs>
+                    </svg>
+                    <div class="journey-nodes" id="journeyNodes"></div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -274,6 +301,78 @@
         </div>
     </div>
 
+    <!-- Journey Node Modal -->
+    <div class="modal-overlay hidden" id="nodeModalOverlay">
+        <div class="modal" style="width:440px">
+            <div class="modal-header">
+                <h2 id="nodeModalTitle">Modifier le bloc</h2>
+                <button class="modal-close" id="nodeModalClose"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body" id="nodeModalBody">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nodeText">Titre du bloc</label>
+                        <input type="text" id="nodeText" placeholder="Ex: Premier contact...">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nodeDesc">Description</label>
+                        <textarea id="nodeDesc" rows="2" placeholder="Détails de cette étape..."></textarea>
+                    </div>
+                </div>
+                <div class="form-row two-col">
+                    <div class="form-group">
+                        <label for="nodeColor">Couleur</label>
+                        <div class="color-picker-row">
+                            <input type="color" id="nodeColor" class="color-input" value="#8b5cf6">
+                            <div class="color-presets">
+                                <button type="button" class="color-swatch node-color-sw" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+                                <button type="button" class="color-swatch node-color-sw" data-color="#3b82f6" style="background:#3b82f6"></button>
+                                <button type="button" class="color-swatch node-color-sw" data-color="#06b6d4" style="background:#06b6d4"></button>
+                                <button type="button" class="color-swatch node-color-sw" data-color="#10b981" style="background:#10b981"></button>
+                                <button type="button" class="color-swatch node-color-sw" data-color="#f59e0b" style="background:#f59e0b"></button>
+                                <button type="button" class="color-swatch node-color-sw" data-color="#ef4444" style="background:#ef4444"></button>
+                                <button type="button" class="color-swatch node-color-sw" data-color="#ec4899" style="background:#ec4899"></button>
+                                <button type="button" class="color-swatch node-color-sw" data-color="#f97316" style="background:#f97316"></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nodeIcon">Icône</label>
+                        <select id="nodeIcon">
+                            <option value="ri-global-line">Globe</option>
+                            <option value="ri-phone-line">Téléphone</option>
+                            <option value="ri-store-2-line">Agence</option>
+                            <option value="ri-mail-line">Email</option>
+                            <option value="ri-user-line">Utilisateur</option>
+                            <option value="ri-customer-service-line">Support</option>
+                            <option value="ri-file-list-line">Devis</option>
+                            <option value="ri-tools-line">Intervention</option>
+                            <option value="ri-calendar-check-line">RDV</option>
+                            <option value="ri-shield-check-line">Validation</option>
+                            <option value="ri-hand-coin-line">Paiement</option>
+                            <option value="ri-truck-line">Livraison</option>
+                            <option value="ri-install-line">Installation</option>
+                            <option value="ri-star-line">Satisfaction</option>
+                            <option value="ri-chat-smile-line">Suivi</option>
+                            <option value="ri-repeat-line">Fidélisation</option>
+                            <option value="ri-megaphone-line">Parrainage</option>
+                            <option value="ri-arrow-right-line">Étape</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger" id="nodeDeleteBtn"><i class="ri-delete-bin-6-line"></i> Supprimer</button>
+                    <div class="form-actions-right">
+                        <button type="button" class="btn btn-ghost" id="nodeModalCancel">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="nodeModalSave"><i class="ri-check-line"></i> Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Detail Panel -->
     <div class="detail-panel hidden" id="detailPanel">
         <div class="detail-panel-header">
@@ -287,6 +386,7 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="journey.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

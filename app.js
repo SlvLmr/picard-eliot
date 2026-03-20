@@ -220,13 +220,16 @@ function cacheDom() {
     DOM.detailBody = $('#detailBody');
     DOM.detailClose = $('#detailClose');
     DOM.tasksList = $('#tasksList');
+    DOM.journeyContainer = $('#journeyContainer');
 }
 
 // ─── Init ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     cacheDom();
     loadData();
+    loadJourney();
     initNav(); initMonthNav(); initBrandFilter(); initModal(); initMenuToggle(); initDetailPanel(); initColorPicker();
+    initNodeModal(); initJourneyToolbar();
     render();
 });
 
@@ -291,6 +294,7 @@ function render() {
     DOM.htimelineContainer.classList.add('hidden');
     DOM.allTimelineContainer.classList.add('hidden');
     DOM.kpiContainer.classList.add('hidden');
+    DOM.journeyContainer.classList.add('hidden');
     const budgetEl = $('#budgetContainer');
     if (budgetEl) budgetEl.classList.add('hidden');
 
@@ -302,6 +306,9 @@ function render() {
         renderAllTimeline();
     } else if (APP.currentSection === 'budget') {
         renderBudget();
+    } else if (APP.currentSection === 'parcours-client') {
+        DOM.journeyContainer.classList.remove('hidden');
+        renderJourney();
     } else {
         DOM.htimelineContainer.classList.remove('hidden');
         renderTimeline(DOM.htimelineContainer, getFilteredEvents());
@@ -313,6 +320,7 @@ function updatePageTitle() {
     if (s === 'kpi') { DOM.pageTitle.textContent='Indicateurs KPI'; DOM.pageBadge.textContent='Analytics'; DOM.pageBadge.style.background='rgba(16,185,129,0.12)'; DOM.pageBadge.style.color='#10b981'; }
     else if (s === 'all') { DOM.pageTitle.textContent='Vue Globale'; DOM.pageBadge.textContent='Toutes catégories'; DOM.pageBadge.style.background='rgba(167,139,250,0.12)'; DOM.pageBadge.style.color='#a78bfa'; }
     else if (s === 'budget') { DOM.pageTitle.textContent='Budget'; DOM.pageBadge.textContent='Finances'; DOM.pageBadge.style.background='rgba(245,158,11,0.12)'; DOM.pageBadge.style.color='#f59e0b'; }
+    else if (s === 'parcours-client') { DOM.pageTitle.textContent='Parcours Client'; DOM.pageBadge.textContent='Journey Map'; DOM.pageBadge.style.background='rgba(6,182,212,0.12)'; DOM.pageBadge.style.color='#06b6d4'; }
     else { const c=CATEGORIES[s]; DOM.pageTitle.textContent=c.label; DOM.pageBadge.textContent='Timeline'; DOM.pageBadge.style.background=`${c.color}1a`; DOM.pageBadge.style.color=c.color; }
 }
 
