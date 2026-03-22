@@ -23,7 +23,7 @@ const CATEGORIES = {
     'plan-digital':    { label: 'Plan Digital',      icon: 'ri-global-fill',       color: '#3b82f6' },
     'sites-web':       { label: 'Sites Web',          icon: 'ri-window-fill',       color: '#14b8a6' },
     'newsletters':     { label: 'Newsletters',       icon: 'ri-mail-send-fill',    color: '#06b6d4' },
-    'reseaux-sociaux': { label: 'Réseaux Sociaux',   icon: 'ri-twitter-x-fill',    color: '#ec4899' },
+    'reseaux-sociaux': { label: 'Réseaux Sociaux',   icon: 'ri-share-fill',    color: '#ec4899' },
     'salons-foires':   { label: 'Salons · Foires',   icon: 'ri-store-3-fill',      color: '#f59e0b' },
     'usine-interne':   { label: 'Usine · Interne',   icon: 'ri-building-4-fill',   color: '#10b981' },
     'produits':        { label: 'Produits',           icon: 'ri-box-3-fill',        color: '#f97316' },
@@ -422,22 +422,25 @@ function renderTimeline(container, events, options = {}) {
     bindTimelineEvents(container);
 }
 
-function renderTimelineRow(evt, ctx, today) {
-    const brandLabel = evt.brand==='picard'?'Picard':evt.brand==='eliot'?'Eliot':'P+E';
+function renderTimelineRow(evt, ctx, today, compact = false) {
     const barColor = evt.barColor || CATEGORIES[evt.category]?.color || '#8b5cf6';
 
-    let html = `<div class="htimeline-row" data-event-id="${evt.id}">`;
+    let html = `<div class="htimeline-row${compact ? ' htimeline-row-compact' : ''}" data-event-id="${evt.id}">`;
 
     // Label col
     html += `<div class="htimeline-row-label" data-event-id="${evt.id}">`;
     html += `<div class="htimeline-row-brand ${evt.brand}"></div>`;
     html += `<div class="htimeline-row-info">`;
     html += `<div class="htimeline-row-title">${evt.name}</div>`;
-    html += `<div class="htimeline-row-meta">`;
-    html += `<span class="htimeline-row-status ${evt.status}">${STATUS_LABELS[evt.status]}</span>`;
-    html += `<span>${brandLabel}</span>`;
-    html += `<span>${formatDateRange(evt.start, evt.end)}</span>`;
-    html += `</div></div>`;
+    if (!compact) {
+        const brandLabel = evt.brand==='picard'?'Picard':evt.brand==='eliot'?'Eliot':'P+E';
+        html += `<div class="htimeline-row-meta">`;
+        html += `<span class="htimeline-row-status ${evt.status}">${STATUS_LABELS[evt.status]}</span>`;
+        html += `<span>${brandLabel}</span>`;
+        html += `<span>${formatDateRange(evt.start, evt.end)}</span>`;
+        html += `</div>`;
+    }
+    html += `</div>`;
 
     html += `</div>`;
 
@@ -519,11 +522,11 @@ function renderAllTimeline() {
         html += `<div class="htimeline-cat-row" style="color:${cat.color}"><i class="${cat.icon}"></i><span>${cat.label}</span><span class="htimeline-cat-count">${evts.length}</span></div>`;
 
         evts.forEach(evt => {
-            html += renderTimelineRow(evt, timeCtx, today);
+            html += renderTimelineRow(evt, timeCtx, today, true);
         });
 
         if (evts.length === 0) {
-            html += `<div style="padding:12px 20px 12px 40px;font-size:12px;color:var(--text-muted)">Aucune action</div>`;
+            html += `<div style="padding:8px 20px 8px 40px;font-size:12px;color:var(--text-muted)">Aucune action</div>`;
         }
     });
 
