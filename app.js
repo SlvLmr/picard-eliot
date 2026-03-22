@@ -27,7 +27,8 @@ const CATEGORIES = {
     'salons-foires':   { label: 'Salons · Foires',   icon: 'ri-store-3-fill',      color: '#f59e0b' },
     'usine-interne':   { label: 'Usine · Interne',   icon: 'ri-building-4-fill',   color: '#10b981' },
     'produits':        { label: 'Produits',           icon: 'ri-box-3-fill',        color: '#f97316' },
-    'ressources':      { label: 'Ressources',        icon: 'ri-folder-5-fill',     color: '#6366f1' },
+    'ressources':      { label: 'Ressources et outils', icon: 'ri-folder-5-fill',    color: '#6366f1' },
+    'taches-diverses': { label: 'Tâches diverses',    icon: 'ri-task-fill',         color: '#78716c' },
 };
 
 const STATUS_LABELS = { 'planned': 'Planifié', 'in-progress': 'En cours', 'completed': 'Terminé', 'cancelled': 'Annulé' };
@@ -328,6 +329,9 @@ function render() {
     } else if (APP.currentSection === 'parcours-client') {
         DOM.journeyContainer.classList.remove('hidden');
         renderJourney();
+    } else if (APP.currentSection === 'comite-iap') {
+        DOM.htimelineContainer.classList.remove('hidden');
+        renderTimeline(DOM.htimelineContainer, [], {});
     } else {
         DOM.htimelineContainer.classList.remove('hidden');
         renderTimeline(DOM.htimelineContainer, getFilteredEvents());
@@ -340,6 +344,7 @@ function updatePageTitle() {
     else if (s === 'budget') { DOM.pageTitle.textContent='Budget'; DOM.pageBadge.textContent='Finances'; DOM.pageBadge.style.background='rgba(245,158,11,0.12)'; DOM.pageBadge.style.color='#f59e0b'; }
     else if (s === 'all') { DOM.pageTitle.textContent='Vue Globale'; DOM.pageBadge.textContent='Toutes catégories'; DOM.pageBadge.style.background='rgba(167,139,250,0.12)'; DOM.pageBadge.style.color='#a78bfa'; }
     else if (s === 'parcours-client') { DOM.pageTitle.textContent='Projet Leads'; DOM.pageBadge.textContent='Journey Map'; DOM.pageBadge.style.background='rgba(6,182,212,0.12)'; DOM.pageBadge.style.color='#06b6d4'; }
+    else if (s === 'comite-iap') { DOM.pageTitle.textContent='Comité stratégique IAP'; DOM.pageBadge.textContent='Groupe de Travail'; DOM.pageBadge.style.background='rgba(244,114,182,0.12)'; DOM.pageBadge.style.color='#f472b6'; }
     else { const c=CATEGORIES[s]; DOM.pageTitle.textContent=c.label; DOM.pageBadge.textContent='Timeline'; DOM.pageBadge.style.background=`${c.color}1a`; DOM.pageBadge.style.color=c.color; }
 }
 
