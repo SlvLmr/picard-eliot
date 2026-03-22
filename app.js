@@ -5,7 +5,7 @@
 
 // ─── State ───────────────────────────────────────
 const APP = {
-    currentSection: 'plan-media',
+    currentSection: 'all',
     currentBrand: 'all',
     currentMonth: new Date().getMonth(),
     currentYear: new Date().getFullYear(),
@@ -20,6 +20,7 @@ const APP = {
 const CATEGORIES = {
     'plan-media':      { label: 'Plan Média',       icon: 'ri-broadcast-fill',    color: '#8b5cf6' },
     'plan-digital':    { label: 'Plan Digital',      icon: 'ri-global-fill',       color: '#3b82f6' },
+    'sites-web':       { label: 'Sites Web',          icon: 'ri-window-fill',       color: '#14b8a6' },
     'newsletters':     { label: 'Newsletters',       icon: 'ri-mail-send-fill',    color: '#06b6d4' },
     'reseaux-sociaux': { label: 'Réseaux Sociaux',   icon: 'ri-twitter-x-fill',    color: '#ec4899' },
     'salons-foires':   { label: 'Salons · Foires',   icon: 'ri-store-3-fill',      color: '#f59e0b' },
@@ -283,7 +284,7 @@ function initColorPicker() {
 function getFilteredEvents(section) {
     let evts = [...APP.events];
     const s = section || APP.currentSection;
-    if (s !== 'kpi' && s !== 'all' && s !== 'budget') evts = evts.filter(e => e.category === s);
+    if (s !== 'kpi' && s !== 'all') evts = evts.filter(e => e.category === s);
     if (APP.currentBrand !== 'all') evts = evts.filter(e => e.brand === APP.currentBrand || e.brand === 'both');
     return evts;
 }
@@ -302,11 +303,10 @@ function render() {
     if (APP.currentSection === 'kpi') {
         DOM.kpiContainer.classList.remove('hidden');
         renderKPI();
+        renderBudget();
     } else if (APP.currentSection === 'all') {
         DOM.allTimelineContainer.classList.remove('hidden');
         renderAllTimeline();
-    } else if (APP.currentSection === 'budget') {
-        renderBudget();
     } else if (APP.currentSection === 'parcours-client') {
         DOM.journeyContainer.classList.remove('hidden');
         renderJourney();
@@ -318,10 +318,9 @@ function render() {
 
 function updatePageTitle() {
     const s = APP.currentSection;
-    if (s === 'kpi') { DOM.pageTitle.textContent='Indicateurs KPI'; DOM.pageBadge.textContent='Analytics'; DOM.pageBadge.style.background='rgba(16,185,129,0.12)'; DOM.pageBadge.style.color='#10b981'; }
+    if (s === 'kpi') { DOM.pageTitle.textContent='KPI · Budget'; DOM.pageBadge.textContent='Analytics & Finances'; DOM.pageBadge.style.background='rgba(16,185,129,0.12)'; DOM.pageBadge.style.color='#10b981'; }
     else if (s === 'all') { DOM.pageTitle.textContent='Vue Globale'; DOM.pageBadge.textContent='Toutes catégories'; DOM.pageBadge.style.background='rgba(167,139,250,0.12)'; DOM.pageBadge.style.color='#a78bfa'; }
-    else if (s === 'budget') { DOM.pageTitle.textContent='Budget'; DOM.pageBadge.textContent='Finances'; DOM.pageBadge.style.background='rgba(245,158,11,0.12)'; DOM.pageBadge.style.color='#f59e0b'; }
-    else if (s === 'parcours-client') { DOM.pageTitle.textContent='Parcours Client'; DOM.pageBadge.textContent='Journey Map'; DOM.pageBadge.style.background='rgba(6,182,212,0.12)'; DOM.pageBadge.style.color='#06b6d4'; }
+    else if (s === 'parcours-client') { DOM.pageTitle.textContent='Projet Leads'; DOM.pageBadge.textContent='Journey Map'; DOM.pageBadge.style.background='rgba(6,182,212,0.12)'; DOM.pageBadge.style.color='#06b6d4'; }
     else { const c=CATEGORIES[s]; DOM.pageTitle.textContent=c.label; DOM.pageBadge.textContent='Timeline'; DOM.pageBadge.style.background=`${c.color}1a`; DOM.pageBadge.style.color=c.color; }
 }
 
@@ -804,7 +803,7 @@ function openAddModal() {
     DOM.submitLabel.textContent = 'Créer';
     DOM.deleteEventBtn.classList.add('hidden');
     DOM.eventForm.reset();
-    if (APP.currentSection !== 'kpi' && APP.currentSection !== 'all' && APP.currentSection !== 'budget') {
+    if (APP.currentSection !== 'kpi' && APP.currentSection !== 'all') {
         $('#eventCategory').value = APP.currentSection;
     }
     const today = dateToStr(new Date());
