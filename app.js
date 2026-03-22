@@ -7,6 +7,7 @@
 const APP = {
     currentSection: 'all',
     currentBrand: 'all',
+    currentView: 'year',
     currentMonth: new Date().getMonth(),
     currentYear: new Date().getFullYear(),
     editingEventId: null,
@@ -249,9 +250,25 @@ function initNav() {
 }
 
 function initMonthNav() {
-    $('#prevMonth').addEventListener('click', () => { APP.currentYear--; render(); });
-    $('#nextMonth').addEventListener('click', () => { APP.currentYear++; render(); });
+    $('#prevMonth').addEventListener('click', () => {
+        if (APP.currentView === 'year') { APP.currentYear--; }
+        else { APP.currentMonth--; if (APP.currentMonth<0){APP.currentMonth=11;APP.currentYear--;} }
+        render();
+    });
+    $('#nextMonth').addEventListener('click', () => {
+        if (APP.currentView === 'year') { APP.currentYear++; }
+        else { APP.currentMonth++; if (APP.currentMonth>11){APP.currentMonth=0;APP.currentYear++;} }
+        render();
+    });
     $('#todayBtn').addEventListener('click', () => { const n=new Date(); APP.currentMonth=n.getMonth(); APP.currentYear=n.getFullYear(); render(); });
+    document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            APP.currentView = btn.dataset.view;
+            render();
+        });
+    });
 }
 
 function initBrandFilter() {
@@ -326,29 +343,73 @@ function updatePageTitle() {
     else { const c=CATEGORIES[s]; DOM.pageTitle.textContent=c.label; DOM.pageBadge.textContent='Timeline'; DOM.pageBadge.style.background=`${c.color}1a`; DOM.pageBadge.style.color=c.color; }
 }
 
-function updateMonthLabel() { DOM.monthLabel.textContent=`${APP.currentYear}`; }
+function updateMonthLabel() {
+    DOM.monthLabel.textContent = APP.currentView === 'year' ? `${APP.currentYear}` : `${MONTHS_FR[APP.currentMonth]} ${APP.currentYear}`;
+}
+
+// ─── Timeline Helpers ────────────────────────────
+function getTimeContext(today, isYearView) {
+    if (isYearView) {
+        const isLeap = (APP.currentYear % 4 === 0 && APP.currentYear % 100 !== 0) || APP.currentYear % 400 === 0;
+        return {
+            isYearView: true,
+            totalDays: isLeap ? 366 : 365,
+            isCurrent: today.getFullYear() === APP.currentYear,
+            rangeStart: new Date(APP.currentYear, 0, 1),
+            rangeEnd: new Date(APP.currentYear, 11, 31),
+            cellCount: 12
+        };
+    } else {
+        const daysInMonth = new Date(APP.currentYear, APP.currentMonth + 1, 0).getDate();
+        return {
+            isYearView: false,
+            totalDays: daysInMonth,
+            isCurrent: today.getMonth() === APP.currentMonth && today.getFullYear() === APP.currentYear,
+            rangeStart: new Date(APP.currentYear, APP.currentMonth, 1),
+            rangeEnd: new Date(APP.currentYear, APP.currentMonth, daysInMonth),
+            cellCount: daysInMonth
+        };
+    }
+}
+
+function renderTimelineHeader(today, isYearView) {
+    let html = '';
+    if (isYearView) {
+        const isCurYear = today.getFullYear() === APP.currentYear;
+        for (let m = 0; m < 12; m++) {
+            const isCurMonth = isCurYear && today.getMonth() === m;
+            html += `<div class="htimeline-day-cell htimeline-month-cell${isCurMonth ? ' today' : ''}"><span class="day-num">${MONTHS_SHORT[m]}</span></div>`;
+        }
+    } else {
+        const daysInMonth = new Date(APP.currentYear, APP.currentMonth + 1, 0).getDate();
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dt = new Date(APP.currentYear, APP.currentMonth, d);
+            const isToday = isSameDay(dt, today);
+            const isWe = dt.getDay() === 0 || dt.getDay() === 6;
+            html += `<div class="htimeline-day-cell${isToday ? ' today' : ''}${isWe ? ' weekend' : ''}"><span class="day-letter">${DAYS_SHORT[dt.getDay()].charAt(0)}</span><span class="day-num">${d}</span></div>`;
+        }
+    }
+    return html;
+}
 
 // ─── Timeline Renderer (reusable) ────────────────
 function renderTimeline(container, events, options = {}) {
     events = events.sort((a,b) => new Date(a.start)-new Date(b.start));
     const today = new Date();
-    const isCurYear = today.getFullYear()===APP.currentYear;
-    const daysInYear = ((APP.currentYear % 4 === 0 && APP.currentYear % 100 !== 0) || APP.currentYear % 400 === 0) ? 366 : 365;
+    const isYearView = APP.currentView === 'year';
+    const timeCtx = getTimeContext(today, isYearView);
 
     let html = `<div class="htimeline-header">`;
     html += `<div class="htimeline-label-col">Projets / Actions</div>`;
     html += `<div class="htimeline-days-wrap">`;
-    for (let m=0; m<12; m++) {
-        const isCurMonth = isCurYear && today.getMonth()===m;
-        html += `<div class="htimeline-day-cell htimeline-month-cell${isCurMonth?' today':''}"><span class="day-num">${MONTHS_SHORT[m]}</span></div>`;
-    }
+    html += renderTimelineHeader(today, isYearView);
     html += `</div></div><div class="htimeline-body">`;
 
     if (events.length === 0) {
         html += `<div class="htimeline-empty"><i class="ri-calendar-todo-fill"></i><p>Aucune action planifiée</p><small>Cliquez sur "Ajouter" pour créer votre première action</small></div>`;
     } else {
         events.forEach(evt => {
-            html += renderTimelineRow(evt, daysInYear, isCurYear, today);
+            html += renderTimelineRow(evt, timeCtx, today);
         });
     }
     html += `</div>`;
@@ -356,9 +417,7 @@ function renderTimeline(container, events, options = {}) {
     bindTimelineEvents(container);
 }
 
-function renderTimelineRow(evt, daysInYear, isCurYear, today) {
-    const { total: tasksTotal, done: tasksDone } = countTasks(evt.tasks);
-    const taskPct = tasksTotal > 0 ? Math.round((tasksDone/tasksTotal)*100) : 0;
+function renderTimelineRow(evt, ctx, today) {
     const brandLabel = evt.brand==='picard'?'Picard':evt.brand==='eliot'?'Eliot':'P+E';
     const barColor = evt.barColor || CATEGORIES[evt.category]?.color || '#8b5cf6';
 
@@ -379,29 +438,46 @@ function renderTimelineRow(evt, daysInYear, isCurYear, today) {
 
     // Bars area
     html += `<div class="htimeline-bars-area">`;
-    for (let m=0; m<12; m++) {
-        html += `<div class="htimeline-bar-bg"></div>`;
+    for (let i = 0; i < ctx.cellCount; i++) {
+        if (ctx.isYearView) {
+            html += `<div class="htimeline-bar-bg"></div>`;
+        } else {
+            const dt = new Date(APP.currentYear, APP.currentMonth, i + 1);
+            const isWe = dt.getDay() === 0 || dt.getDay() === 6;
+            html += `<div class="htimeline-bar-bg${isWe ? ' weekend' : ''}"></div>`;
+        }
     }
 
     const startDate = new Date(evt.start);
     const endDate = evt.end ? new Date(evt.end) : startDate;
-    const yearStart = new Date(APP.currentYear, 0, 1);
-    const yearEnd = new Date(APP.currentYear, 11, 31);
 
-    if (endDate >= yearStart && startDate <= yearEnd) {
-        const effStart = startDate < yearStart ? yearStart : startDate;
-        const effEnd = endDate > yearEnd ? yearEnd : endDate;
-        const dayOfYearStart = Math.floor((effStart - yearStart) / 86400000);
-        const dayOfYearEnd = Math.floor((effEnd - yearStart) / 86400000);
-        const leftPct = (dayOfYearStart / daysInYear) * 100;
-        const widthPct = Math.max(((dayOfYearEnd - dayOfYearStart + 1) / daysInYear) * 100, (1 / daysInYear) * 100);
-        html += `<div class="htimeline-bar" style="left:${leftPct}%;width:${widthPct}%;background:linear-gradient(90deg,${hexToRgba(barColor,0.9)},${hexToRgba(barColor,0.4)});color:white;box-shadow:0 0 12px ${hexToRgba(barColor,0.35)}" data-event-id="${evt.id}"></div>`;
+    if (endDate >= ctx.rangeStart && startDate <= ctx.rangeEnd) {
+        const effStart = startDate < ctx.rangeStart ? ctx.rangeStart : startDate;
+        const effEnd = endDate > ctx.rangeEnd ? ctx.rangeEnd : endDate;
+        if (ctx.isYearView) {
+            const dayStart = Math.floor((effStart - ctx.rangeStart) / 86400000);
+            const dayEnd = Math.floor((effEnd - ctx.rangeStart) / 86400000);
+            const leftPct = (dayStart / ctx.totalDays) * 100;
+            const widthPct = Math.max(((dayEnd - dayStart + 1) / ctx.totalDays) * 100, (1 / ctx.totalDays) * 100);
+            html += `<div class="htimeline-bar" style="left:${leftPct}%;width:${widthPct}%;background:linear-gradient(90deg,${hexToRgba(barColor,0.9)},${hexToRgba(barColor,0.4)});color:white;box-shadow:0 0 12px ${hexToRgba(barColor,0.35)}" data-event-id="${evt.id}"></div>`;
+        } else {
+            const effS = effStart.getDate();
+            const effE = effEnd.getDate();
+            const leftPct = ((effS - 1) / ctx.totalDays) * 100;
+            const widthPct = Math.max(((effE - effS + 1) / ctx.totalDays) * 100, (1 / ctx.totalDays) * 100);
+            html += `<div class="htimeline-bar" style="left:${leftPct}%;width:${widthPct}%;background:linear-gradient(90deg,${hexToRgba(barColor,0.9)},${hexToRgba(barColor,0.4)});color:white;box-shadow:0 0 12px ${hexToRgba(barColor,0.35)}" data-event-id="${evt.id}"></div>`;
+        }
     }
 
-    if (isCurYear) {
-        const dayOfYearToday = Math.floor((today - yearStart) / 86400000);
-        const todayPos = ((dayOfYearToday + 0.5) / daysInYear) * 100;
-        html += `<div class="htimeline-today-line" style="left:${todayPos}%"></div>`;
+    if (ctx.isCurrent) {
+        if (ctx.isYearView) {
+            const dayOfYear = Math.floor((today - ctx.rangeStart) / 86400000);
+            const todayPos = ((dayOfYear + 0.5) / ctx.totalDays) * 100;
+            html += `<div class="htimeline-today-line" style="left:${todayPos}%"></div>`;
+        } else {
+            const todayPos = ((today.getDate() - 0.5) / ctx.totalDays) * 100;
+            html += `<div class="htimeline-today-line" style="left:${todayPos}%"></div>`;
+        }
     }
 
     html += `</div></div>`;
@@ -420,16 +496,13 @@ function bindTimelineEvents(container) {
 // ─── All View = Timeline grouped by category ─────
 function renderAllTimeline() {
     const today = new Date();
-    const isCurYear = today.getFullYear()===APP.currentYear;
-    const daysInYear = ((APP.currentYear % 4 === 0 && APP.currentYear % 100 !== 0) || APP.currentYear % 400 === 0) ? 366 : 365;
+    const isYearView = APP.currentView === 'year';
+    const timeCtx = getTimeContext(today, isYearView);
 
     let html = `<div class="htimeline-header">`;
     html += `<div class="htimeline-label-col">Vue Globale</div>`;
     html += `<div class="htimeline-days-wrap">`;
-    for (let m=0; m<12; m++) {
-        const isCurMonth = isCurYear && today.getMonth()===m;
-        html += `<div class="htimeline-day-cell htimeline-month-cell${isCurMonth?' today':''}"><span class="day-num">${MONTHS_SHORT[m]}</span></div>`;
-    }
+    html += renderTimelineHeader(today, isYearView);
     html += `</div></div><div class="htimeline-body">`;
 
     Object.entries(CATEGORIES).forEach(([key, cat]) => {
@@ -441,7 +514,7 @@ function renderAllTimeline() {
         html += `<div class="htimeline-cat-row" style="color:${cat.color}"><i class="${cat.icon}"></i><span>${cat.label}</span><span class="htimeline-cat-count">${evts.length}</span></div>`;
 
         evts.forEach(evt => {
-            html += renderTimelineRow(evt, daysInYear, isCurYear, today);
+            html += renderTimelineRow(evt, timeCtx, today);
         });
 
         if (evts.length === 0) {

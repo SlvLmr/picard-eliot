@@ -170,6 +170,20 @@ body {
     text-transform: uppercase; letter-spacing: 0.5px;
 }
 .topbar-right { display: flex; align-items: center; gap: 16px; }
+.view-toggle {
+    display: flex; background: var(--bg-tertiary); border-radius: var(--radius-xs);
+    border: 1px solid var(--border); overflow: hidden;
+}
+.view-toggle-btn {
+    padding: 6px 14px; border: none; background: transparent;
+    color: var(--text-muted); cursor: pointer; font-size: 12px; font-weight: 600;
+    font-family: inherit; transition: var(--transition); letter-spacing: 0.3px;
+}
+.view-toggle-btn:hover { color: var(--text-primary); }
+.view-toggle-btn.active {
+    background: var(--picard); color: white;
+    box-shadow: 0 0 8px var(--picard-glow);
+}
 .month-nav { display: flex; align-items: center; gap: 8px; }
 .month-btn {
     padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs);
