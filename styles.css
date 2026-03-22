@@ -130,6 +130,8 @@ body {
 .nav-item[data-section="ressources"].active::before { background: var(--cat-ressources); box-shadow: 0 0 12px rgba(99,102,241,0.5); }
 .nav-item[data-section="kpi"].active { color: #10b981; background: rgba(16,185,129,0.12); }
 .nav-item[data-section="kpi"].active::before { background: #10b981; box-shadow: 0 0 12px rgba(16,185,129,0.5); }
+.nav-item[data-section="budget"].active { color: #f59e0b; background: rgba(245,158,11,0.12); }
+.nav-item[data-section="budget"].active::before { background: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,0.5); }
 .nav-item[data-section="all"].active { color: #a78bfa; background: rgba(167,139,250,0.12); }
 .nav-item[data-section="all"].active::before { background: #a78bfa; box-shadow: 0 0 12px rgba(167,139,250,0.5); }
 

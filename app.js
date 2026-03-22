@@ -284,7 +284,7 @@ function initColorPicker() {
 function getFilteredEvents(section) {
     let evts = [...APP.events];
     const s = section || APP.currentSection;
-    if (s !== 'kpi' && s !== 'all') evts = evts.filter(e => e.category === s);
+    if (s !== 'kpi' && s !== 'all' && s !== 'budget') evts = evts.filter(e => e.category === s);
     if (APP.currentBrand !== 'all') evts = evts.filter(e => e.brand === APP.currentBrand || e.brand === 'both');
     return evts;
 }
@@ -303,6 +303,7 @@ function render() {
     if (APP.currentSection === 'kpi') {
         DOM.kpiContainer.classList.remove('hidden');
         renderKPI();
+    } else if (APP.currentSection === 'budget') {
         renderBudget();
     } else if (APP.currentSection === 'all') {
         DOM.allTimelineContainer.classList.remove('hidden');
@@ -318,7 +319,8 @@ function render() {
 
 function updatePageTitle() {
     const s = APP.currentSection;
-    if (s === 'kpi') { DOM.pageTitle.textContent='KPI · Budget'; DOM.pageBadge.textContent='Analytics & Finances'; DOM.pageBadge.style.background='rgba(16,185,129,0.12)'; DOM.pageBadge.style.color='#10b981'; }
+    if (s === 'kpi') { DOM.pageTitle.textContent='Indicateurs KPI'; DOM.pageBadge.textContent='Analytics'; DOM.pageBadge.style.background='rgba(16,185,129,0.12)'; DOM.pageBadge.style.color='#10b981'; }
+    else if (s === 'budget') { DOM.pageTitle.textContent='Budget'; DOM.pageBadge.textContent='Finances'; DOM.pageBadge.style.background='rgba(245,158,11,0.12)'; DOM.pageBadge.style.color='#f59e0b'; }
     else if (s === 'all') { DOM.pageTitle.textContent='Vue Globale'; DOM.pageBadge.textContent='Toutes catégories'; DOM.pageBadge.style.background='rgba(167,139,250,0.12)'; DOM.pageBadge.style.color='#a78bfa'; }
     else if (s === 'parcours-client') { DOM.pageTitle.textContent='Projet Leads'; DOM.pageBadge.textContent='Journey Map'; DOM.pageBadge.style.background='rgba(6,182,212,0.12)'; DOM.pageBadge.style.color='#06b6d4'; }
     else { const c=CATEGORIES[s]; DOM.pageTitle.textContent=c.label; DOM.pageBadge.textContent='Timeline'; DOM.pageBadge.style.background=`${c.color}1a`; DOM.pageBadge.style.color=c.color; }
@@ -803,7 +805,7 @@ function openAddModal() {
     DOM.submitLabel.textContent = 'Créer';
     DOM.deleteEventBtn.classList.add('hidden');
     DOM.eventForm.reset();
-    if (APP.currentSection !== 'kpi' && APP.currentSection !== 'all') {
+    if (APP.currentSection !== 'kpi' && APP.currentSection !== 'all' && APP.currentSection !== 'budget') {
         $('#eventCategory').value = APP.currentSection;
     }
     const today = dateToStr(new Date());
