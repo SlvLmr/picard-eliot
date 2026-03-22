@@ -568,8 +568,11 @@ body {
 .kpi-card-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
 .kpi-card-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
 .kpi-charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-.chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; position: relative; overflow: hidden; }
+.chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; position: relative; overflow: hidden; max-height: 320px; }
+.chart-card canvas { max-height: 240px; }
 .chart-card.wide { grid-column: span 2; }
+.chart-card.chart-card-tall { max-height: 420px; }
+.chart-card.chart-card-tall canvas { max-height: 340px; }
 .chart-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 20px; }
 .chart-glow { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); width: 60%; height: 60px; border-radius: 50%; background: radial-gradient(ellipse, rgba(139, 92, 246, 0.15), transparent); pointer-events: none; filter: blur(20px); }
 .chart-card:nth-child(2) .chart-glow { background: radial-gradient(ellipse, rgba(59,130,246,0.15), transparent); }

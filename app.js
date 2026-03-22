@@ -773,6 +773,23 @@ function renderKPICharts() {
 
     const statusCounts={'planned':0,'in-progress':0,'completed':0,'cancelled':0}; events.forEach(e=>{if(statusCounts[e.status]!==undefined)statusCounts[e.status]++});
     APP.charts.status = new Chart($('#chartStatus'),{type:'polarArea',data:{labels:Object.values(STATUS_LABELS),datasets:[{data:Object.values(statusCounts),backgroundColor:['rgba(139,92,246,0.6)','rgba(59,130,246,0.6)','rgba(16,185,129,0.6)','rgba(239,68,68,0.6)'],borderColor:['#8b5cf6','#3b82f6','#10b981','#ef4444'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#8b8da3',padding:12,font:{size:11}}}},scales:{r:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{display:false}}}}});
+
+    // Trafic & Leads Sites Web
+    const trafficLeadsData = {
+        picard_trafic:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        eliot_trafic:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        picard_leads:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        eliot_leads:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const ctxTL=$('#chartTrafficLeads').getContext('2d');
+    const gradPT=ctxTL.createLinearGradient(0,0,0,300); gradPT.addColorStop(0,'rgba(59,130,246,0.15)'); gradPT.addColorStop(1,'rgba(59,130,246,0.01)');
+    const gradET=ctxTL.createLinearGradient(0,0,0,300); gradET.addColorStop(0,'rgba(245,158,11,0.15)'); gradET.addColorStop(1,'rgba(245,158,11,0.01)');
+    APP.charts.trafficLeads = new Chart(ctxTL,{type:'line',data:{labels:MONTHS_FR.map(m=>m.substring(0,3)),datasets:[
+        {label:'Trafic Picard',data:trafficLeadsData.picard_trafic,borderColor:'#3b82f6',backgroundColor:gradPT,borderWidth:3,fill:true,tension:0.4,pointBackgroundColor:'#3b82f6',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7,order:2},
+        {label:'Trafic Eliot',data:trafficLeadsData.eliot_trafic,borderColor:'#f59e0b',backgroundColor:gradET,borderWidth:3,fill:true,tension:0.4,pointBackgroundColor:'#f59e0b',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7,order:3},
+        {label:'Leads Picard',data:trafficLeadsData.picard_leads,borderColor:'#60a5fa',backgroundColor:'transparent',borderWidth:2,borderDash:[6,4],fill:false,tension:0.4,pointBackgroundColor:'#60a5fa',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:5,pointStyle:'rectRot',pointHoverRadius:8,yAxisID:'y1',order:0},
+        {label:'Leads Eliot',data:trafficLeadsData.eliot_leads,borderColor:'#fbbf24',backgroundColor:'transparent',borderWidth:2,borderDash:[6,4],fill:false,tension:0.4,pointBackgroundColor:'#fbbf24',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:5,pointStyle:'rectRot',pointHoverRadius:8,yAxisID:'y1',order:1},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{color:'#8b8da3',padding:16,font:{size:11},usePointStyle:true}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('fr-FR')}}}},scales:{x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',font:{size:11}}},y:{position:'left',title:{display:true,text:'Trafic',color:'#555770',font:{size:11}},grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',font:{size:10}}},y1:{position:'right',title:{display:true,text:'Leads',color:'#555770',font:{size:11}},grid:{drawOnChartArea:false},ticks:{color:'#555770',font:{size:10}}}}}});
 }
 
 function renderUpcomingList() {
