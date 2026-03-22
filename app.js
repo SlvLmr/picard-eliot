@@ -374,12 +374,6 @@ function renderTimelineRow(evt, daysInYear, isCurYear, today) {
     html += `<span>${formatDateRange(evt.start, evt.end)}</span>`;
     html += `</div></div>`;
 
-    if (tasksTotal > 0) {
-        html += `<div class="htimeline-row-tasks">`;
-        html += `<div class="task-progress-mini"><div class="task-progress-mini-fill" style="width:${taskPct}%;background:${barColor}"></div></div>`;
-        html += `<span class="task-progress-label">${tasksDone}/${tasksTotal}</span>`;
-        html += `</div>`;
-    }
     html += `</div>`;
 
     // Bars area
