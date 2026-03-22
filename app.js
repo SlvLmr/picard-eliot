@@ -30,6 +30,7 @@ const CATEGORIES = {
 
 const STATUS_LABELS = { 'planned': 'Planifié', 'in-progress': 'En cours', 'completed': 'Terminé', 'cancelled': 'Annulé' };
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTHS_SHORT = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
 const DAYS_SHORT = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
 // ─── Helpers ─────────────────────────────────────
@@ -247,8 +248,8 @@ function initNav() {
 }
 
 function initMonthNav() {
-    $('#prevMonth').addEventListener('click', () => { APP.currentMonth--; if (APP.currentMonth<0){APP.currentMonth=11;APP.currentYear--;} render(); });
-    $('#nextMonth').addEventListener('click', () => { APP.currentMonth++; if (APP.currentMonth>11){APP.currentMonth=0;APP.currentYear++;} render(); });
+    $('#prevMonth').addEventListener('click', () => { APP.currentYear--; render(); });
+    $('#nextMonth').addEventListener('click', () => { APP.currentYear++; render(); });
     $('#todayBtn').addEventListener('click', () => { const n=new Date(); APP.currentMonth=n.getMonth(); APP.currentYear=n.getFullYear(); render(); });
 }
 
@@ -324,23 +325,21 @@ function updatePageTitle() {
     else { const c=CATEGORIES[s]; DOM.pageTitle.textContent=c.label; DOM.pageBadge.textContent='Timeline'; DOM.pageBadge.style.background=`${c.color}1a`; DOM.pageBadge.style.color=c.color; }
 }
 
-function updateMonthLabel() { DOM.monthLabel.textContent=`${MONTHS_FR[APP.currentMonth]} ${APP.currentYear}`; }
+function updateMonthLabel() { DOM.monthLabel.textContent=`${APP.currentYear}`; }
 
 // ─── Timeline Renderer (reusable) ────────────────
 function renderTimeline(container, events, options = {}) {
     events = events.sort((a,b) => new Date(a.start)-new Date(b.start));
-    const daysInMonth = new Date(APP.currentYear, APP.currentMonth+1, 0).getDate();
     const today = new Date();
-    const isCurMonth = today.getMonth()===APP.currentMonth && today.getFullYear()===APP.currentYear;
+    const isCurYear = today.getFullYear()===APP.currentYear;
+    const daysInYear = ((APP.currentYear % 4 === 0 && APP.currentYear % 100 !== 0) || APP.currentYear % 400 === 0) ? 366 : 365;
 
     let html = `<div class="htimeline-header">`;
     html += `<div class="htimeline-label-col">Projets / Actions</div>`;
     html += `<div class="htimeline-days-wrap">`;
-    for (let d=1; d<=daysInMonth; d++) {
-        const dt = new Date(APP.currentYear, APP.currentMonth, d);
-        const isToday = isSameDay(dt, today);
-        const isWe = dt.getDay()===0 || dt.getDay()===6;
-        html += `<div class="htimeline-day-cell${isToday?' today':''}${isWe?' weekend':''}"><span class="day-letter">${DAYS_SHORT[dt.getDay()].charAt(0)}</span><span class="day-num">${d}</span></div>`;
+    for (let m=0; m<12; m++) {
+        const isCurMonth = isCurYear && today.getMonth()===m;
+        html += `<div class="htimeline-day-cell htimeline-month-cell${isCurMonth?' today':''}"><span class="day-num">${MONTHS_SHORT[m]}</span></div>`;
     }
     html += `</div></div><div class="htimeline-body">`;
 
@@ -348,7 +347,7 @@ function renderTimeline(container, events, options = {}) {
         html += `<div class="htimeline-empty"><i class="ri-calendar-todo-fill"></i><p>Aucune action planifiée</p><small>Cliquez sur "Ajouter" pour créer votre première action</small></div>`;
     } else {
         events.forEach(evt => {
-            html += renderTimelineRow(evt, daysInMonth, isCurMonth, today);
+            html += renderTimelineRow(evt, daysInYear, isCurYear, today);
         });
     }
     html += `</div>`;
@@ -356,7 +355,7 @@ function renderTimeline(container, events, options = {}) {
     bindTimelineEvents(container);
 }
 
-function renderTimelineRow(evt, daysInMonth, isCurMonth, today) {
+function renderTimelineRow(evt, daysInYear, isCurYear, today) {
     const { total: tasksTotal, done: tasksDone } = countTasks(evt.tasks);
     const taskPct = tasksTotal > 0 ? Math.round((tasksDone/tasksTotal)*100) : 0;
     const brandLabel = evt.brand==='picard'?'Picard':evt.brand==='eliot'?'Eliot':'P+E';
@@ -385,27 +384,28 @@ function renderTimelineRow(evt, daysInMonth, isCurMonth, today) {
 
     // Bars area
     html += `<div class="htimeline-bars-area">`;
-    for (let d=1; d<=daysInMonth; d++) {
-        const dt = new Date(APP.currentYear, APP.currentMonth, d);
-        const isWe = dt.getDay()===0||dt.getDay()===6;
-        html += `<div class="htimeline-bar-bg${isWe?' weekend':''}"></div>`;
+    for (let m=0; m<12; m++) {
+        html += `<div class="htimeline-bar-bg"></div>`;
     }
 
     const startDate = new Date(evt.start);
     const endDate = evt.end ? new Date(evt.end) : startDate;
-    const monthStart = new Date(APP.currentYear, APP.currentMonth, 1);
-    const monthEnd = new Date(APP.currentYear, APP.currentMonth, daysInMonth);
+    const yearStart = new Date(APP.currentYear, 0, 1);
+    const yearEnd = new Date(APP.currentYear, 11, 31);
 
-    if (endDate >= monthStart && startDate <= monthEnd) {
-        const effS = startDate < monthStart ? 1 : startDate.getDate();
-        const effE = endDate > monthEnd ? daysInMonth : endDate.getDate();
-        const leftPct = ((effS-1)/daysInMonth)*100;
-        const widthPct = Math.max(((effE-effS+1)/daysInMonth)*100, (1/daysInMonth)*100);
+    if (endDate >= yearStart && startDate <= yearEnd) {
+        const effStart = startDate < yearStart ? yearStart : startDate;
+        const effEnd = endDate > yearEnd ? yearEnd : endDate;
+        const dayOfYearStart = Math.floor((effStart - yearStart) / 86400000);
+        const dayOfYearEnd = Math.floor((effEnd - yearStart) / 86400000);
+        const leftPct = (dayOfYearStart / daysInYear) * 100;
+        const widthPct = Math.max(((dayOfYearEnd - dayOfYearStart + 1) / daysInYear) * 100, (1 / daysInYear) * 100);
         html += `<div class="htimeline-bar" style="left:${leftPct}%;width:${widthPct}%;background:linear-gradient(90deg,${hexToRgba(barColor,0.9)},${hexToRgba(barColor,0.4)});color:white;box-shadow:0 0 12px ${hexToRgba(barColor,0.35)}" data-event-id="${evt.id}"></div>`;
     }
 
-    if (isCurMonth) {
-        const todayPos = ((today.getDate()-0.5)/daysInMonth)*100;
+    if (isCurYear) {
+        const dayOfYearToday = Math.floor((today - yearStart) / 86400000);
+        const todayPos = ((dayOfYearToday + 0.5) / daysInYear) * 100;
         html += `<div class="htimeline-today-line" style="left:${todayPos}%"></div>`;
     }
 
@@ -424,18 +424,16 @@ function bindTimelineEvents(container) {
 
 // ─── All View = Timeline grouped by category ─────
 function renderAllTimeline() {
-    const daysInMonth = new Date(APP.currentYear, APP.currentMonth+1, 0).getDate();
     const today = new Date();
-    const isCurMonth = today.getMonth()===APP.currentMonth && today.getFullYear()===APP.currentYear;
+    const isCurYear = today.getFullYear()===APP.currentYear;
+    const daysInYear = ((APP.currentYear % 4 === 0 && APP.currentYear % 100 !== 0) || APP.currentYear % 400 === 0) ? 366 : 365;
 
     let html = `<div class="htimeline-header">`;
     html += `<div class="htimeline-label-col">Vue Globale</div>`;
     html += `<div class="htimeline-days-wrap">`;
-    for (let d=1; d<=daysInMonth; d++) {
-        const dt = new Date(APP.currentYear, APP.currentMonth, d);
-        const isToday = isSameDay(dt, today);
-        const isWe = dt.getDay()===0||dt.getDay()===6;
-        html += `<div class="htimeline-day-cell${isToday?' today':''}${isWe?' weekend':''}"><span class="day-letter">${DAYS_SHORT[dt.getDay()].charAt(0)}</span><span class="day-num">${d}</span></div>`;
+    for (let m=0; m<12; m++) {
+        const isCurMonth = isCurYear && today.getMonth()===m;
+        html += `<div class="htimeline-day-cell htimeline-month-cell${isCurMonth?' today':''}"><span class="day-num">${MONTHS_SHORT[m]}</span></div>`;
     }
     html += `</div></div><div class="htimeline-body">`;
 
@@ -448,7 +446,7 @@ function renderAllTimeline() {
         html += `<div class="htimeline-cat-row" style="color:${cat.color}"><i class="${cat.icon}"></i><span>${cat.label}</span><span class="htimeline-cat-count">${evts.length}</span></div>`;
 
         evts.forEach(evt => {
-            html += renderTimelineRow(evt, daysInMonth, isCurMonth, today);
+            html += renderTimelineRow(evt, daysInYear, isCurYear, today);
         });
 
         if (evts.length === 0) {
