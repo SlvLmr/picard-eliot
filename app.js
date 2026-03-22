@@ -13,6 +13,7 @@ const APP = {
     editingEventId: null,
     events: [],
     budgets: {},
+    budgetFamilies: [],
     charts: {},
     modalTasks: [],
 };
@@ -64,6 +65,7 @@ function hexToRgba(hex, alpha) {
 function saveData() {
     localStorage.setItem('picard_eliot_events_v3', JSON.stringify(APP.events));
     localStorage.setItem('picard_eliot_budgets', JSON.stringify(APP.budgets));
+    localStorage.setItem('picard_eliot_budget_families', JSON.stringify(APP.budgetFamilies||[]));
 }
 
 function loadData() {
@@ -72,7 +74,10 @@ function loadData() {
         if (v3) APP.events = JSON.parse(v3);
         const b = localStorage.getItem('picard_eliot_budgets');
         if (b) APP.budgets = JSON.parse(b);
+        const bf = localStorage.getItem('picard_eliot_budget_families');
+        if (bf) APP.budgetFamilies = JSON.parse(bf);
     } catch(e) { console.warn('Load error:', e); }
+    if (!APP.budgetFamilies) APP.budgetFamilies = [];
     if (!APP.events.length) { APP.events = sampleEvents(); saveData(); }
     if (!APP.budgets || !Object.keys(APP.budgets).length) {
         APP.budgets = { picard: { allocated: 120000, spent: 45000 }, eliot: { allocated: 85000, spent: 28000 } };
@@ -321,8 +326,6 @@ function render() {
     if (APP.currentSection === 'kpi') {
         DOM.kpiContainer.classList.remove('hidden');
         renderKPI();
-    } else if (APP.currentSection === 'budget') {
-        renderBudget();
     } else if (APP.currentSection === 'all') {
         DOM.allTimelineContainer.classList.remove('hidden');
         renderAllTimeline();
@@ -732,77 +735,18 @@ function deleteEvent(eventId) {
 }
 
 // ─── KPI ─────────────────────────────────────────
-function renderKPI() { renderKPICards(); renderKPICharts(); renderUpcomingList(); }
-
-function renderKPICards() {
-    const events = APP.currentBrand==='all'?APP.events:APP.events.filter(e=>e.brand===APP.currentBrand||e.brand==='both');
-    const total = events.length;
-    const inProgress = events.filter(e=>e.status==='in-progress').length;
-    const completed = events.filter(e=>e.status==='completed').length;
-    const planned = events.filter(e=>e.status==='planned').length;
-    const urgent = events.filter(e=>e.priority==='urgent').length;
-    let totalTasks=0, doneTasks=0;
-    events.forEach(e => { const c=countTasks(e.tasks); totalTasks+=c.total; doneTasks+=c.done; });
-    const taskPct = totalTasks>0?Math.round((doneTasks/totalTasks)*100):0;
-
-    const cards = [
-        { icon:'ri-list-check-3', color:'#8b5cf6', value:total, label:'Actions totales', bg:'rgba(139,92,246,0.12)' },
-        { icon:'ri-loader-4-fill', color:'#3b82f6', value:inProgress, label:'En cours', bg:'rgba(59,130,246,0.12)' },
-        { icon:'ri-check-double-fill', color:'#10b981', value:completed, label:'Terminées', bg:'rgba(16,185,129,0.12)' },
-        { icon:'ri-calendar-schedule-fill', color:'#f59e0b', value:planned, label:'Planifiées', bg:'rgba(245,158,11,0.12)' },
-        { icon:'ri-alarm-warning-fill', color:'#ef4444', value:urgent, label:'Urgentes', bg:'rgba(239,68,68,0.12)' },
-        { icon:'ri-checkbox-circle-fill', color:'#06b6d4', value:`${taskPct}%`, label:`Tâches (${doneTasks}/${totalTasks})`, bg:'rgba(6,182,212,0.12)' },
-    ];
-    $('#kpiCards').innerHTML = cards.map(c=>`<div class="kpi-card"><div class="kpi-card-icon" style="background:${c.bg};color:${c.color}"><i class="${c.icon}"></i></div><div class="kpi-card-value" style="color:${c.color}">${c.value}</div><div class="kpi-card-label">${c.label}</div></div>`).join('');
-}
+function renderKPI() { renderKPICharts(); renderKPIBudget(); }
 
 function renderKPICharts() {
-    Object.values(APP.charts).forEach(c=>{if(c&&c.destroy)c.destroy()});
-    APP.charts={};
-    const events = APP.currentBrand==='all'?APP.events:APP.events.filter(e=>e.brand===APP.currentBrand||e.brand==='both');
+    if(APP.charts.trafficLeads){APP.charts.trafficLeads.destroy();delete APP.charts.trafficLeads;}
 
     // --- Shared stylized options ---
     const glowGridColor = 'rgba(255,255,255,0.06)';
     const glowTickColor = '#6b7094';
-    const styledScales = (extra)=>({x:{grid:{color:glowGridColor,lineWidth:1},ticks:{color:glowTickColor,font:{size:10,weight:'600'}},border:{color:'rgba(255,255,255,0.08)'}},y:{grid:{color:glowGridColor,lineWidth:1},ticks:{color:glowTickColor,font:{size:10},stepSize:1},border:{color:'rgba(255,255,255,0.08)'},beginAtZero:true,...(extra||{})}});
     const styledTooltip = {backgroundColor:'rgba(15,16,30,0.95)',borderColor:'rgba(255,255,255,0.12)',borderWidth:1,titleFont:{size:12,weight:'700'},bodyFont:{size:11},padding:12,cornerRadius:8,displayColors:true,boxPadding:4};
     const styledLegend = (pos)=>({position:pos||'bottom',labels:{color:'#a0a3bd',padding:16,font:{size:11,weight:'600'},usePointStyle:true,pointStyleWidth:10}});
 
-    // Helper: rich gradient
-    function makeGrad(ctx,color,opacity1,opacity2,h){
-        const g=ctx.createLinearGradient(0,0,0,h||250);
-        g.addColorStop(0,color.replace('1)',opacity1+')').replace('rgb','rgba'));
-        g.addColorStop(0.6,color.replace('1)',((opacity1+opacity2)/2)+')').replace('rgb','rgba'));
-        g.addColorStop(1,color.replace('1)',opacity2+')').replace('rgb','rgba'));
-        return g;
-    }
-
-    // 1. Category Bar Chart — gradient bars
-    const catCounts={}; Object.keys(CATEGORIES).forEach(k=>catCounts[k]=0); events.forEach(e=>{if(catCounts[e.category]!==undefined)catCounts[e.category]++});
-    const ctxCat=$('#chartCategory').getContext('2d');
-    const catColors=Object.keys(CATEGORIES).map(k=>CATEGORIES[k].color);
-    const catGrads=catColors.map(c=>{const g=ctxCat.createLinearGradient(0,0,0,250);g.addColorStop(0,c+'cc');g.addColorStop(1,c+'15');return g;});
-    APP.charts.category = new Chart(ctxCat,{type:'bar',data:{labels:Object.keys(CATEGORIES).map(k=>CATEGORIES[k].label),datasets:[{data:Object.values(catCounts),backgroundColor:catGrads,borderColor:catColors,borderWidth:2,borderRadius:10,borderSkipped:false,hoverBackgroundColor:catColors.map(c=>c+'ee')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:styledTooltip},scales:styledScales(),animation:{duration:800,easing:'easeOutQuart'}}});
-
-    // 2. Brand Doughnut — glow colors
-    const brandCounts={picard:0,eliot:0,both:0}; events.forEach(e=>{if(brandCounts[e.brand]!==undefined)brandCounts[e.brand]++});
-    APP.charts.brand = new Chart($('#chartBrand'),{type:'doughnut',data:{labels:['Picard','Eliot','Les deux'],datasets:[{data:[brandCounts.picard,brandCounts.eliot,brandCounts.both],backgroundColor:['rgba(59,130,246,0.75)','rgba(245,158,11,0.75)','rgba(167,139,250,0.75)'],borderColor:['#3b82f6','#f59e0b','#a78bfa'],borderWidth:3,hoverOffset:12,hoverBorderWidth:4,hoverBackgroundColor:['rgba(59,130,246,0.95)','rgba(245,158,11,0.95)','rgba(167,139,250,0.95)']}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:styledLegend(),tooltip:styledTooltip},animation:{animateRotate:true,duration:1000,easing:'easeOutQuart'}}});
-
-    // 3. Monthly Evolution — rich gradient fill like reference
-    const monthlyData=Array(12).fill(0); events.forEach(e=>{const d=new Date(e.start);if(d.getFullYear()===APP.currentYear)monthlyData[d.getMonth()]++});
-    const ctx3=$('#chartTimeline').getContext('2d');
-    const gradTimeline=ctx3.createLinearGradient(0,0,0,250);
-    gradTimeline.addColorStop(0,'rgba(168,85,247,0.55)');
-    gradTimeline.addColorStop(0.4,'rgba(139,92,246,0.3)');
-    gradTimeline.addColorStop(0.7,'rgba(99,102,241,0.12)');
-    gradTimeline.addColorStop(1,'rgba(99,102,241,0.01)');
-    APP.charts.timeline = new Chart(ctx3,{type:'line',data:{labels:MONTHS_FR.map(m=>m.substring(0,3)),datasets:[{data:monthlyData,borderColor:'#a855f7',backgroundColor:gradTimeline,borderWidth:3.5,fill:true,tension:0.45,pointBackgroundColor:'#c084fc',pointBorderColor:'#1a1b26',pointBorderWidth:3,pointRadius:6,pointHoverRadius:10,pointHoverBackgroundColor:'#fff',pointHoverBorderColor:'#a855f7',pointHoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:styledTooltip},scales:styledScales(),animation:{duration:1000,easing:'easeOutQuart'}}});
-
-    // 4. Status Polar — vivid colors
-    const statusCounts={'planned':0,'in-progress':0,'completed':0,'cancelled':0}; events.forEach(e=>{if(statusCounts[e.status]!==undefined)statusCounts[e.status]++});
-    APP.charts.status = new Chart($('#chartStatus'),{type:'polarArea',data:{labels:Object.values(STATUS_LABELS),datasets:[{data:Object.values(statusCounts),backgroundColor:['rgba(168,85,247,0.6)','rgba(59,130,246,0.6)','rgba(16,185,129,0.6)','rgba(239,68,68,0.6)'],borderColor:['#a855f7','#3b82f6','#10b981','#ef4444'],borderWidth:2.5,hoverBackgroundColor:['rgba(168,85,247,0.85)','rgba(59,130,246,0.85)','rgba(16,185,129,0.85)','rgba(239,68,68,0.85)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:styledLegend(),tooltip:styledTooltip},scales:{r:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{display:false},angleLines:{color:'rgba(255,255,255,0.05)'}}},animation:{duration:800,easing:'easeOutQuart'}}});
-
-    // 5. Trafic & Leads Sites Web — ultra-stylized like reference image
+    // Trafic & Leads Sites Web — ultra-stylized like reference image
     const trafficLeadsData = {
         picard_trafic:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         eliot_trafic:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -837,32 +781,67 @@ function renderKPICharts() {
     ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:styledLegend(),tooltip:{...styledTooltip,callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('fr-FR')}}}},scales:{x:{grid:{color:glowGridColor},ticks:{color:glowTickColor,font:{size:11,weight:'600'}},border:{color:'rgba(255,255,255,0.08)'}},y:{position:'left',title:{display:true,text:'Trafic',color:'#6b7094',font:{size:11,weight:'700'}},grid:{color:glowGridColor},ticks:{color:glowTickColor,font:{size:10}},border:{color:'rgba(255,255,255,0.08)'}},y1:{position:'right',title:{display:true,text:'Leads',color:'#6b7094',font:{size:11,weight:'700'}},grid:{drawOnChartArea:false},ticks:{color:glowTickColor,font:{size:10}},border:{color:'rgba(255,255,255,0.08)'}}},animation:{duration:1200,easing:'easeOutQuart'}}});
 }
 
-function renderUpcomingList() {
-    const today=new Date(); today.setHours(0,0,0,0);
-    let events = APP.currentBrand==='all'?APP.events:APP.events.filter(e=>e.brand===APP.currentBrand||e.brand==='both');
-    const upcoming = events.filter(e=>new Date(e.start)>=today&&e.status!=='completed'&&e.status!=='cancelled').sort((a,b)=>new Date(a.start)-new Date(b.start)).slice(0,6);
-    const container=$('#upcomingList'); if(!container) return;
-    container.innerHTML = upcoming.map(evt=>{
-        const cat=CATEGORIES[evt.category];
-        return `<div class="upcoming-item" data-event-id="${evt.id}" style="cursor:pointer"><div class="upcoming-dot" style="background:${cat.color};box-shadow:0 0 6px ${cat.color}60"></div><div class="upcoming-info"><div class="upcoming-title">${evt.name}</div><div class="upcoming-date">${formatDate(evt.start)}</div></div><div class="priority-indicator ${evt.priority}"></div></div>`;
-    }).join('') || '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">Aucune échéance</div>';
-    container.querySelectorAll('.upcoming-item').forEach(item=>{item.addEventListener('click',()=>openDetailPanel(item.dataset.eventId))});
-}
-
-// ─── Budget ──────────────────────────────────────
-function renderBudget() {
-    let el=$('#budgetContainer'); if(!el){el=document.createElement('div');el.id='budgetContainer';el.className='budget-container';DOM.contentArea.appendChild(el);} el.classList.remove('hidden');
+// ─── Budget (intégré dans KPI) ──────────────────────────────────────
+function renderKPIBudget() {
+    const el=$('#kpiBudgetSection'); if(!el) return;
+    if(!APP.budgetFamilies) APP.budgetFamilies = [];
     const p=APP.budgets.picard||{allocated:0,spent:0}; const e=APP.budgets.eliot||{allocated:0,spent:0};
     const tA=p.allocated+e.allocated,tS=p.spent+e.spent,tR=tA-tS;
     const fmt=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
     const pctP=p.allocated>0?Math.round((p.spent/p.allocated)*100):0; const pctE=e.allocated>0?Math.round((e.spent/e.allocated)*100):0; const pctT=tA>0?Math.round((tS/tA)*100):0;
 
-    el.innerHTML=`<div class="budget-total-card"><div class="budget-total-header"><i class="ri-money-euro-circle-fill"></i><h3>Budget Global Communication</h3></div><div class="budget-total-grid"><div class="budget-metric"><span class="budget-metric-label">Budget alloué</span><span class="budget-metric-value allocated">${fmt(tA)}</span></div><div class="budget-metric"><span class="budget-metric-label">Budget dépensé</span><span class="budget-metric-value spent">${fmt(tS)}</span></div><div class="budget-metric"><span class="budget-metric-label">Solde restant</span><span class="budget-metric-value remaining ${tR<0?'negative':''}">${fmt(tR)}</span></div></div><div class="budget-progress-container"><div class="budget-progress-bar"><div class="budget-progress-fill" style="width:${Math.min(pctT,100)}%"><div class="budget-progress-glow"></div></div></div><span class="budget-progress-label">${pctT}% utilisé</span></div></div><div class="budget-brands"><div class="budget-brand-card picard"><div class="budget-brand-header"><div class="budget-brand-dot picard"></div><h4>Picard Serrures</h4></div><div class="budget-fields"><div class="budget-field"><label>Budget alloué</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="picard" data-field="allocated" value="${p.allocated}" min="0" step="1000"></div></div><div class="budget-field"><label>Budget dépensé</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="picard" data-field="spent" value="${p.spent}" min="0" step="500"></div></div><div class="budget-field"><label>Solde</label><div class="budget-solde ${(p.allocated-p.spent)<0?'negative':''}">${fmt(p.allocated-p.spent)}</div></div></div><div class="budget-progress-container"><div class="budget-progress-bar picard"><div class="budget-progress-fill picard" style="width:${Math.min(pctP,100)}%"><div class="budget-progress-glow picard"></div></div></div><span class="budget-progress-label">${pctP}%</span></div></div><div class="budget-brand-card eliot"><div class="budget-brand-header"><div class="budget-brand-dot eliot"></div><h4>Eliot</h4></div><div class="budget-fields"><div class="budget-field"><label>Budget alloué</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="eliot" data-field="allocated" value="${e.allocated}" min="0" step="1000"></div></div><div class="budget-field"><label>Budget dépensé</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="eliot" data-field="spent" value="${e.spent}" min="0" step="500"></div></div><div class="budget-field"><label>Solde</label><div class="budget-solde ${(e.allocated-e.spent)<0?'negative':''}">${fmt(e.allocated-e.spent)}</div></div></div><div class="budget-progress-container"><div class="budget-progress-bar eliot"><div class="budget-progress-fill eliot" style="width:${Math.min(pctE,100)}%"><div class="budget-progress-glow eliot"></div></div></div><span class="budget-progress-label">${pctE}%</span></div></div></div><div class="budget-chart-container"><div class="chart-card wide"><h3>Répartition budgétaire</h3><canvas id="chartBudget" height="200"></canvas><div class="chart-glow" style="background:radial-gradient(ellipse,rgba(245,158,11,0.12),transparent)"></div></div></div>`;
+    // Budget families HTML
+    const familiesHTML = APP.budgetFamilies.map((fam,i)=>{
+        const fTotal = fam.allocated||0, fSpent = fam.spent||0, fRest = fTotal-fSpent;
+        const fPct = fTotal>0?Math.round((fSpent/fTotal)*100):0;
+        return `<div class="budget-family-card">
+            <div class="budget-family-header">
+                <input type="text" class="budget-family-name-input" data-fam-idx="${i}" value="${fam.name||''}" placeholder="Nom de la famille">
+                <button class="budget-family-delete" data-fam-idx="${i}" title="Supprimer"><i class="ri-delete-bin-line"></i></button>
+            </div>
+            <div class="budget-fields">
+                <div class="budget-field"><label>Alloué</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-fam-input" data-fam-idx="${i}" data-fam-field="allocated" value="${fTotal}" min="0" step="500"></div></div>
+                <div class="budget-field"><label>Dépensé</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-fam-input" data-fam-idx="${i}" data-fam-field="spent" value="${fSpent}" min="0" step="500"></div></div>
+                <div class="budget-field"><label>Solde</label><div class="budget-solde ${fRest<0?'negative':''}">${fmt(fRest)}</div></div>
+            </div>
+            <div class="budget-progress-container"><div class="budget-progress-bar"><div class="budget-progress-fill" style="width:${Math.min(fPct,100)}%;background:linear-gradient(90deg,${fam.color||'#8b5cf6'},${fam.color||'#8b5cf6'}99)"><div class="budget-progress-glow" style="background:${fam.color||'#8b5cf6'}"></div></div></div><span class="budget-progress-label">${fPct}%</span></div>
+        </div>`;
+    }).join('');
 
-    el.querySelectorAll('.budget-input').forEach(input=>{input.addEventListener('change',ev=>{const brand=ev.target.dataset.brand;const field=ev.target.dataset.field;if(!APP.budgets[brand])APP.budgets[brand]={allocated:0,spent:0};APP.budgets[brand][field]=parseFloat(ev.target.value)||0;saveData();renderBudget();showToast('Budget mis à jour','success')})});
+    el.innerHTML=`<div class="budget-total-card"><div class="budget-total-header"><i class="ri-money-euro-circle-fill"></i><h3>Budget Global Communication</h3></div><div class="budget-total-grid"><div class="budget-metric"><span class="budget-metric-label">Budget alloué</span><span class="budget-metric-value allocated">${fmt(tA)}</span></div><div class="budget-metric"><span class="budget-metric-label">Budget dépensé</span><span class="budget-metric-value spent">${fmt(tS)}</span></div><div class="budget-metric"><span class="budget-metric-label">Solde restant</span><span class="budget-metric-value remaining ${tR<0?'negative':''}">${fmt(tR)}</span></div></div><div class="budget-progress-container"><div class="budget-progress-bar"><div class="budget-progress-fill" style="width:${Math.min(pctT,100)}%"><div class="budget-progress-glow"></div></div></div><span class="budget-progress-label">${pctT}% utilisé</span></div></div>
+    <div class="budget-brands">
+        <div class="budget-brand-card picard"><div class="budget-brand-header"><div class="budget-brand-dot picard"></div><h4>Picard Serrures</h4></div><div class="budget-fields"><div class="budget-field"><label>Budget alloué</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="picard" data-field="allocated" value="${p.allocated}" min="0" step="1000"></div></div><div class="budget-field"><label>Budget dépensé</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="picard" data-field="spent" value="${p.spent}" min="0" step="500"></div></div><div class="budget-field"><label>Solde</label><div class="budget-solde ${(p.allocated-p.spent)<0?'negative':''}">${fmt(p.allocated-p.spent)}</div></div></div><div class="budget-progress-container"><div class="budget-progress-bar picard"><div class="budget-progress-fill picard" style="width:${Math.min(pctP,100)}%"><div class="budget-progress-glow picard"></div></div></div><span class="budget-progress-label">${pctP}%</span></div></div>
+        <div class="budget-brand-card eliot"><div class="budget-brand-header"><div class="budget-brand-dot eliot"></div><h4>Eliot</h4></div><div class="budget-fields"><div class="budget-field"><label>Budget alloué</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="eliot" data-field="allocated" value="${e.allocated}" min="0" step="1000"></div></div><div class="budget-field"><label>Budget dépensé</label><div class="budget-input-wrap"><span class="budget-input-prefix">€</span><input type="number" class="budget-input" data-brand="eliot" data-field="spent" value="${e.spent}" min="0" step="500"></div></div><div class="budget-field"><label>Solde</label><div class="budget-solde ${(e.allocated-e.spent)<0?'negative':''}">${fmt(e.allocated-e.spent)}</div></div></div><div class="budget-progress-container"><div class="budget-progress-bar eliot"><div class="budget-progress-fill eliot" style="width:${Math.min(pctE,100)}%"><div class="budget-progress-glow eliot"></div></div></div><span class="budget-progress-label">${pctE}%</span></div></div>
+    </div>
+    <div class="budget-families-section">
+        <div class="budget-families-header"><h3><i class="ri-folder-5-fill"></i> Familles de budget</h3><button class="btn-add-family" id="btnAddFamily"><i class="ri-add-line"></i> Ajouter une famille</button></div>
+        <div class="budget-families-grid">${familiesHTML || '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px">Aucune famille de budget. Cliquez sur "Ajouter une famille" pour commencer.</div>'}</div>
+    </div>`;
 
-    if(APP.charts.budget)APP.charts.budget.destroy();
-    const chartEl=$('#chartBudget'); if(chartEl){APP.charts.budget=new Chart(chartEl,{type:'bar',data:{labels:['Picard Serrures','Eliot'],datasets:[{label:'Alloué',data:[p.allocated,e.allocated],backgroundColor:['rgba(59,130,246,0.5)','rgba(245,158,11,0.5)'],borderColor:['#3b82f6','#f59e0b'],borderWidth:2,borderRadius:8,borderSkipped:false},{label:'Dépensé',data:[p.spent,e.spent],backgroundColor:['rgba(59,130,246,0.2)','rgba(245,158,11,0.2)'],borderColor:['rgba(59,130,246,0.5)','rgba(245,158,11,0.5)'],borderWidth:2,borderRadius:8,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8b8da3',font:{size:11}}}},scales:{x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770'}},y:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',callback:v=>fmt(v)}}}}});}
+    // Event: brand budget inputs
+    el.querySelectorAll('.budget-input').forEach(input=>{input.addEventListener('change',ev=>{const brand=ev.target.dataset.brand;const field=ev.target.dataset.field;if(!APP.budgets[brand])APP.budgets[brand]={allocated:0,spent:0};APP.budgets[brand][field]=parseFloat(ev.target.value)||0;saveData();renderKPIBudget();showToast('Budget mis à jour','success')})});
+
+    // Event: add family
+    const btnAdd=$('#btnAddFamily');
+    if(btnAdd) btnAdd.addEventListener('click',()=>{
+        const colors=['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#f97316','#6366f1','#14b8a6'];
+        APP.budgetFamilies.push({name:'',allocated:0,spent:0,color:colors[APP.budgetFamilies.length%colors.length]});
+        saveData(); renderKPIBudget(); showToast('Famille ajoutée','success');
+    });
+
+    // Event: family inputs
+    el.querySelectorAll('.budget-fam-input').forEach(input=>{input.addEventListener('change',ev=>{
+        const idx=parseInt(ev.target.dataset.famIdx); const field=ev.target.dataset.famField;
+        APP.budgetFamilies[idx][field]=parseFloat(ev.target.value)||0; saveData(); renderKPIBudget(); showToast('Budget mis à jour','success');
+    })});
+    el.querySelectorAll('.budget-family-name-input').forEach(input=>{input.addEventListener('change',ev=>{
+        const idx=parseInt(ev.target.dataset.famIdx);
+        APP.budgetFamilies[idx].name=ev.target.value; saveData();
+    })});
+    el.querySelectorAll('.budget-family-delete').forEach(btn=>{btn.addEventListener('click',ev=>{
+        const idx=parseInt(ev.currentTarget.dataset.famIdx);
+        APP.budgetFamilies.splice(idx,1); saveData(); renderKPIBudget(); showToast('Famille supprimée','success');
+    })});
 }
 
 // ─── Modal (Create / Edit) ───────────────────────
