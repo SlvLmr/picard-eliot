@@ -14,6 +14,7 @@ const APP = {
     events: [],
     budgets: {},
     budgetFamilies: [],
+    trafficLeadsData: null,
     charts: {},
     modalTasks: [],
 };
@@ -66,6 +67,7 @@ function saveData() {
     localStorage.setItem('picard_eliot_events_v3', JSON.stringify(APP.events));
     localStorage.setItem('picard_eliot_budgets', JSON.stringify(APP.budgets));
     localStorage.setItem('picard_eliot_budget_families', JSON.stringify(APP.budgetFamilies||[]));
+    localStorage.setItem('picard_eliot_traffic_leads', JSON.stringify(APP.trafficLeadsData||null));
 }
 
 function loadData() {
@@ -76,8 +78,16 @@ function loadData() {
         if (b) APP.budgets = JSON.parse(b);
         const bf = localStorage.getItem('picard_eliot_budget_families');
         if (bf) APP.budgetFamilies = JSON.parse(bf);
+        const tl = localStorage.getItem('picard_eliot_traffic_leads');
+        if (tl) APP.trafficLeadsData = JSON.parse(tl);
     } catch(e) { console.warn('Load error:', e); }
     if (!APP.budgetFamilies) APP.budgetFamilies = [];
+    if (!APP.trafficLeadsData) APP.trafficLeadsData = {
+        picard_trafic: [0,0,0,0,0,0,0,0,0,0,0,0],
+        eliot_trafic:  [0,0,0,0,0,0,0,0,0,0,0,0],
+        picard_leads:  [0,0,0,0,0,0,0,0,0,0,0,0],
+        eliot_leads:   [0,0,0,0,0,0,0,0,0,0,0,0],
+    };
     if (!APP.events.length) { APP.events = sampleEvents(); saveData(); }
     if (!APP.budgets || !Object.keys(APP.budgets).length) {
         APP.budgets = { picard: { allocated: 120000, spent: 45000 }, eliot: { allocated: 85000, spent: 28000 } };
@@ -747,12 +757,32 @@ function renderKPICharts() {
     const styledLegend = (pos)=>({position:pos||'bottom',labels:{color:'#a0a3bd',padding:16,font:{size:11,weight:'600'},usePointStyle:true,pointStyleWidth:10}});
 
     // Trafic & Leads Sites Web — ultra-stylized like reference image
-    const trafficLeadsData = {
-        picard_trafic:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        eliot_trafic:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        picard_leads:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        eliot_leads:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    };
+    const trafficLeadsData = APP.trafficLeadsData;
+
+    // Build edit panel
+    const editPanel=$('#tlEditPanel');
+    if(editPanel){
+        const series=[
+            {key:'picard_trafic',label:'Trafic Picard',color:'#3b82f6'},
+            {key:'eliot_trafic',label:'Trafic Eliot',color:'#f59e0b'},
+            {key:'picard_leads',label:'Leads Picard',color:'#93c5fd'},
+            {key:'eliot_leads',label:'Leads Eliot',color:'#fde68a'},
+        ];
+        const months=MONTHS_FR.map(m=>m.substring(0,3));
+        editPanel.innerHTML=`<div class="tl-edit-table-wrap"><table class="tl-edit-table"><thead><tr><th></th>${months.map(m=>`<th>${m}</th>`).join('')}</tr></thead><tbody>${series.map(s=>`<tr><td class="tl-edit-series" style="color:${s.color}"><span class="tl-edit-dot" style="background:${s.color}"></span>${s.label}</td>${trafficLeadsData[s.key].map((v,i)=>`<td><input type="number" class="tl-edit-input" data-series="${s.key}" data-month="${i}" value="${v}" min="0"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+        editPanel.querySelectorAll('.tl-edit-input').forEach(input=>{input.addEventListener('change',ev=>{
+            const series=ev.target.dataset.series;const month=parseInt(ev.target.dataset.month);
+            APP.trafficLeadsData[series][month]=parseFloat(ev.target.value)||0;
+            saveData(); renderKPICharts();
+        })});
+    }
+    // Toggle button
+    const btnToggle=$('#btnToggleTLEdit');
+    if(btnToggle&&!btnToggle._bound){btnToggle._bound=true;btnToggle.addEventListener('click',()=>{
+        const panel=$('#tlEditPanel');
+        panel.classList.toggle('hidden');
+        btnToggle.innerHTML=panel.classList.contains('hidden')?'<i class="ri-edit-line"></i> Éditer les données':'<i class="ri-close-line"></i> Fermer';
+    });}
     const ctxTL=$('#chartTrafficLeads').getContext('2d');
     // Rich gradients for each dataset
     const gradPicardT=ctxTL.createLinearGradient(0,0,0,320);

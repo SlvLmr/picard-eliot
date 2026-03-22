@@ -142,10 +142,14 @@
 
             <!-- KPI Section -->
             <div class="kpi-container hidden" id="kpiContainer">
-                <div class="chart-card wide chart-card-tall" style="margin-bottom:8px">
-                    <h3>Trafic & Leads Sites Web</h3>
+                <div class="chart-card wide chart-card-tall" style="margin-bottom:8px;max-height:none">
+                    <div class="tl-chart-header">
+                        <h3>Trafic & Leads Sites Web</h3>
+                        <button class="btn-toggle-tl-edit" id="btnToggleTLEdit"><i class="ri-edit-line"></i> Éditer les données</button>
+                    </div>
                     <canvas id="chartTrafficLeads"></canvas>
                     <div class="chart-glow"></div>
+                    <div class="tl-edit-panel hidden" id="tlEditPanel"></div>
                 </div>
                 <div id="kpiBudgetSection"></div>
             </div>
