@@ -761,20 +761,48 @@ function renderKPICharts() {
     APP.charts={};
     const events = APP.currentBrand==='all'?APP.events:APP.events.filter(e=>e.brand===APP.currentBrand||e.brand==='both');
 
+    // --- Shared stylized options ---
+    const glowGridColor = 'rgba(255,255,255,0.06)';
+    const glowTickColor = '#6b7094';
+    const styledScales = (extra)=>({x:{grid:{color:glowGridColor,lineWidth:1},ticks:{color:glowTickColor,font:{size:10,weight:'600'}},border:{color:'rgba(255,255,255,0.08)'}},y:{grid:{color:glowGridColor,lineWidth:1},ticks:{color:glowTickColor,font:{size:10},stepSize:1},border:{color:'rgba(255,255,255,0.08)'},beginAtZero:true,...(extra||{})}});
+    const styledTooltip = {backgroundColor:'rgba(15,16,30,0.95)',borderColor:'rgba(255,255,255,0.12)',borderWidth:1,titleFont:{size:12,weight:'700'},bodyFont:{size:11},padding:12,cornerRadius:8,displayColors:true,boxPadding:4};
+    const styledLegend = (pos)=>({position:pos||'bottom',labels:{color:'#a0a3bd',padding:16,font:{size:11,weight:'600'},usePointStyle:true,pointStyleWidth:10}});
+
+    // Helper: rich gradient
+    function makeGrad(ctx,color,opacity1,opacity2,h){
+        const g=ctx.createLinearGradient(0,0,0,h||250);
+        g.addColorStop(0,color.replace('1)',opacity1+')').replace('rgb','rgba'));
+        g.addColorStop(0.6,color.replace('1)',((opacity1+opacity2)/2)+')').replace('rgb','rgba'));
+        g.addColorStop(1,color.replace('1)',opacity2+')').replace('rgb','rgba'));
+        return g;
+    }
+
+    // 1. Category Bar Chart — gradient bars
     const catCounts={}; Object.keys(CATEGORIES).forEach(k=>catCounts[k]=0); events.forEach(e=>{if(catCounts[e.category]!==undefined)catCounts[e.category]++});
-    APP.charts.category = new Chart($('#chartCategory'),{type:'bar',data:{labels:Object.keys(CATEGORIES).map(k=>CATEGORIES[k].label),datasets:[{data:Object.values(catCounts),backgroundColor:Object.keys(CATEGORIES).map(k=>CATEGORIES[k].color+'40'),borderColor:Object.keys(CATEGORIES).map(k=>CATEGORIES[k].color),borderWidth:2,borderRadius:8,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',stepSize:1}}}}});
+    const ctxCat=$('#chartCategory').getContext('2d');
+    const catColors=Object.keys(CATEGORIES).map(k=>CATEGORIES[k].color);
+    const catGrads=catColors.map(c=>{const g=ctxCat.createLinearGradient(0,0,0,250);g.addColorStop(0,c+'cc');g.addColorStop(1,c+'15');return g;});
+    APP.charts.category = new Chart(ctxCat,{type:'bar',data:{labels:Object.keys(CATEGORIES).map(k=>CATEGORIES[k].label),datasets:[{data:Object.values(catCounts),backgroundColor:catGrads,borderColor:catColors,borderWidth:2,borderRadius:10,borderSkipped:false,hoverBackgroundColor:catColors.map(c=>c+'ee')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:styledTooltip},scales:styledScales(),animation:{duration:800,easing:'easeOutQuart'}}});
 
+    // 2. Brand Doughnut — glow colors
     const brandCounts={picard:0,eliot:0,both:0}; events.forEach(e=>{if(brandCounts[e.brand]!==undefined)brandCounts[e.brand]++});
-    APP.charts.brand = new Chart($('#chartBrand'),{type:'doughnut',data:{labels:['Picard','Eliot','Les deux'],datasets:[{data:[brandCounts.picard,brandCounts.eliot,brandCounts.both],backgroundColor:['rgba(59,130,246,0.7)','rgba(245,158,11,0.7)','rgba(167,139,250,0.7)'],borderColor:['#3b82f6','#f59e0b','#a78bfa'],borderWidth:2,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#8b8da3',padding:16,font:{size:11}}}}}});
+    APP.charts.brand = new Chart($('#chartBrand'),{type:'doughnut',data:{labels:['Picard','Eliot','Les deux'],datasets:[{data:[brandCounts.picard,brandCounts.eliot,brandCounts.both],backgroundColor:['rgba(59,130,246,0.75)','rgba(245,158,11,0.75)','rgba(167,139,250,0.75)'],borderColor:['#3b82f6','#f59e0b','#a78bfa'],borderWidth:3,hoverOffset:12,hoverBorderWidth:4,hoverBackgroundColor:['rgba(59,130,246,0.95)','rgba(245,158,11,0.95)','rgba(167,139,250,0.95)']}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:styledLegend(),tooltip:styledTooltip},animation:{animateRotate:true,duration:1000,easing:'easeOutQuart'}}});
 
+    // 3. Monthly Evolution — rich gradient fill like reference
     const monthlyData=Array(12).fill(0); events.forEach(e=>{const d=new Date(e.start);if(d.getFullYear()===APP.currentYear)monthlyData[d.getMonth()]++});
-    const ctx3=$('#chartTimeline').getContext('2d'); const grad=ctx3.createLinearGradient(0,0,0,250); grad.addColorStop(0,'rgba(139,92,246,0.3)'); grad.addColorStop(1,'rgba(139,92,246,0.01)');
-    APP.charts.timeline = new Chart($('#chartTimeline'),{type:'line',data:{labels:MONTHS_FR.map(m=>m.substring(0,3)),datasets:[{data:monthlyData,borderColor:'#8b5cf6',backgroundColor:grad,borderWidth:3,fill:true,tension:0.4,pointBackgroundColor:'#8b5cf6',pointBorderColor:'#1a1b26',pointBorderWidth:3,pointRadius:5,pointHoverRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',stepSize:1},beginAtZero:true}}}});
+    const ctx3=$('#chartTimeline').getContext('2d');
+    const gradTimeline=ctx3.createLinearGradient(0,0,0,250);
+    gradTimeline.addColorStop(0,'rgba(168,85,247,0.55)');
+    gradTimeline.addColorStop(0.4,'rgba(139,92,246,0.3)');
+    gradTimeline.addColorStop(0.7,'rgba(99,102,241,0.12)');
+    gradTimeline.addColorStop(1,'rgba(99,102,241,0.01)');
+    APP.charts.timeline = new Chart(ctx3,{type:'line',data:{labels:MONTHS_FR.map(m=>m.substring(0,3)),datasets:[{data:monthlyData,borderColor:'#a855f7',backgroundColor:gradTimeline,borderWidth:3.5,fill:true,tension:0.45,pointBackgroundColor:'#c084fc',pointBorderColor:'#1a1b26',pointBorderWidth:3,pointRadius:6,pointHoverRadius:10,pointHoverBackgroundColor:'#fff',pointHoverBorderColor:'#a855f7',pointHoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:styledTooltip},scales:styledScales(),animation:{duration:1000,easing:'easeOutQuart'}}});
 
+    // 4. Status Polar — vivid colors
     const statusCounts={'planned':0,'in-progress':0,'completed':0,'cancelled':0}; events.forEach(e=>{if(statusCounts[e.status]!==undefined)statusCounts[e.status]++});
-    APP.charts.status = new Chart($('#chartStatus'),{type:'polarArea',data:{labels:Object.values(STATUS_LABELS),datasets:[{data:Object.values(statusCounts),backgroundColor:['rgba(139,92,246,0.6)','rgba(59,130,246,0.6)','rgba(16,185,129,0.6)','rgba(239,68,68,0.6)'],borderColor:['#8b5cf6','#3b82f6','#10b981','#ef4444'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#8b8da3',padding:12,font:{size:11}}}},scales:{r:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{display:false}}}}});
+    APP.charts.status = new Chart($('#chartStatus'),{type:'polarArea',data:{labels:Object.values(STATUS_LABELS),datasets:[{data:Object.values(statusCounts),backgroundColor:['rgba(168,85,247,0.6)','rgba(59,130,246,0.6)','rgba(16,185,129,0.6)','rgba(239,68,68,0.6)'],borderColor:['#a855f7','#3b82f6','#10b981','#ef4444'],borderWidth:2.5,hoverBackgroundColor:['rgba(168,85,247,0.85)','rgba(59,130,246,0.85)','rgba(16,185,129,0.85)','rgba(239,68,68,0.85)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:styledLegend(),tooltip:styledTooltip},scales:{r:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{display:false},angleLines:{color:'rgba(255,255,255,0.05)'}}},animation:{duration:800,easing:'easeOutQuart'}}});
 
-    // Trafic & Leads Sites Web
+    // 5. Trafic & Leads Sites Web — ultra-stylized like reference image
     const trafficLeadsData = {
         picard_trafic:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         eliot_trafic:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -782,14 +810,31 @@ function renderKPICharts() {
         eliot_leads:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     };
     const ctxTL=$('#chartTrafficLeads').getContext('2d');
-    const gradPT=ctxTL.createLinearGradient(0,0,0,300); gradPT.addColorStop(0,'rgba(59,130,246,0.15)'); gradPT.addColorStop(1,'rgba(59,130,246,0.01)');
-    const gradET=ctxTL.createLinearGradient(0,0,0,300); gradET.addColorStop(0,'rgba(245,158,11,0.15)'); gradET.addColorStop(1,'rgba(245,158,11,0.01)');
+    // Rich gradients for each dataset
+    const gradPicardT=ctxTL.createLinearGradient(0,0,0,320);
+    gradPicardT.addColorStop(0,'rgba(59,130,246,0.50)');
+    gradPicardT.addColorStop(0.4,'rgba(59,130,246,0.25)');
+    gradPicardT.addColorStop(0.8,'rgba(99,102,241,0.08)');
+    gradPicardT.addColorStop(1,'rgba(99,102,241,0.01)');
+    const gradEliotT=ctxTL.createLinearGradient(0,0,0,320);
+    gradEliotT.addColorStop(0,'rgba(245,158,11,0.45)');
+    gradEliotT.addColorStop(0.4,'rgba(245,158,11,0.20)');
+    gradEliotT.addColorStop(0.8,'rgba(251,191,36,0.06)');
+    gradEliotT.addColorStop(1,'rgba(251,191,36,0.01)');
+    const gradPicardL=ctxTL.createLinearGradient(0,0,0,320);
+    gradPicardL.addColorStop(0,'rgba(96,165,250,0.35)');
+    gradPicardL.addColorStop(0.5,'rgba(96,165,250,0.10)');
+    gradPicardL.addColorStop(1,'rgba(96,165,250,0.01)');
+    const gradEliotL=ctxTL.createLinearGradient(0,0,0,320);
+    gradEliotL.addColorStop(0,'rgba(251,191,36,0.30)');
+    gradEliotL.addColorStop(0.5,'rgba(251,191,36,0.08)');
+    gradEliotL.addColorStop(1,'rgba(251,191,36,0.01)');
     APP.charts.trafficLeads = new Chart(ctxTL,{type:'line',data:{labels:MONTHS_FR.map(m=>m.substring(0,3)),datasets:[
-        {label:'Trafic Picard',data:trafficLeadsData.picard_trafic,borderColor:'#3b82f6',backgroundColor:gradPT,borderWidth:3,fill:true,tension:0.4,pointBackgroundColor:'#3b82f6',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7,order:2},
-        {label:'Trafic Eliot',data:trafficLeadsData.eliot_trafic,borderColor:'#f59e0b',backgroundColor:gradET,borderWidth:3,fill:true,tension:0.4,pointBackgroundColor:'#f59e0b',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7,order:3},
-        {label:'Leads Picard',data:trafficLeadsData.picard_leads,borderColor:'#60a5fa',backgroundColor:'transparent',borderWidth:2,borderDash:[6,4],fill:false,tension:0.4,pointBackgroundColor:'#60a5fa',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:5,pointStyle:'rectRot',pointHoverRadius:8,yAxisID:'y1',order:0},
-        {label:'Leads Eliot',data:trafficLeadsData.eliot_leads,borderColor:'#fbbf24',backgroundColor:'transparent',borderWidth:2,borderDash:[6,4],fill:false,tension:0.4,pointBackgroundColor:'#fbbf24',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:5,pointStyle:'rectRot',pointHoverRadius:8,yAxisID:'y1',order:1},
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{color:'#8b8da3',padding:16,font:{size:11},usePointStyle:true}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('fr-FR')}}}},scales:{x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',font:{size:11}}},y:{position:'left',title:{display:true,text:'Trafic',color:'#555770',font:{size:11}},grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555770',font:{size:10}}},y1:{position:'right',title:{display:true,text:'Leads',color:'#555770',font:{size:11}},grid:{drawOnChartArea:false},ticks:{color:'#555770',font:{size:10}}}}}});
+        {label:'Trafic Picard',data:trafficLeadsData.picard_trafic,borderColor:'#3b82f6',backgroundColor:gradPicardT,borderWidth:3.5,fill:true,tension:0.45,pointBackgroundColor:'#60a5fa',pointBorderColor:'#1a1b26',pointBorderWidth:3,pointRadius:5,pointHoverRadius:9,pointHoverBackgroundColor:'#fff',pointHoverBorderColor:'#3b82f6',pointHoverBorderWidth:3,order:3},
+        {label:'Trafic Eliot',data:trafficLeadsData.eliot_trafic,borderColor:'#f59e0b',backgroundColor:gradEliotT,borderWidth:3.5,fill:true,tension:0.45,pointBackgroundColor:'#fbbf24',pointBorderColor:'#1a1b26',pointBorderWidth:3,pointRadius:5,pointHoverRadius:9,pointHoverBackgroundColor:'#fff',pointHoverBorderColor:'#f59e0b',pointHoverBorderWidth:3,order:2},
+        {label:'Leads Picard',data:trafficLeadsData.picard_leads,borderColor:'#93c5fd',backgroundColor:gradPicardL,borderWidth:2.5,fill:true,tension:0.45,pointBackgroundColor:'#93c5fd',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:5,pointStyle:'diamond',pointHoverRadius:9,pointHoverBackgroundColor:'#fff',pointHoverBorderColor:'#93c5fd',yAxisID:'y1',order:1},
+        {label:'Leads Eliot',data:trafficLeadsData.eliot_leads,borderColor:'#fde68a',backgroundColor:gradEliotL,borderWidth:2.5,fill:true,tension:0.45,pointBackgroundColor:'#fde68a',pointBorderColor:'#1a1b26',pointBorderWidth:2,pointRadius:5,pointStyle:'diamond',pointHoverRadius:9,pointHoverBackgroundColor:'#fff',pointHoverBorderColor:'#fde68a',yAxisID:'y1',order:0},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:styledLegend(),tooltip:{...styledTooltip,callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('fr-FR')}}}},scales:{x:{grid:{color:glowGridColor},ticks:{color:glowTickColor,font:{size:11,weight:'600'}},border:{color:'rgba(255,255,255,0.08)'}},y:{position:'left',title:{display:true,text:'Trafic',color:'#6b7094',font:{size:11,weight:'700'}},grid:{color:glowGridColor},ticks:{color:glowTickColor,font:{size:10}},border:{color:'rgba(255,255,255,0.08)'}},y1:{position:'right',title:{display:true,text:'Leads',color:'#6b7094',font:{size:11,weight:'700'}},grid:{drawOnChartArea:false},ticks:{color:glowTickColor,font:{size:10}},border:{color:'rgba(255,255,255,0.08)'}}},animation:{duration:1200,easing:'easeOutQuart'}}});
 }
 
 function renderUpcomingList() {
