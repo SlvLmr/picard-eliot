@@ -259,7 +259,7 @@ body {
 }
 
 .htimeline-row {
-    display: flex; min-height: 52px; border-bottom: 1px solid var(--border);
+    display: flex; min-height: 62px; border-bottom: 1px solid var(--border);
     transition: var(--transition); position: relative;
 }
 .htimeline-row-compact { min-height: 38px; }
@@ -269,24 +269,24 @@ body {
 .htimeline-row:hover { background: rgba(255,255,255,0.015); }
 
 .htimeline-row-label {
-    width: 300px; min-width: 300px; padding: 10px 16px;
+    width: 320px; min-width: 320px; padding: 12px 18px;
     display: flex; align-items: center; gap: 10px;
     border-right: 1px solid var(--border); cursor: pointer; transition: var(--transition);
 }
 .htimeline-row-label:hover { background: var(--bg-hover); }
 
-.htimeline-row-brand { width: 4px; height: 32px; border-radius: 4px; flex-shrink: 0; }
+.htimeline-row-brand { width: 5px; height: 38px; border-radius: 4px; flex-shrink: 0; }
 .htimeline-row-brand.picard { background: var(--picard); box-shadow: 0 0 6px var(--picard-glow); }
 .htimeline-row-brand.eliot { background: var(--eliot); box-shadow: 0 0 6px var(--eliot-glow); }
 .htimeline-row-brand.both { background: linear-gradient(to bottom, var(--picard), var(--eliot)); box-shadow: 0 0 6px var(--picard-glow); }
 
 .htimeline-row-info { flex: 1; min-width: 0; }
-.htimeline-row-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
-.htimeline-row-meta { display: flex; align-items: center; gap: 8px; font-size: 10.5px; color: var(--text-muted); flex-wrap: wrap; }
+.htimeline-row-title { font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; letter-spacing: -0.3px; }
+.htimeline-row-meta { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-secondary); flex-wrap: wrap; }
 
 .htimeline-row-status {
-    padding: 2px 7px; border-radius: 10px; font-size: 9px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.3px;
+    padding: 3px 10px; border-radius: 10px; font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px;
 }
 .htimeline-row-status.planned { background: rgba(139,92,246,0.15); color: var(--status-planned); }
 .htimeline-row-status.in-progress { background: rgba(59,130,246,0.15); color: var(--status-in-progress); }
