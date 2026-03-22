@@ -478,14 +478,15 @@ function renderTimelineRow(evt, ctx, today, compact = false) {
     }
 
     if (ctx.isCurrent) {
+        let todayPos;
         if (ctx.isYearView) {
             const dayOfYear = Math.floor((today - ctx.rangeStart) / 86400000);
-            const todayPos = ((dayOfYear + 0.5) / ctx.totalDays) * 100;
-            html += `<div class="htimeline-today-line" style="left:${todayPos}%"></div>`;
+            todayPos = ((dayOfYear + 0.5) / ctx.totalDays) * 100;
         } else {
-            const todayPos = ((today.getDate() - 0.5) / ctx.totalDays) * 100;
-            html += `<div class="htimeline-today-line" style="left:${todayPos}%"></div>`;
+            todayPos = ((today.getDate() - 0.5) / ctx.totalDays) * 100;
         }
+        html += `<div class="htimeline-past-overlay" style="width:${todayPos}%"></div>`;
+        html += `<div class="htimeline-today-line" style="left:${todayPos}%"></div>`;
     }
 
     html += `</div></div>`;
