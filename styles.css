@@ -4,12 +4,12 @@
    ============================================ */
 
 :root {
-    --bg-primary: #0a0b0f;
-    --bg-secondary: #12131a;
-    --bg-tertiary: #1a1b26;
-    --bg-card: #16171f;
-    --bg-hover: #1e1f2e;
-    --bg-input: #1a1b26;
+    --bg-primary: #141520;
+    --bg-secondary: #1c1d2b;
+    --bg-tertiary: #242536;
+    --bg-card: #1f2030;
+    --bg-hover: #2a2b3d;
+    --bg-input: #242536;
     --text-primary: #e8e9f0;
     --text-secondary: #8b8da3;
     --text-muted: #555770;
