@@ -3,401 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Communication — Picard Serrures & Eliot</title>
+    <title>Picard2030</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <div class="logo-img-wrapper">
-                    <svg class="logo-svg" viewBox="0 0 220 45" xmlns="http://www.w3.org/2000/svg">
-                        <text x="110" y="22" text-anchor="middle" dominant-baseline="central"
-                              font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-                              font-size="16" font-weight="300" letter-spacing="4" fill="white"
-                              text-rendering="optimizeLegibility">PICARD SERRURES</text>
-                        <line x1="30" y1="34" x2="190" y2="34" stroke="rgba(255,255,255,0.25)" stroke-width="0.5"/>
-                        <text x="110" y="42" text-anchor="middle" dominant-baseline="central"
-                              font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-                              font-size="7" font-weight="400" letter-spacing="6" fill="rgba(255,255,255,0.7)"
-                              text-rendering="optimizeLegibility">ELIOT</text>
-                    </svg>
-                </div>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark">P</div>
+            <div>
+                <h1>Picard<span>2030</span></h1>
+                <p class="subtitle" id="today-label"></p>
             </div>
         </div>
-
-        <nav class="sidebar-nav">
-            <ul>
-                <li class="nav-item active" data-section="all">
-                    <i class="ri-layout-grid-fill"></i>
-                    <span>Vue Globale</span>
-                </li>
-                <li class="nav-separator"></li>
-                <li class="nav-item" data-section="plan-media">
-                    <i class="ri-broadcast-fill"></i>
-                    <span>Plan Média</span>
-                </li>
-                <li class="nav-item" data-section="plan-digital">
-                    <i class="ri-global-fill"></i>
-                    <span>Plan Digital</span>
-                </li>
-                <li class="nav-item" data-section="sites-web">
-                    <i class="ri-window-fill"></i>
-                    <span>Sites Web</span>
-                </li>
-                <li class="nav-item" data-section="newsletters">
-                    <i class="ri-mail-send-fill"></i>
-                    <span>Newsletters</span>
-                </li>
-                <li class="nav-item" data-section="reseaux-sociaux">
-                    <i class="ri-share-fill"></i>
-                    <span>Réseaux Sociaux</span>
-                </li>
-                <li class="nav-item" data-section="salons-foires">
-                    <i class="ri-store-3-fill"></i>
-                    <span>Salons · Foires</span>
-                </li>
-                <li class="nav-item" data-section="usine-interne">
-                    <i class="ri-building-4-fill"></i>
-                    <span>Usine · Interne</span>
-                </li>
-                <li class="nav-item" data-section="produits">
-                    <i class="ri-box-3-fill"></i>
-                    <span>Produits</span>
-                </li>
-                <li class="nav-item" data-section="ressources">
-                    <i class="ri-folder-5-fill"></i>
-                    <span>Ressources et outils</span>
-                </li>
-                <li class="nav-item" data-section="taches-diverses">
-                    <i class="ri-task-fill"></i>
-                    <span>Tâches diverses</span>
-                </li>
-                <li class="nav-separator"></li>
-                <li class="nav-item" data-section="kpi">
-                    <i class="ri-bar-chart-grouped-fill"></i>
-                    <span>KPI et budgets</span>
-                </li>
-                <li class="nav-separator"></li>
-                <li class="nav-section-title">Groupe de Travail</li>
-                <li class="nav-item" data-section="parcours-client">
-                    <i class="ri-route-fill"></i>
-                    <span>Projet Leads</span>
-                </li>
-                <li class="nav-item" data-section="comite-iap">
-                    <i class="ri-team-fill"></i>
-                    <span>Comité stratégique IAP</span>
-                </li>
-            </ul>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="brand-filter">
-                <button class="brand-btn active" data-brand="all">Toutes</button>
-                <button class="brand-btn" data-brand="picard">
-                    <span class="brand-dot picard"></span> Picard
-                </button>
-                <button class="brand-btn" data-brand="eliot">
-                    <span class="brand-dot eliot"></span> Eliot
-                </button>
-            </div>
+        <div class="topbar-actions">
+            <button class="btn btn-ghost" id="btn-import" title="Importer un fichier de données"><i class="ri-upload-2-line"></i><span>Importer</span></button>
+            <button class="btn btn-ghost" id="btn-export" title="Télécharger data/projets.js"><i class="ri-download-2-line"></i><span>Exporter</span></button>
+            <button class="btn btn-primary" id="btn-admin"><i class="ri-settings-3-line"></i><span>Admin</span></button>
+            <input type="file" id="import-file" accept=".js,.json" hidden>
         </div>
-    </aside>
+    </header>
 
-    <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-        <!-- Top Bar -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="ri-menu-2-fill"></i>
-                </button>
-                <h1 class="page-title" id="pageTitle">Plan Média</h1>
-                <span class="page-badge" id="pageBadge">Timeline</span>
-            </div>
-            <div class="topbar-right">
-                <div class="view-toggle">
-                    <button class="view-toggle-btn active" data-view="year">Année</button>
-                    <button class="view-toggle-btn" data-view="month">Mois</button>
-                </div>
-                <div class="month-nav">
-                    <button class="month-btn" id="prevMonth"><i class="ri-arrow-left-s-line"></i></button>
-                    <span class="month-label" id="monthLabel">2026</span>
-                    <button class="month-btn" id="nextMonth"><i class="ri-arrow-right-s-line"></i></button>
-                    <button class="month-btn today-btn" id="todayBtn">Aujourd'hui</button>
-                </div>
-                <button class="add-event-btn" id="addEventBtn">
-                    <i class="ri-add-line"></i>
-                    <span>Ajouter</span>
-                </button>
-            </div>
-        </header>
+    <div class="local-banner" id="local-banner" hidden>
+        <i class="ri-information-line"></i>
+        <span>Modifications locales non publiées. Exportez <code>data/projets.js</code> pour les partager.</span>
+        <button class="btn btn-small" id="btn-banner-export">Exporter</button>
+        <button class="btn btn-small btn-ghost" id="btn-reset">Annuler mes modifications</button>
+    </div>
 
-        <!-- Content Area -->
-        <div class="content-area" id="contentArea">
-            <div class="htimeline-container" id="htimelineContainer"></div>
+    <main class="container">
+        <nav class="pole-tabs" id="pole-tabs"></nav>
+        <section class="poles-overview" id="poles-overview"></section>
+        <section class="kpis" id="kpis"></section>
 
-            <!-- KPI Section -->
-            <div class="kpi-container hidden" id="kpiContainer">
-                <div class="chart-card wide chart-card-tall" style="margin-bottom:8px;max-height:none">
-                    <div class="tl-chart-header">
-                        <h3>Trafic & Leads Sites Web</h3>
-                        <button class="btn-toggle-tl-edit" id="btnToggleTLEdit"><i class="ri-edit-line"></i> Éditer les données</button>
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="ri-calendar-schedule-line"></i> Timeline</h2>
+                <div class="toolbar">
+                    <div class="segmented" id="zoom">
+                        <button data-zoom="semester">6 mois</button>
+                        <button data-zoom="year">Année</button>
+                        <button data-zoom="plan">2026 → 2030</button>
                     </div>
-                    <canvas id="chartTrafficLeads"></canvas>
-                    <div class="chart-glow"></div>
-                    <div class="tl-edit-panel hidden" id="tlEditPanel"></div>
-                </div>
-                <div id="kpiBudgetSection"></div>
-            </div>
-
-            <!-- All View (now also timeline) -->
-            <div class="htimeline-container hidden" id="allTimelineContainer"></div>
-
-            <!-- Parcours Client -->
-            <div class="journey-container hidden" id="journeyContainer">
-                <div class="journey-toolbar">
-                    <button class="btn btn-primary btn-small" id="journeyAddFreeBtn"><i class="ri-add-box-line"></i> Ajouter un bloc</button>
-                    <button class="btn btn-ghost btn-small" id="journeyResetBtn"><i class="ri-refresh-line"></i> Réinitialiser</button>
-                </div>
-                <div class="journey-canvas" id="journeyCanvas">
-                    <svg class="journey-svg" id="journeySvg">
-                        <defs>
-                            <filter id="glowFilter" x="-50%" y="-50%" width="200%" height="200%">
-                                <feGaussianBlur stdDeviation="6" result="blur"/>
-                                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                            </filter>
-                            <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
-                                <feGaussianBlur stdDeviation="10" result="blur"/>
-                                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                            </filter>
-                        </defs>
-                    </svg>
-                    <div class="journey-nodes" id="journeyNodes"></div>
+                    <div class="nav-btns">
+                        <button class="btn btn-icon" id="nav-prev" title="Période précédente"><i class="ri-arrow-left-s-line"></i></button>
+                        <button class="btn btn-small" id="nav-today">Aujourd'hui</button>
+                        <button class="btn btn-icon" id="nav-next" title="Période suivante"><i class="ri-arrow-right-s-line"></i></button>
+                    </div>
+                    <select id="filter-owner" aria-label="Filtrer par responsable"></select>
                 </div>
             </div>
-        </div>
+            <div class="gantt" id="gantt"></div>
+            <div class="legend">
+                <span><i class="lg lg-done"></i>Réalisé</span>
+                <span><i class="lg lg-todo"></i>Reste à faire</span>
+                <span><i class="lg lg-ms"></i>Jalon</span>
+                <span><i class="lg lg-ms done"></i>Jalon atteint</span>
+                <span><i class="lg lg-today"></i>Aujourd'hui</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="ri-dashboard-3-line"></i> Projets</h2>
+            </div>
+            <div class="cards" id="cards"></div>
+        </section>
     </main>
 
-    <!-- Event Modal -->
-    <div class="modal-overlay hidden" id="modalOverlay">
-        <div class="modal" id="eventModal">
-            <div class="modal-header">
-                <h2 id="modalTitle">Nouvel Événement</h2>
-                <button class="modal-close" id="modalClose"><i class="ri-close-line"></i></button>
+    <!-- Détail projet -->
+    <aside class="drawer" id="drawer" aria-hidden="true">
+        <div class="drawer-inner" id="drawer-content"></div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Admin -->
+    <div class="modal" id="admin" aria-hidden="true">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h2><i class="ri-settings-3-line"></i> Administration</h2>
+                <button class="btn btn-icon" id="admin-close"><i class="ri-close-line"></i></button>
             </div>
-            <form id="eventForm" class="modal-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="eventName">Titre</label>
-                        <input type="text" id="eventName" placeholder="Nom de l'action..." required>
-                    </div>
+            <div class="admin-body">
+                <div class="admin-list">
+                    <div id="admin-projects"></div>
+                    <button class="btn btn-primary btn-block" id="admin-add"><i class="ri-add-line"></i> Nouveau projet</button>
                 </div>
-                <div class="form-row two-col">
-                    <div class="form-group">
-                        <label for="eventCategory">Catégorie</label>
-                        <select id="eventCategory">
-                            <option value="plan-media">Plan Média</option>
-                            <option value="plan-digital">Plan Digital</option>
-                            <option value="sites-web">Sites Web</option>
-                            <option value="newsletters">Newsletters</option>
-                            <option value="reseaux-sociaux">Réseaux Sociaux</option>
-                            <option value="salons-foires">Salons · Foires</option>
-                            <option value="usine-interne">Usine · Interne</option>
-                            <option value="produits">Produits</option>
-                            <option value="ressources">Ressources et outils</option>
-                            <option value="taches-diverses">Tâches diverses</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventBrand">Marque</label>
-                        <select id="eventBrand">
-                            <option value="picard">Picard Serrures</option>
-                            <option value="eliot">Eliot</option>
-                            <option value="both">Les deux</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row two-col">
-                    <div class="form-group">
-                        <label for="eventStart">Date début</label>
-                        <input type="date" id="eventStart" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventEnd">Date fin</label>
-                        <input type="date" id="eventEnd">
-                    </div>
-                </div>
-                <div class="form-row two-col">
-                    <div class="form-group">
-                        <label for="eventStatus">Statut</label>
-                        <select id="eventStatus">
-                            <option value="planned">Planifié</option>
-                            <option value="in-progress">En cours</option>
-                            <option value="completed">Terminé</option>
-                            <option value="cancelled">Annulé</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventPriority">Priorité</label>
-                        <select id="eventPriority">
-                            <option value="low">Basse</option>
-                            <option value="medium" selected>Moyenne</option>
-                            <option value="high">Haute</option>
-                            <option value="urgent">Urgente</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row two-col">
-                    <div class="form-group">
-                        <label for="eventBarColor">Couleur de la barre</label>
-                        <div class="color-picker-row">
-                            <input type="color" id="eventBarColor" class="color-input" value="#8b5cf6">
-                            <div class="color-presets" id="colorPresets">
-                                <button type="button" class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="Violet"></button>
-                                <button type="button" class="color-swatch" data-color="#3b82f6" style="background:#3b82f6" title="Bleu"></button>
-                                <button type="button" class="color-swatch" data-color="#06b6d4" style="background:#06b6d4" title="Cyan"></button>
-                                <button type="button" class="color-swatch" data-color="#10b981" style="background:#10b981" title="Vert"></button>
-                                <button type="button" class="color-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Jaune"></button>
-                                <button type="button" class="color-swatch" data-color="#f97316" style="background:#f97316" title="Orange"></button>
-                                <button type="button" class="color-swatch" data-color="#ef4444" style="background:#ef4444" title="Rouge"></button>
-                                <button type="button" class="color-swatch" data-color="#ec4899" style="background:#ec4899" title="Rose"></button>
-                                <button type="button" class="color-swatch" data-color="#6366f1" style="background:#6366f1" title="Indigo"></button>
-                                <button type="button" class="color-swatch" data-color="#a855f7" style="background:#a855f7" title="Pourpre"></button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventDesc">Description</label>
-                        <textarea id="eventDesc" rows="2" placeholder="Détails..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Tasks / Checklist -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Tâches à finaliser</label>
-                        <div class="tasks-list" id="tasksList"></div>
-                        <div class="task-add-row">
-                            <input type="text" id="newTaskInput" placeholder="Nouvelle tâche..." class="task-input">
-                            <input type="text" id="newTaskAssignee" placeholder="Responsable..." class="task-input task-input-assignee">
-                            <button type="button" class="btn btn-small btn-ghost" id="addTaskBtn">
-                                <i class="ri-add-line"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn btn-danger hidden" id="deleteEventBtn">
-                        <i class="ri-delete-bin-6-line"></i> Supprimer
-                    </button>
-                    <div class="form-actions-right">
-                        <button type="button" class="btn btn-ghost" id="cancelBtn">Annuler</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ri-check-line"></i> <span id="submitLabel">Créer</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Journey Node Modal -->
-    <div class="modal-overlay hidden" id="nodeModalOverlay">
-        <div class="modal" style="width:440px">
-            <div class="modal-header">
-                <h2 id="nodeModalTitle">Modifier le bloc</h2>
-                <button class="modal-close" id="nodeModalClose"><i class="ri-close-line"></i></button>
-            </div>
-            <div class="modal-body" id="nodeModalBody">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nodeText">Titre du bloc</label>
-                        <input type="text" id="nodeText" placeholder="Ex: Premier contact...">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nodeDesc">Description</label>
-                        <textarea id="nodeDesc" rows="2" placeholder="Détails de cette étape..."></textarea>
-                    </div>
-                </div>
-                <div class="form-row two-col">
-                    <div class="form-group">
-                        <label for="nodeColor">Couleur</label>
-                        <div class="color-picker-row">
-                            <input type="color" id="nodeColor" class="color-input" value="#8b5cf6">
-                            <div class="color-presets">
-                                <button type="button" class="color-swatch node-color-sw" data-color="#8b5cf6" style="background:#8b5cf6"></button>
-                                <button type="button" class="color-swatch node-color-sw" data-color="#3b82f6" style="background:#3b82f6"></button>
-                                <button type="button" class="color-swatch node-color-sw" data-color="#06b6d4" style="background:#06b6d4"></button>
-                                <button type="button" class="color-swatch node-color-sw" data-color="#10b981" style="background:#10b981"></button>
-                                <button type="button" class="color-swatch node-color-sw" data-color="#f59e0b" style="background:#f59e0b"></button>
-                                <button type="button" class="color-swatch node-color-sw" data-color="#ef4444" style="background:#ef4444"></button>
-                                <button type="button" class="color-swatch node-color-sw" data-color="#ec4899" style="background:#ec4899"></button>
-                                <button type="button" class="color-swatch node-color-sw" data-color="#f97316" style="background:#f97316"></button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="nodeIcon">Icône</label>
-                        <select id="nodeIcon">
-                            <option value="ri-global-line">Globe</option>
-                            <option value="ri-phone-line">Téléphone</option>
-                            <option value="ri-store-2-line">Agence</option>
-                            <option value="ri-mail-line">Email</option>
-                            <option value="ri-user-line">Utilisateur</option>
-                            <option value="ri-customer-service-line">Support</option>
-                            <option value="ri-file-list-line">Devis</option>
-                            <option value="ri-tools-line">Intervention</option>
-                            <option value="ri-calendar-check-line">RDV</option>
-                            <option value="ri-shield-check-line">Validation</option>
-                            <option value="ri-hand-coin-line">Paiement</option>
-                            <option value="ri-truck-line">Livraison</option>
-                            <option value="ri-install-line">Installation</option>
-                            <option value="ri-star-line">Satisfaction</option>
-                            <option value="ri-chat-smile-line">Suivi</option>
-                            <option value="ri-repeat-line">Fidélisation</option>
-                            <option value="ri-megaphone-line">Parrainage</option>
-                            <option value="ri-arrow-right-line">Étape</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="ri-link"></i> Connexions parentes</label>
-                        <div id="nodeParentsList" class="node-parents-list"></div>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-danger" id="nodeDeleteBtn"><i class="ri-delete-bin-6-line"></i> Supprimer</button>
-                    <div class="form-actions-right">
-                        <button type="button" class="btn btn-ghost" id="nodeModalCancel">Annuler</button>
-                        <button type="button" class="btn btn-primary" id="nodeModalSave"><i class="ri-check-line"></i> Enregistrer</button>
-                    </div>
-                </div>
+                <form class="admin-form" id="admin-form" autocomplete="off"></form>
             </div>
         </div>
     </div>
 
-    <!-- Detail Panel -->
-    <div class="detail-panel hidden" id="detailPanel">
-        <div class="detail-panel-header">
-            <h3 id="detailTitle">Détail</h3>
-            <button class="modal-close" id="detailClose"><i class="ri-close-line"></i></button>
-        </div>
-        <div class="detail-panel-body" id="detailBody"></div>
-    </div>
-
-    <!-- Toast -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="journey.js"></script>
+    <script src="data/projets.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
