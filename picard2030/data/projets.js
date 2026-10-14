@@ -14,6 +14,16 @@ window.PICARD2030_DATA = {
     "name": "Picard2030",
     "updatedAt": "2026-10-14"
   },
+  "settings": {
+    "title": "Picard2030",
+    "subtitle": "Suivi des projets",
+    "accent": "#0f766e",
+    "planStart": 2026,
+    "planEnd": 2030,
+    "warnThreshold": 5,
+    "lateThreshold": 15,
+    "milestoneHorizon": 90
+  },
   "poles": [
     { "id": "commerce", "name": "Commerce", "color": "#ea580c", "icon": "ri-store-2-line" },
     { "id": "production", "name": "Production", "color": "#2563eb", "icon": "ri-tools-line" }

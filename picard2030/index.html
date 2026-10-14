@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picard2030</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark" id="brand-mark">P</div>
+            <div>
+                <h1 id="app-title">Picard2030</h1>
+                <p class="subtitle" id="today-label"></p>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn btn-primary" id="btn-admin"><i class="ri-settings-3-line"></i><span>Admin</span></button>
+            <input type="file" id="import-file" accept=".js,.json" hidden>
+        </div>
+    </header>
+
+    <div class="local-banner" id="local-banner" hidden>
+        <i class="ri-information-line"></i>
+        <span>Modifications locales non publiées. Exportez <code>data/projets.js</code> pour les partager.</span>
+        <button class="btn btn-small" id="btn-banner-export">Exporter</button>
+        <button class="btn btn-small btn-ghost" id="btn-reset">Annuler mes modifications</button>
+    </div>
+
+    <main class="container">
+        <nav class="pole-tabs" id="pole-tabs"></nav>
+        <section class="poles-overview" id="poles-overview"></section>
+        <section class="kpis" id="kpis"></section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="ri-calendar-schedule-line"></i> Timeline</h2>
+                <div class="toolbar">
+                    <div class="segmented" id="zoom">
+                        <button data-zoom="semester">6 mois</button>
+                        <button data-zoom="year">Année</button>
+                        <button data-zoom="plan" id="zoom-plan">2026 → 2030</button>
+                    </div>
+                    <div class="nav-btns">
+                        <button class="btn btn-icon" id="nav-prev" title="Période précédente"><i class="ri-arrow-left-s-line"></i></button>
+                        <button class="btn btn-small" id="nav-today">Aujourd'hui</button>
+                        <button class="btn btn-icon" id="nav-next" title="Période suivante"><i class="ri-arrow-right-s-line"></i></button>
+                    </div>
+                    <select id="filter-owner" aria-label="Filtrer par responsable"></select>
+                </div>
+            </div>
+            <div class="gantt" id="gantt"></div>
+            <div class="legend">
+                <span><i class="lg lg-done"></i>Réalisé</span>
+                <span><i class="lg lg-todo"></i>Reste à faire</span>
+                <span><i class="lg lg-ms"></i>Jalon</span>
+                <span><i class="lg lg-ms done"></i>Jalon atteint</span>
+                <span><i class="lg lg-today"></i>Aujourd'hui</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2><i class="ri-dashboard-3-line"></i> Projets</h2>
+            </div>
+            <div class="cards" id="cards"></div>
+        </section>
+    </main>
+
+    <!-- Détail projet -->
+    <aside class="drawer" id="drawer" aria-hidden="true">
+        <div class="drawer-inner" id="drawer-content"></div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Admin -->
+    <div class="modal" id="admin" aria-hidden="true">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h2><i class="ri-settings-3-line"></i> Administration</h2>
+                <nav class="admin-tabs" id="admin-tabs"></nav>
+                <button class="btn btn-icon" id="admin-close" title="Fermer"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="admin-body" id="admin-body"></div>
+            <div class="modal-foot"><span class="admin-status" id="admin-status"><i class="ri-save-line"></i> Enregistrement automatique</span></div>
+        </div>
+    </div>
+
+    <script src="data/projets.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

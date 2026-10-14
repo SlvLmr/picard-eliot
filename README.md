@@ -4,7 +4,9 @@ Timeline interactive pour suivre l'avancement des projets du plan **Picard2030**
 
 ## Ouvrir l'outil
 
-Ouvrez `index.html` dans un navigateur, sans installation ni serveur. Le site peut aussi être publié tel quel (GitHub Pages, Netlify…).
+L'application se trouve dans le dossier **`picard2030/`**. Une fois en ligne, son adresse se termine donc par `/picard2030/`. La racine du dépôt redirige vers ce dossier.
+
+Pour l'utiliser en local, ouvrez `picard2030/index.html` dans un navigateur, sans installation ni serveur.
 
 ## Ce qu'on y trouve
 
@@ -24,11 +26,20 @@ Ouvrez `index.html` dans un navigateur, sans installation ni serveur. Le site pe
   - entre −5 et −15 pts → *Vigilance*
   - < −15 pts, ou un jalon dépassé et non atteint → *En retard*
 
+## Administration
+
+Le bouton **Admin** ouvre quatre onglets. Chaque modification est **enregistrée automatiquement**.
+
+| Onglet | Ce qu'on y règle |
+|---|---|
+| **Projets** | Nom, pôle, responsable, couleur, description, ordre ; phases (dates, avancement avec un curseur) ; jalons (date, atteint). Un projet peut être dupliqué ou supprimé. |
+| **Pôles** | Ajouter, renommer ou réordonner les pôles, choisir leur couleur et leur icône. |
+| **Réglages** | Nom de l'outil, sous-titre, couleur principale, années du plan, seuils de la météo, horizon des jalons. |
+| **Données** | Exporter, importer, ou annuler ses modifications locales. |
+
 ## Mettre à jour les données
 
-La source de vérité est **`data/projets.js`**.
+La source de vérité est **`picard2030/data/projets.js`**.
 
-1. **Via Claude** : décrivez le changement (« ERP : paramétrage à 70 % », « ajoute un projet Commerce… »). Claude modifie `data/projets.js`, puis commit et push.
-2. **Via l'admin** (bouton *Admin*) : créer, modifier ou supprimer des projets, phases et jalons. Les modifications sont d'abord enregistrées dans votre navigateur (un bandeau le signale). Cliquez ensuite sur **Exporter** et remplacez `data/projets.js` par le fichier téléchargé pour les partager.
-
-Le bouton **Importer** recharge un fichier `projets.js` ou `.json`.
+1. **Via Claude** : décrivez le changement (« ERP : paramétrage à 70 % », « ajoute un projet Commerce… »). Claude modifie le fichier, puis commit et push.
+2. **Via l'admin** : les modifications sont d'abord enregistrées dans votre navigateur, et un bandeau le signale. Pour les partager, allez dans *Données → Exporter* et remplacez `picard2030/data/projets.js` par le fichier téléchargé.
