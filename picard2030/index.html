@@ -17,6 +17,7 @@
             </div>
         </div>
         <div class="topbar-actions">
+            <a class="btn btn-ghost" id="btn-report" href="rapport.html" target="_blank" title="Version simplifiée à imprimer ou enregistrer en PDF"><i class="ri-file-pdf-2-line"></i><span>Rapport PDF</span></a>
             <button class="btn btn-primary" id="btn-admin"><i class="ri-settings-3-line"></i><span>Admin</span></button>
             <input type="file" id="import-file" accept=".js,.json" hidden>
         </div>
@@ -48,6 +49,7 @@
                         <button class="btn btn-small" id="nav-today">Aujourd'hui</button>
                         <button class="btn btn-icon" id="nav-next" title="Période suivante"><i class="ri-arrow-right-s-line"></i></button>
                     </div>
+                    <button class="btn btn-small" id="toggle-all"></button>
                     <select id="filter-owner" aria-label="Filtrer par responsable"></select>
                 </div>
             </div>
@@ -55,15 +57,16 @@
             <div class="legend">
                 <span><i class="lg lg-done"></i>Réalisé</span>
                 <span><i class="lg lg-todo"></i>Reste à faire</span>
+                <span><i class="lg lg-pt"></i>Échéance</span>
                 <span><i class="lg lg-ms"></i>Jalon</span>
-                <span><i class="lg lg-ms done"></i>Jalon atteint</span>
                 <span><i class="lg lg-today"></i>Aujourd'hui</span>
+                <span class="legend-hint"><i class="ri-cursor-line"></i>Survolez une barre ou un point pour le détail</span>
             </div>
         </section>
 
         <section class="panel">
             <div class="panel-head">
-                <h2><i class="ri-dashboard-3-line"></i> Projets</h2>
+                <h2><i class="ri-dashboard-3-line"></i> Thèmes</h2>
             </div>
             <div class="cards" id="cards"></div>
         </section>
@@ -88,7 +91,10 @@
         </div>
     </div>
 
+    <div class="tip" id="tip" role="tooltip"></div>
+
     <script src="data/projets.js"></script>
+    <script src="core.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

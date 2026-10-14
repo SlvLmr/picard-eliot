@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picard2030 — État d'avancement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
+    <link rel="stylesheet" href="rapport.css">
+</head>
+<body>
+    <div class="toolbar no-print">
+        <a class="tb-btn ghost" href="index.html"><i class="ri-arrow-left-line"></i> Retour</a>
+        <label class="tb-check"><input type="checkbox" id="opt-actions" checked> Détail des actions</label>
+        <label class="tb-check"><input type="checkbox" id="opt-notes" checked> Textes contextuels</label>
+        <select id="opt-rubrique" aria-label="Rubriques à inclure"></select>
+        <button class="tb-btn" id="btn-print"><i class="ri-file-pdf-2-line"></i> Enregistrer en PDF</button>
+    </div>
+    <p class="print-hint no-print">Dans la fenêtre d'impression, choisissez <b>« Enregistrer au format PDF »</b> comme destination.</p>
+
+    <main id="report"></main>
+
+    <script src="data/projets.js"></script>
+    <script src="core.js"></script>
+    <script src="rapport.js"></script>
+</body>
+</html>
