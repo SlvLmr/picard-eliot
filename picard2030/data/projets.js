@@ -160,7 +160,7 @@ window.PICARD2030_DATA = {
       "note": "Refonte complète du programme IAP pour Picard 2030. Échéance : fin 2026.",
       "actions": [
         {
-          "name": "GT Storistes : RDV cabinet externe",
+          "name": "Groupe de travail Storistes : RDV cabinet externe",
           "start": "2026-10-19",
           "end": "2026-10-19",
           "progress": 0,
@@ -245,7 +245,7 @@ window.PICARD2030_DATA = {
       "owner": "",
       "color": "#7c3aed",
       "icon": "ri-lightbulb-line",
-      "note": "Serrures (CP : Laurent Guillard), portes palières (cabinet externe, avec Eliot), Hall & Tech.",
+      "note": "Serrures (CP : Laurent Guillard), portes palières (cabinet externe, avec Eliot), Hall & Tech (chef produit : Christophe Kuti).",
       "actions": [
         {
           "name": "Serrures : plan d'action gammes serrures et cylindres",
@@ -262,11 +262,11 @@ window.PICARD2030_DATA = {
           "note": "Jalon. Cylindre Nord A2P 3*."
         },
         {
-          "name": "Serrures : rationalisation de la gamme Ermitis Pro P30",
+          "name": "Serrures : rationalisation des gammes Ermétis, P10 et P30",
           "start": "2026-10-22",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "Lancée le 22/10, livrable fin décembre."
+          "note": "Lancée le 22/10, livrable fin décembre. CP Serrures : Laurent Guillard."
         },
         {
           "name": "Portes palières : cabinet externe (avec Eliot)",
@@ -276,11 +276,11 @@ window.PICARD2030_DATA = {
           "note": "En cours de discussion. Point d'attention : coordination avec Eliot."
         },
         {
-          "name": "Hall & Tech : chef produit",
+          "name": "Hall & Tech : Christophe Kuti, chef produit",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "À préciser."
+          "note": ""
         }
       ]
     },
@@ -372,7 +372,7 @@ window.PICARD2030_DATA = {
       "note": "Livrable : janvier 2027.",
       "actions": [
         {
-          "name": "GT réflexion organisation service client / SAV",
+          "name": "Groupe de travail : organisation service client / SAV",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
@@ -390,7 +390,7 @@ window.PICARD2030_DATA = {
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": "GT ADO / Léo (à confirmer)."
+          "note": "Groupe de travail avec Régis Di Dia et Léo Gaday."
         }
       ]
     },
@@ -464,7 +464,7 @@ window.PICARD2030_DATA = {
     {
       "id": "c-reflex-confort",
       "rubrique": "commerce",
-      "name": "Chapitre Reflex / Confort",
+      "name": "Chapitre Reflet / Confort",
       "owner": "",
       "color": "#a16207",
       "icon": "ri-flag-2-line",
@@ -478,11 +478,11 @@ window.PICARD2030_DATA = {
           "note": ""
         },
         {
-          "name": "Installation des prototypes",
+          "name": "Installation des prototypes chez 5 IAP",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "Chantiers test, confidentialité (lecture incertaine : « SIAP portes test »)."
+          "note": "Portes test chez 5 Installateurs Agréés Picard (IAP), avec engagement de confidentialité."
         },
         {
           "name": "Tarification publique validée",
