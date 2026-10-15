@@ -17,7 +17,7 @@ const state = {
     openClusters: new Set(),
     showPast: false,
     agThemes: new Set(),
-    agTypes: new Set(['jalon', 'rdv', 'echeance']),
+    agTypes: new Set(['jalon', 'rdv', 'echeance']), // tous les types affichés
     ganttSort: 'theme',
 };
 
@@ -464,18 +464,13 @@ function renderAgenda(themes, showRubrique) {
     if (!all.length) return '<div class="empty">Aucun événement.</div>';
     // Filtres (thèmes, types)
     const events = all.filter(e => (!state.agThemes.size || state.agThemes.has(e.t.id)) && state.agTypes.has(e.kind));
-    const count = (pred) => all.filter(pred).length;
-    const toolbar = `<div class="ag-toolbar">
-        <div class="ag-filter-group" role="group" aria-label="Filtrer par thème">
-            <button type="button" class="ag-fchip ${state.agThemes.size ? '' : 'on'}" data-ag-theme=""><i class="ri-apps-2-line"></i>Tous<b>${all.length}</b></button>
-            ${themes.map(t => `<button type="button" class="ag-fchip ${state.agThemes.has(t.id) ? 'on' : ''}" data-ag-theme="${esc(t.id)}" style="--c:${t.color}">
-                <i class="${esc(t.icon || 'ri-folder-line')}"></i>${esc(t.name)}<b>${count(e => e.t === t)}</b></button>`).join('')}
-        </div>
-        <div class="ag-filter-group ag-types" role="group" aria-label="Filtrer par type">
-            ${Object.entries(KINDS).map(([k, v]) => `<button type="button" class="ag-tchip ${state.agTypes.has(k) ? 'on' : ''}" data-ag-type="${k}"><i class="${v.icon}"></i>${v.label}<b>${count(e => e.kind === k)}</b></button>`).join('')}
-        </div>
-    </div>`;
-    if (!events.length) return toolbar + '<div class="agenda"><div class="empty">Aucun événement pour ces filtres.</div></div>';
+    const select = `<label class="ag-select"><i class="ri-filter-3-line"></i>
+        <select data-ag-select aria-label="Filtrer par thème">
+            <option value="">Tous les thèmes</option>
+            ${themes.map(t => `<option value="${esc(t.id)}" ${state.agThemes.has(t.id) ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
+        </select></label>`;
+    const toolbar = select;
+    if (!events.length) return `<div class="ag-bar">${toolbar}</div><div class="agenda"><div class="empty">Aucun événement pour ce thème.</div></div>`;
 
     // Regroupement des échéances d'un même jour
     const items = [];
@@ -499,10 +494,11 @@ function renderAgenda(themes, showRubrique) {
     const months = [];
     shown.forEach(x => { const m = mk(x.date); let g = months.find(o => o.m === m); if (!g) months.push(g = { m, d: x.date, n: 0 }); if (!x.today) g.n += x.cluster ? x.cluster.length : 1; });
     const next7 = events.filter(e => !e.done && daysBetween(today, e.date) >= 0 && daysBetween(today, e.date) <= 15).length;
-    const scrub = `<nav class="ag-scrub" aria-label="Mois">${months.map(o => `
-        <button type="button" class="ag-scrub-m ${o.m === mk(today) ? 'is-today is-active' : ''} ${o.m < mk(today) ? 'is-past' : ''}" data-ag-month="${o.m}">
-            <span>${MONTHS[o.d.getMonth()].replace('.', '')}</span><small>${String(o.d.getFullYear()).slice(2)}</small>${o.n ? `<b>${o.n}</b>` : ''}
-        </button>`).join('')}</nav>`;
+    const scrub = `<nav class="ag-scrub" aria-label="Mois">${months.map((o, k) => {
+        const yearChange = k === 0 || months[k - 1].d.getFullYear() !== o.d.getFullYear();
+        return `<button type="button" class="ag-scrub-m ${o.m === mk(today) ? 'is-today is-active' : ''} ${o.m < mk(today) ? 'is-past' : ''}" data-ag-month="${o.m}">
+            ${MONTHS[o.d.getMonth()].replace('.', '')}${yearChange ? `<small>${o.d.getFullYear()}</small>` : ''}</button>`;
+    }).join('')}</nav>`;
 
     let html = '', prevMonth = null;
     if (old.length) {
@@ -531,11 +527,10 @@ function renderAgenda(themes, showRubrique) {
         else if (x.cluster) html += agendaCluster(iso(x.date), x.cluster, showRubrique);
         else html += agendaRow(x.e, showRubrique);
     });
-    return `${toolbar}${scrub}<div class="agenda">${html}</div>
+    return `<div class="ag-bar">${toolbar}${scrub}</div><div class="agenda">${html}</div>
         <div class="ag-legend">
             <span><i class="ag-lg jalon"></i>Jalon</span><span><i class="ag-lg rdv"></i>Rendez-vous</span>
             <span><i class="ag-lg ech"></i>Échéance</span><span><i class="ag-lg est"></i>Date estimée</span><span><i class="ag-lg done"></i>Fait</span>
-            <span><i class="ag-when now"><i class="ri-alarm-warning-fill"></i></i>Sous 7 jours</span>
         </div>`;
 }
 
@@ -1241,19 +1236,6 @@ function bind() {
             if (t === $('#admin') || t.closest('#admin-close')) return closeAdmin();
             return adminClick(t);
         }
-        const agTheme = t.closest('[data-ag-theme]');
-        if (agTheme) {
-            const id = agTheme.dataset.agTheme;
-            if (!id) state.agThemes.clear();
-            else state.agThemes.has(id) ? state.agThemes.delete(id) : state.agThemes.add(id);
-            hideTip(); renderStory(); return observeReveals();
-        }
-        const agType = t.closest('[data-ag-type]');
-        if (agType) {
-            const k = agType.dataset.agType;
-            if (state.agTypes.has(k) && state.agTypes.size > 1) state.agTypes.delete(k); else state.agTypes.add(k);
-            hideTip(); renderStory(); return observeReveals();
-        }
         const agMonth = t.closest('[data-ag-month]');
         if (agMonth) return document.getElementById('ag-m-' + agMonth.dataset.agMonth)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         if (t.closest('[data-toggle-past]')) { state.showPast = !state.showPast; hideTip(); renderStory(); return observeReveals(); }
@@ -1304,6 +1286,11 @@ function bind() {
         autosave(e.target.closest('form'));
     });
     $('#admin-body').addEventListener('change', e => autosave(e.target.closest('form')));
+    document.addEventListener('change', e => {
+        if (!e.target.matches('[data-ag-select]')) return;
+        state.agThemes = new Set(e.target.value ? [e.target.value] : []);
+        hideTip(); renderStory(); observeReveals();
+    });
 
     $('#toggle-all').onclick = () => {
         const themes = visibleThemes();

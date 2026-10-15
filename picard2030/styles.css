@@ -212,48 +212,28 @@ html { scroll-behavior: smooth; }
 }
 
 /* ─── 01 · Vue Agenda ────────────────────── */
-/* Filtres */
-.ag-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.ag-filter-group { display: flex; flex-wrap: wrap; gap: 6px; }
-.ag-fchip, .ag-tchip {
-    --c: var(--pole-current);
-    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
-    font: inherit; font-size: 12.5px; font-weight: 600; color: var(--muted);
-    background: var(--surface); border: 1px solid var(--border); transition: all .2s;
-}
-.ag-fchip i, .ag-tchip i { color: var(--c); font-size: 15px; transition: transform .25s; }
-.ag-fchip b, .ag-tchip b { font-size: 11px; padding: 0 7px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
-.ag-fchip:hover, .ag-tchip:hover { border-color: var(--c); color: var(--text); transform: translateY(-1px); }
-.ag-fchip:hover i, .ag-tchip:hover i { transform: scale(1.2) rotate(-8deg); }
-.ag-fchip.on, .ag-tchip.on { color: var(--c); border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--surface)); box-shadow: 0 4px 14px color-mix(in srgb, var(--c) 18%, transparent); }
-.ag-fchip.on b, .ag-tchip.on b { background: var(--c); color: #fff; }
-.ag-types .ag-tchip { --c: var(--accent-text); }
-
-/* Frise des mois (reste visible au défilement) */
-.ag-scrub {
-    position: sticky; top: 76px; z-index: 6; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
-    padding: 8px; margin-bottom: 10px; border-radius: 16px;
-    background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(10px);
+/* Barre : filtre par thème + frise des mois (reste visible au défilement) */
+.ag-bar {
+    position: sticky; top: 76px; z-index: 6; display: flex; align-items: center; gap: 10px;
+    padding: 6px; margin-bottom: 10px; border-radius: 14px;
+    background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(10px);
     border: 1px solid var(--border); box-shadow: var(--shadow);
 }
+.ag-select { position: relative; display: inline-flex; align-items: center; flex: none; }
+.ag-select i { position: absolute; left: 10px; color: var(--muted); pointer-events: none; }
+.ag-select select { padding: 7px 10px 7px 30px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--surface-2); border-color: transparent; cursor: pointer; max-width: 220px; }
+.ag-scrub { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; flex: 1; }
 .ag-scrub::-webkit-scrollbar { display: none; }
 .ag-scrub-m {
-    position: relative; flex: none; display: flex; flex-direction: column; align-items: center; min-width: 62px; padding: 6px 10px;
-    border-radius: 12px; border: 1px solid transparent; background: var(--surface-2); cursor: pointer; font: inherit; color: var(--text); transition: all .25s;
+    position: relative; flex: none; display: inline-flex; align-items: baseline; gap: 4px; padding: 7px 12px; border-radius: 10px;
+    border: 0; background: transparent; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .04em; transition: background .2s, color .2s;
 }
-.ag-scrub-m span { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
-.ag-scrub-m small { font-size: 10.5px; color: var(--muted); }
-.ag-scrub-m b {
-    position: absolute; top: -6px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px;
-    display: grid; place-items: center; font-size: 10.5px; color: #fff; background: var(--pole-current);
-}
-.ag-scrub-m:hover { transform: translateY(-2px); border-color: var(--pole-current); }
-.ag-scrub-m.is-past { opacity: .55; }
-.ag-scrub-m.is-today { border-color: var(--late); }
-.ag-scrub-m.is-today::after { content: ""; position: absolute; bottom: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--late); animation: blink 1.4s infinite; }
-.ag-scrub-m.is-active { background: var(--pole-current); color: #fff; transform: translateY(-2px) scale(1.05); box-shadow: 0 6px 16px color-mix(in srgb, var(--pole-current) 40%, transparent); }
-.ag-scrub-m.is-active small { color: rgba(255, 255, 255, .8); }
-.ag-scrub-m.is-active b { background: #fff; color: var(--pole-current); }
+.ag-scrub-m small { font-size: 10.5px; font-weight: 600; letter-spacing: 0; opacity: .75; }
+.ag-scrub-m:hover { color: var(--text); background: var(--surface-2); }
+.ag-scrub-m.is-past { opacity: .5; }
+.ag-scrub-m.is-today::after { content: ""; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--late); animation: blink 1.4s infinite; }
+.ag-scrub-m.is-active { background: var(--pole-current); color: #fff; opacity: 1; }
 @keyframes blink { 50% { opacity: .2; } }
 
 /* Corps de l'agenda */
@@ -401,7 +381,6 @@ html { scroll-behavior: smooth; }
 .ag-past-toggle i:last-child { margin-left: auto; }
 .ag-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 12px; color: var(--muted); align-items: center; }
 .ag-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.ag-legend .ag-when { padding: 1px 6px; animation: none; }
 .ag-lg { display: inline-block; width: 11px; height: 11px; background: var(--muted-strong); border-radius: 50%; }
 .ag-lg.jalon, .ag-lg.rdv { border-radius: 2px; transform: rotate(45deg); }
 .ag-lg.est { background: transparent; border: 2px dashed var(--muted-strong); }
@@ -876,9 +855,8 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
     .ag-item { grid-template-columns: 26px 1fr 44px; }
     .ag-item-theme { grid-column: 2; grid-row: 2; }
     .ag-item-prog { grid-row: 1; grid-column: 3; }
-    .ag-filter-group { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-    .ag-fchip, .ag-tchip { flex: none; }
-    .ag-scrub { top: 64px; }
+    .ag-bar { top: 64px; }
+    .ag-select select { max-width: 150px; font-size: 12px; }
     .ag-today-long, .ag-past-toggle small { display: none; }
     .ag-today-short { display: inline; }
     .ag-today-body { background: none; animation: none; }
