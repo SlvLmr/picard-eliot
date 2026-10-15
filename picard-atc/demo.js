@@ -52,7 +52,7 @@ function demoInitialState() {
             objectifs.push({ commercial_id: 'demo-' + code.toLowerCase(), annee: an, mois: m, montant: Math.round(annuel * 1e6 * (an === y ? 1 : 0.94) * SAISON[m - 1] / somme / 1000) * 1000 });
         }
     });
-    return { reglages: { nom: 'Commerce', sous_titre: 'Pilotage du chiffre des commerciaux', lecture_publique: true, seuil_vert: 100, seuil_orange: 90,
+    return { reglages: { nom: 'PICARD-ATC', sous_titre: 'Pilotage du chiffre des commerciaux', lecture_publique: true, seuil_vert: 100, seuil_orange: 90,
         gammes: ['Serrures', 'Portes blindées', 'Portes techniques', 'Portes de Hall', 'Eliot'],
         types_clientele: ['Serruriers', 'Menuisiers', 'Installateurs', 'Négoces & distributeurs', 'Entreprises du bâtiment', 'Grands comptes', 'Collectivités', 'Industriels'],
         fonctions: ['ATC', 'ATS', 'Chef de secteur', 'Responsable grands comptes', 'Agent commercial'] }, commerciaux, secteurs, objectifs, imports: [], ventesImportees: [] };

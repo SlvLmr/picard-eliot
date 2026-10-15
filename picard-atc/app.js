@@ -31,8 +31,8 @@ async function loadAll() {
     const y = S.ref.getFullYear();
     S.byDay = indexSeries(await S.store.serieJour(`${y - 1}-01-01`, `${y}-12-31`));
     if (S.who && !commercial(S.who)) S.who = null;
-    document.title = `${S.base.reglages.nom || 'Commerce'} · Pilotage`;
-    $('#app-name').textContent = S.base.reglages.nom || 'Commerce';
+    document.title = S.base.reglages.nom || 'PICARD-ATC';
+    $('#app-name').textContent = S.base.reglages.nom || 'PICARD-ATC';
     $('#app-sub').textContent = S.base.reglages.sous_titre || '';
 }
 

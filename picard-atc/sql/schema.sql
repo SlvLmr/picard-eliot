@@ -14,7 +14,7 @@ $$;
 -- ─── Tables ────────────────────────────────────────────────
 create table public.reglages (
   id int primary key default 1 check (id = 1),
-  nom text not null default 'Commerce',
+  nom text not null default 'PICARD-ATC',
   sous_titre text not null default 'Pilotage du chiffre des commerciaux',
   lecture_publique boolean not null default true,
   seuil_vert numeric not null default 100,   -- % du rythme attendu à date : à partir de là, « dans les temps »

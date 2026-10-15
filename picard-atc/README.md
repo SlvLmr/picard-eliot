@@ -1,9 +1,9 @@
-# Commerce — pilotage du chiffre des commerciaux
+# PICARD-ATC — pilotage du chiffre des commerciaux
 
 Tableau de bord du chiffre des ATC, alimenté par un fichier quotidien, avec carte interactive France, Belgique, Luxembourg, Suisse et outre-mer.
 
-L'application est dans le dossier **`commerce/`**. Une fois en ligne, son adresse se termine par `/commerce/`.
-Elle fonctionne sans installation : pour un test en local, servez le dossier (par exemple `python3 -m http.server`) et ouvrez `/commerce/`.
+L'application est dans le dossier **`picard-atc/`**. En ligne : https://slvlmr.github.io/picard-eliot/picard-atc/
+Elle fonctionne sans installation : pour un test en local, servez le dossier (par exemple `python3 -m http.server`) et ouvrez `/picard-atc/`.
 
 ## Ce qu'on y trouve
 
