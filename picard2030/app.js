@@ -13,7 +13,7 @@ const state = {
     adminTab: 'themes',
     collapsed: new Set(),
     storyMode: null,
-    storySort: 'agenda',
+    storySort: 'theme',
     openClusters: new Set(),
     showPast: false,
     agThemes: new Set(),
@@ -1192,7 +1192,7 @@ function renderSortButtons() {
 }
 
 function saveUiPrefs() {
-    try { localStorage.setItem('picard2030_sort', JSON.stringify({ story: state.storySort, gantt: state.ganttSort })); } catch (e) { /* ignore */ }
+    try { localStorage.setItem('picard2030_sort', JSON.stringify({ gantt: state.ganttSort })); } catch (e) { /* ignore */ }
 }
 
 function renderAll() {
@@ -1210,8 +1210,18 @@ function renderAll() {
 function setRubrique(id) {
     state.rubrique = id;
     state.agThemes.clear();
-    try { localStorage.setItem('picard2030_rubrique', id); } catch (e) { /* ignore */ }
     renderAll();
+}
+
+// Retour à la page par défaut (clic sur le logo)
+function goHome() {
+    closeDrawer(); closeAdmin(); hideTip();
+    Object.assign(state, { rubrique: 'all', storySort: 'theme', owner: '', zoom: 'year', anchor: startOfMonth(today), showPast: false });
+    state.agThemes.clear(); state.openClusters.clear(); state.collapsed.clear();
+    renderAll();
+    document.documentElement.style.scrollBehavior = 'auto';
+    scrollTo(0, 0);
+    document.documentElement.style.scrollBehavior = '';
 }
 
 function updateThemeButton() {
@@ -1305,6 +1315,7 @@ function bind() {
     let resizeTimer;
     addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (storyMode() !== state.storyMode) { renderStory(); observeReveals(); } }, 200); });
     $('#btn-admin').onclick = () => openAdmin();
+    $('#brand-home').onclick = e => { e.preventDefault(); goHome(); };
     $('#btn-theme').onclick = () => {
         const dark = document.documentElement.dataset.theme !== 'dark';
         if (dark) document.documentElement.dataset.theme = 'dark'; else delete document.documentElement.dataset.theme;
@@ -1319,10 +1330,11 @@ function bind() {
 
 loadData();
 $('#local-banner').hidden = !store.isLocal;
-try { const saved = localStorage.getItem('picard2030_rubrique'); if (saved && (saved === 'all' || data().rubriques.some(r => r.id === saved))) state.rubrique = saved; } catch (e) { /* ignore */ }
+// L'outil s'ouvre toujours sur la page par défaut : vue d'ensemble, timeline par thème.
+// Seul le classement du Gantt est mémorisé.
 try {
+    localStorage.removeItem('picard2030_rubrique');
     const sort = JSON.parse(localStorage.getItem('picard2030_sort'));
-    if (sort && ['agenda', 'theme'].includes(sort.story)) state.storySort = sort.story;
     if (sort && ['date', 'theme'].includes(sort.gantt)) state.ganttSort = sort.gantt;
 } catch (e) { /* ignore */ }
 bind();

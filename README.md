@@ -23,13 +23,15 @@ Pour l'utiliser en local, ouvrez `picard2030/index.html` dans un navigateur, san
 
 La page est organisée en trois sections, accessibles depuis les raccourcis en haut à droite :
 
+L'outil s'ouvre toujours sur la **vue d'ensemble**, avec la Timeline par thème (Commerce et Production côte à côte). Un **clic sur le logo** ramène à cette page.
+
 1. **Timeline**, avec deux vues :
-   - **Agenda** (par défaut) : le vrai calendrier, avec un point par événement daté, regroupés par mois, et « Aujourd'hui » à sa vraie place.
+   - **Par thème** (par défaut) : l'infographie verticale des grands thèmes et de leurs jauges.
+   - **Agenda** : le vrai calendrier, avec un point par événement daté, regroupés par mois, et « Aujourd'hui » à sa vraie place.
      - Jalons (◆) et rendez-vous de quelques jours : à leur date.
      - Actions : à leur échéance (⚑).
      - Les échéances d'un même jour sont regroupées (par exemple « 27 échéances fin déc. ») et se déplient au clic.
      - Les **dates estimées** sont en pointillé ; les événements des mois passés sont repliés.
-   - **Par thème** : l'infographie verticale des grands thèmes avec leurs jauges.
 2. **Indicateurs** : compteurs animés, jauges par rubrique, météo des thèmes et des actions, prochaines échéances et points d'attention.
 3. **Gantt** : le détail des actions dans le temps (6 mois, une année ou le plan complet). Les thèmes se déplient, on y voit les points d'échéance, les jalons et la ligne « aujourd'hui ».
 

@@ -11,13 +11,13 @@
 </head>
 <body>
     <header class="topbar">
-        <div class="brand">
+        <a class="brand" id="brand-home" href="./" title="Retour à l'accueil">
             <img class="brand-logo" src="logo/picard2030-embleme.svg" alt="Picard 2030" width="54" height="53">
             <div>
                 <h1 id="app-title">Picard2030</h1>
                 <p class="subtitle" id="today-label"></p>
             </div>
-        </div>
+        </a>
         <div class="topbar-actions">
             <button class="btn btn-ghost btn-icon" id="btn-theme" title="Passer en mode sombre" aria-label="Changer de thème"><i class="ri-moon-line"></i></button>
             <a class="btn btn-ghost" id="btn-report" href="rapport.html" target="_blank" title="Version simplifiée à imprimer ou enregistrer en PDF"><i class="ri-file-pdf-2-line"></i><span>Rapport PDF</span></a>
@@ -46,7 +46,7 @@
         <section class="section" id="sec-timeline">
             <header class="section-head">
                 <span class="section-num">01</span>
-                <div><h2>Timeline</h2><p id="story-sub">L'agenda réel : jalons, rendez-vous et échéances</p></div>
+                <div><h2>Timeline</h2><p id="story-sub">Les grands thèmes de chaque rubrique et leur avancement</p></div>
                 <div class="segmented section-tools" role="group" aria-label="Classement de la timeline">
                     <button data-sort-story="agenda"><i class="ri-calendar-schedule-line"></i> Agenda</button>
                     <button data-sort-story="theme"><i class="ri-stack-line"></i> Par thème</button>
