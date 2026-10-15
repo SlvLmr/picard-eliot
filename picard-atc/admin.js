@@ -338,7 +338,7 @@ function paintRefresh() {
         return `<div class="atc-group">${esc(e.nom)}</div>` + ms.map(c => `<button data-paint="${c.id}" class="${A.paint === c.id ? 'on' : ''}"><span class="avatar" style="--c:${c.couleur}">${esc(initials(c))}</span><span class="p-name">${esc(fullName(c))}</span><span class="p-count">${counts[c.id] || 0}</span></button>`).join('');
     }).join('')
         + `<div class="atc-group">Outils</div><button data-paint="" class="${A.paint === null ? 'on' : ''}"><span class="avatar" style="--c:#64748b"><i class="ri-eraser-line"></i></span><span class="p-name">Gomme (libérer)</span><span class="p-count">${free} libres</span></button>`
-        + `<button data-paint="potentiel" class="${A.paint === 'potentiel' ? 'on' : ''}"><span class="avatar" style="--c:#0fb5d0"><i class="ri-focus-3-line"></i></span><span class="p-name">Potentiel & IAP</span><span class="p-count">par zone</span></button>`;
+        + `<button data-paint="potentiel" class="${A.paint === 'potentiel' ? 'on' : ''}"><span class="avatar" style="--c:#3b82f6"><i class="ri-focus-3-line"></i></span><span class="p-name">Potentiel & IAP</span><span class="p-count">par zone</span></button>`;
     $$('#palette [data-paint]').forEach(b => b.onclick = () => { A.paint = b.dataset.paint === '' ? null : b.dataset.paint; $('#zone-edit').hidden = true; paintRefresh(); });
     const svg = $('#paint-svg');
     const maxPot = Math.max(1, ...Object.values(S.base.zonesInfo).map(z => z.potentiel || 0));

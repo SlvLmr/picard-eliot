@@ -113,6 +113,10 @@ function createDemoStore() {
     let state;
     try { state = JSON.parse(localStorage.getItem(DEMO_KEY)); } catch (e) {}
     if (!state?.commerciaux) state = demoInitialState();
+    if (state.palette !== 2) {   // couleurs d'ATC recalculées sur le camaïeu de bleu des équipes
+        const rang = {}; state.commerciaux.forEach(c => { const k = rang[c.equipe] = (rang[c.equipe] ?? -1) + 1; c.couleur = nuance(equipeDe(c.equipe).couleur, k); });
+        state.palette = 2;
+    }
     const listeners = [];
     const save = () => { try { localStorage.setItem(DEMO_KEY, JSON.stringify(state)); } catch (e) { console.warn('Stockage local plein', e); } listeners.forEach(f => f()); };
     let cache = null;

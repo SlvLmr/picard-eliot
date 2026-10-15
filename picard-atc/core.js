@@ -38,14 +38,14 @@ const CA_GAMMES = ['serrures', 'diamant', 'hall', 'technica'];
 const gammeNom = k => GAMMES.find(g => g.k === k)?.nom || k;
 
 const EQUIPES = [
-    { code: 'IDF', nom: 'Île-de-France', couleur: '#0fb5d0' },
-    { code: 'NORD', nom: 'Nord', couleur: '#5b8def' },
-    { code: 'OUEST', nom: 'Ouest', couleur: '#9d8df1' },
-    { code: 'RA', nom: 'Rhône-Alpes', couleur: '#00c896' },
-    { code: 'PACA', nom: 'PACA', couleur: '#f2a65a' },
-    { code: 'DIR', nom: 'Direction', couleur: '#8aa3ab' },
+    { code: 'IDF', nom: 'Île-de-France', couleur: '#1d4ed8' },
+    { code: 'NORD', nom: 'Nord', couleur: '#0ea5e9' },
+    { code: 'OUEST', nom: 'Ouest', couleur: '#4f6bed' },
+    { code: 'RA', nom: 'Rhône-Alpes', couleur: '#0e7490' },
+    { code: 'PACA', nom: 'PACA', couleur: '#7cb4f2' },
+    { code: 'DIR', nom: 'Direction', couleur: '#94a3b8' },
 ];
-const equipeDe = code => EQUIPES.find(e => e.code === code) || { code, nom: code, couleur: '#8aa3ab' };
+const equipeDe = code => EQUIPES.find(e => e.code === code) || { code, nom: code, couleur: '#94a3b8' };
 
 // Couleur d'un ATC : une nuance de la couleur de son équipe
 function nuance(hex, i) {
