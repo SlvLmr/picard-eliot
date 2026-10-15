@@ -5,154 +5,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PICARD-ATC</title>
     <link rel="icon" type="image/png" href="favicon.png">
-    <script>try { if (localStorage.getItem('commerce_theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="app">
-    <!-- ─── Menu de gauche : l'équipe ─── -->
+    <!-- ─── Navigation ─── -->
     <aside class="side" id="side">
-        <a class="brand" href="./" title="Vue d'ensemble">
+        <a class="brand" href="#synthese" title="Synthèse">
             <img class="brand-logo" src="logo-picard.png" alt="Picard Serrures" width="320" height="74">
         </a>
+        <nav class="nav" id="nav" aria-label="Rubriques">
+            <a href="#synthese" data-view="synthese"><i class="ri-layout-grid-fill"></i>Synthèse</a>
+            <a href="#commerciaux" data-view="commerciaux"><i class="ri-team-line"></i>Commerciaux</a>
+            <a href="#secteurs" data-view="secteurs"><i class="ri-map-2-line"></i>Secteurs</a>
+            <a href="#carnet" data-view="carnet"><i class="ri-truck-line"></i>Carnet de commandes</a>
+            <a href="#clients" data-view="clients"><i class="ri-store-2-line"></i>Clients<span class="badge-new">Exemple</span></a>
+        </nav>
 
-        <button class="team-item" id="team-all" data-who="">
-            <span class="avatar all"><i class="ri-team-line"></i></span>
-            <span class="ti-text"><strong>Tous les ATC</strong><small id="team-count"></small></span>
-            <span class="ring" id="team-ring"></span>
+        <button class="promo" id="promo" title="Importer les fichiers du jour">
+            <span class="promo-top"><i class="ri-flashlight-fill"></i><span id="live-label">Données au —</span></span>
+            <span class="promo-txt" id="live-sub">Importer les fichiers du jour</span>
+            <i class="ri-arrow-right-s-line promo-go"></i>
+            <span class="promo-steps" id="promo-steps"></span>
         </button>
 
-        <div class="side-search">
-            <i class="ri-search-line"></i>
-            <input id="search" type="search" placeholder="Rechercher un ATC" aria-label="Rechercher un ATC">
-        </div>
-        <nav class="team-list" id="team-list" aria-label="Commerciaux"></nav>
-
         <div class="side-foot">
-            <div class="live" id="live" title="Données synchronisées">
-                <span class="live-dot"></span>
-                <span><strong id="live-label">Données au —</strong><small id="live-sub"></small></span>
-            </div>
-            <div class="side-actions">
-                <button class="icon-btn" id="btn-theme" title="Mode clair / sombre" aria-label="Changer de thème"><i class="ri-sun-line"></i></button>
-                <button class="admin-btn" id="btn-admin"><i class="ri-shield-keyhole-line"></i>Admin</button>
-            </div>
+            <button class="nav-btn" id="btn-admin"><i class="ri-shield-keyhole-line"></i>Administration</button>
+            <div class="me" id="me"><span class="avatar me-av"><i class="ri-user-3-line"></i></span><span id="me-name">Visiteur</span></div>
         </div>
     </aside>
     <div class="side-scrim" id="side-scrim"></div>
 
-    <!-- ─── Tableau de bord ─── -->
     <main class="main" id="main">
-        <div class="demo-banner" id="demo-banner" hidden>
-            <i class="ri-flask-line"></i>
-            <span><strong>Mode démonstration</strong> — données fictives. Branchez Supabase dans <code>config.js</code> pour passer sur vos vraies données.</span>
-        </div>
-
-        <header class="head">
-            <button class="icon-btn burger" id="btn-menu" aria-label="Ouvrir la liste des commerciaux"><i class="ri-menu-2-line"></i></button>
-            <div class="who" id="who"></div>
-            <div class="head-tools">
-                <div class="seg" id="period" role="tablist" aria-label="Période">
-                    <button data-period="mois" role="tab">Mois</button>
-                    <button data-period="trimestre" role="tab">Trimestre</button>
-                    <button data-period="annee" role="tab">Année</button>
-                    <span class="seg-glider"></span>
-                </div>
+        <!-- Barre du haut -->
+        <header class="topbar">
+            <button class="ico burger" id="btn-menu" aria-label="Menu"><i class="ri-menu-2-line"></i></button>
+            <span class="top-title" id="top-title"></span>
+            <div class="top-actions">
+                <button class="ico" id="btn-mask" title="Masquer les montants" aria-label="Masquer les montants"><i class="ri-eye-line"></i></button>
+                <span class="pill-demo" id="pill-demo" hidden></span>
+                <button class="cta" id="btn-import"><i class="ri-add-line"></i>Importer les fichiers</button>
             </div>
         </header>
 
-        <section class="signals" id="signals" aria-live="polite"></section>
+        <!-- Sélecteurs : périmètre à gauche, période à droite -->
+        <div class="filters">
+            <div class="dd" id="dd-who">
+                <button class="pill" data-dd="who"><span class="pill-av" id="who-av"></span><span id="who-label">Tous les ATC</span><i class="ri-arrow-down-s-line"></i></button>
+                <div class="menu menu-who" id="menu-who">
+                    <div class="menu-search"><i class="ri-search-line"></i><input id="search" type="search" placeholder="Rechercher un ATC" aria-label="Rechercher un ATC"></div>
+                    <div class="menu-list" id="who-list"></div>
+                </div>
+            </div>
+            <div class="dd" id="dd-period">
+                <button class="pill" data-dd="period"><span id="period-label">Mois</span><i class="ri-arrow-down-s-line"></i></button>
+                <div class="menu menu-right" id="menu-period">
+                    <button data-period="mois">Mois en cours</button>
+                    <button data-period="trimestre">Trimestre</button>
+                    <button data-period="annee">Année</button>
+                </div>
+            </div>
+        </div>
 
-        <section class="kpis" id="kpis"></section>
-
-        <section class="gammes" id="gammes" aria-label="Gammes produits"></section>
-
-        <section class="grid-a">
-            <div class="col">
-                <article class="card gauges-card">
-                    <header class="card-head">
-                        <h2><i class="ri-dashboard-3-line"></i>Budget</h2>
-                        <span class="hint"><i class="ri-cursor-line"></i>Cliquez sur une jauge pour changer de période</span>
-                    </header>
-                    <div class="gauges" id="gauges"></div>
-                    <div class="gauge-legend">
-                        <span><i class="gl gl-done"></i>Réalisé</span>
-                        <span><i class="gl gl-mark"></i>Attendu à date</span>
+        <!-- ═══ Synthèse ═══ -->
+        <section class="view" data-view="synthese">
+            <div class="row-hero">
+                <article class="card hero">
+                    <div class="hero-head">
+                        <div>
+                            <div class="hero-date" id="hero-date"></div>
+                            <div class="hero-val" id="hero-val">—</div>
+                            <div class="hero-delta" id="hero-delta"></div>
+                        </div>
+                        <div class="dd">
+                            <button class="pill pill-sm" data-dd="gamme"><span id="gamme-label">Toutes les gammes</span><i class="ri-arrow-down-s-line"></i></button>
+                            <div class="menu menu-right" id="menu-gamme"></div>
+                        </div>
                     </div>
+                    <div class="chart" id="chart-traj"></div>
+                    <div class="legend" id="traj-legend"></div>
                 </article>
-                <article class="card">
-                    <header class="card-head">
-                        <h2><i class="ri-route-line"></i>Trajectoire <small id="traj-sub"></small></h2>
-                        <div class="legend-inline" id="traj-legend"></div>
-                    </header>
-                    <div class="chart" id="chart-traj" style="height:270px"></div>
+                <article class="card perf">
+                    <h3 class="perf-title">Budget <span id="perf-period"></span></h3>
+                    <div class="perf-body">
+                        <div class="g-chart" id="gauge"></div>
+                        <div class="perf-main">
+                            <span class="muted" id="perf-lbl"></span>
+                            <strong id="perf-val"></strong>
+                            <span class="status" id="perf-status"></span>
+                        </div>
+                    </div>
+                    <div class="perf-rows" id="perf-rows"></div>
+                    <div class="signals" id="signals"></div>
+                    <a class="link" href="#commerciaux" id="perf-link">Voir le détail par ATC<i class="ri-arrow-right-s-line"></i></a>
                 </article>
             </div>
-            <article class="card map-card">
-                <header class="card-head">
-                    <h2><i class="ri-map-2-line"></i>Secteurs</h2>
-                    <div class="seg seg-sm" id="map-mode" role="tablist" aria-label="Affichage de la carte">
-                        <button data-map="secteurs">ATC</button>
-                        <button data-map="atteinte">Budget</button>
-                        <button data-map="evol">Évolution</button>
-                        <button data-map="potentiel">Potentiel</button>
-                        <span class="seg-glider"></span>
-                    </div>
-                </header>
-                <div class="map-wrap" id="map-wrap">
-                    <svg id="map" role="img" aria-label="Carte des secteurs"></svg>
-                    <div class="map-zoom">
-                        <button class="icon-btn" id="map-in" title="Zoomer"><i class="ri-add-line"></i></button>
-                        <button class="icon-btn" id="map-out" title="Dézoomer"><i class="ri-subtract-line"></i></button>
-                        <button class="icon-btn" id="map-reset" title="Vue complète"><i class="ri-fullscreen-exit-line"></i></button>
-                    </div>
-                    <div class="map-legend" id="map-legend"></div>
-                    <aside class="potentiel" id="potentiel" aria-live="polite"></aside>
-                </div>
-            </article>
+
+            <h2 class="sec-title">Indicateurs</h2>
+            <section class="kpis" id="kpis"></section>
+
+            <div class="row-2">
+                <section>
+                    <div class="sec-head"><h2 class="sec-title">Répartition par gamme</h2></div>
+                    <article class="card list" id="gammes"></article>
+                </section>
+                <section>
+                    <div class="sec-head"><h2 class="sec-title" id="rank-title">Commerciaux</h2><a class="link" href="#commerciaux" id="rank-link">Tout voir<i class="ri-arrow-right-s-line"></i></a></div>
+                    <article class="card list" id="rank"></article>
+                </section>
+            </div>
+
+            <div class="sec-head"><h2 class="sec-title">Mois par mois <small id="months-sub"></small></h2><div class="legend" id="months-legend"></div></div>
+            <article class="card"><div class="chart" id="chart-months" style="height:260px"></div></article>
         </section>
 
-        <article class="card" id="card-carnet">
-            <header class="card-head">
-                <h2>Carnet de commandes <small id="carnet-sub"></small></h2>
-                <span class="hint">Société · fichier « Valorisation du portefeuille »</span>
-            </header>
-            <div class="carnet" id="carnet"></div>
-        </article>
-
-        <section class="grid-b">
-            <article class="card">
-                <header class="card-head">
-                    <h2><i class="ri-bar-chart-2-line"></i>Mois par mois <small id="months-sub"></small></h2>
-                    <div class="legend-inline" id="months-legend"></div>
-                </header>
-                <div class="chart" id="chart-months" style="height:260px"></div>
-            </article>
-            <article class="card" id="card-rank">
-                <header class="card-head">
-                    <h2 id="rank-title"></h2>
-                    <span class="hint" id="rank-hint"></span>
-                </header>
-                <div class="rank" id="rank"></div>
-            </article>
-            <article class="card">
-                <header class="card-head">
-                    <h2 id="clients-title">Clients <small id="clients-sub"></small></h2>
-                    <div class="seg seg-sm" id="clients-mode" role="tablist" aria-label="Vue clients">
-                        <button data-cmode="clients">Top clients</button>
-                        <button data-cmode="segments">Par clientèle</button>
-                        <span class="seg-glider"></span>
-                    </div>
-                </header>
-                <div class="clients" id="clients"></div>
-            </article>
+        <!-- ═══ Commerciaux ═══ -->
+        <section class="view" data-view="commerciaux" hidden>
+            <div class="sec-head"><h2 class="sec-title">Commerciaux <small id="atc-sub"></small></h2>
+                <div class="dd"><button class="pill pill-sm" data-dd="sort"><span id="sort-label">Trier par</span><i class="ri-arrow-down-s-line"></i></button>
+                    <div class="menu menu-right" id="menu-sort">
+                        <button data-sort="atteinte">% du budget</button><button data-sort="realise">Facturé</button><button data-sort="evol">Évolution</button><button data-sort="nom">Nom</button>
+                    </div></div></div>
+            <article class="card table-card"><div id="atc-table"></div></article>
         </section>
 
-        <footer class="foot muted">Chiffres facturés. Couleurs : % du budget réalisé (rouge ≤ 60 %, orange 61–85 %, jaune 86–90 %, vert au-delà). Rythme : réalisé ÷ budget attendu à date (au prorata des jours ouvrés). Atterrissage : mois en cours = facturé + livrable du carnet (société) ou rythme actuel (ATC), mois suivants = budget × rythme. Les blocs marqués « exemple » ne sont pas encore alimentés par les fichiers.</footer>
+        <!-- ═══ Secteurs ═══ -->
+        <section class="view" data-view="secteurs" hidden>
+            <div class="row-hero">
+                <article class="card map-card">
+                    <div class="map-top">
+                        <div class="tabs" id="map-mode">
+                            <button data-map="secteurs">ATC</button>
+                            <button data-map="atteinte">Budget</button>
+                            <button data-map="evol">Évolution</button>
+                            <button data-map="potentiel">Potentiel</button>
+                        </div>
+                        <div class="map-legend" id="map-legend"></div>
+                    </div>
+                    <div class="map-wrap" id="map-wrap">
+                        <svg id="map" role="img" aria-label="Carte des secteurs"></svg>
+                        <div class="map-zoom">
+                            <button class="ico" id="map-in" title="Zoomer"><i class="ri-add-line"></i></button>
+                            <button class="ico" id="map-out" title="Dézoomer"><i class="ri-subtract-line"></i></button>
+                            <button class="ico" id="map-reset" title="Vue complète"><i class="ri-fullscreen-exit-line"></i></button>
+                        </div>
+                    </div>
+                </article>
+                <article class="card perf potentiel" id="potentiel" aria-live="polite"></article>
+            </div>
+        </section>
+
+        <!-- ═══ Carnet ═══ -->
+        <section class="view" data-view="carnet" hidden>
+            <div class="sec-head"><h2 class="sec-title">Carnet de commandes <small id="carnet-sub"></small></h2><span class="muted small">Société · fichier « Valorisation du portefeuille »</span></div>
+            <div id="carnet"></div>
+        </section>
+
+        <!-- ═══ Clients ═══ -->
+        <section class="view" data-view="clients" hidden>
+            <div class="sec-head"><h2 class="sec-title">Clients <small id="clients-sub"></small></h2>
+                <div class="tabs" id="clients-mode"><button data-cmode="clients">Top clients</button><button data-cmode="segments">Par clientèle</button></div></div>
+            <article class="card list" id="clients"></article>
+        </section>
+
+        <footer class="foot">Chiffres facturés. Couleurs : % du budget réalisé (rouge ≤ 60 %, orange 61–85 %, jaune 86–90 %, vert au-delà). Atterrissage : mois en cours = facturé + livrable du carnet (société) ou rythme actuel (ATC), mois suivants = budget × rythme. Les blocs marqués « exemple » ne sont pas encore alimentés par les fichiers.</footer>
     </main>
 </div>
 
@@ -162,7 +182,7 @@
 <!-- Connexion -->
 <div class="modal" id="login" aria-hidden="true" role="dialog" aria-labelledby="login-title">
     <form class="login" id="login-form">
-        <button type="button" class="icon-btn modal-x" data-close title="Fermer"><i class="ri-close-line"></i></button>
+        <button type="button" class="ico modal-x" data-close title="Fermer"><i class="ri-close-line"></i></button>
         <span class="login-ico"><i class="ri-shield-keyhole-fill"></i></span>
         <h2 id="login-title">Administration</h2>
         <p class="muted">Accès réservé aux deux administrateurs</p>
@@ -179,7 +199,7 @@
         <header class="admin-head">
             <h2 id="admin-title"><i class="ri-shield-keyhole-line"></i>Administration</h2>
             <nav class="admin-tabs" id="admin-tabs"></nav>
-            <button class="icon-btn" data-close title="Fermer"><i class="ri-close-line"></i></button>
+            <button class="ico" data-close title="Fermer"><i class="ri-close-line"></i></button>
         </header>
         <div class="admin-body" id="admin-body"></div>
         <footer class="admin-foot">
