@@ -22,19 +22,18 @@
     --label-w: 260px;
     color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #0b1120;
-        --surface: #111a2e;
-        --surface-2: #16213a;
-        --border: #24324f;
-        --text: #e2e8f0;
-        --muted: #94a3b8;
-        --muted-strong: #64748b;
-        --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
-        --accent-text: color-mix(in srgb, var(--accent) 55%, #fff);
-        color-scheme: dark;
-    }
+/* Mode sombre : uniquement sur choix de l'utilisateur (bouton dans l'en-tête) */
+:root[data-theme="dark"] {
+    --bg: #0b1120;
+    --surface: #111a2e;
+    --surface-2: #16213a;
+    --border: #24324f;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --muted-strong: #64748b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+    --accent-text: color-mix(in srgb, var(--accent) 55%, #fff);
+    color-scheme: dark;
 }
 
 * { box-sizing: border-box; }

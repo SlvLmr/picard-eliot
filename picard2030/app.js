@@ -1219,6 +1219,12 @@ function setRubrique(id) {
     renderAll();
 }
 
+function updateThemeButton() {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    $('#btn-theme').innerHTML = `<i class="${dark ? 'ri-sun-line' : 'ri-moon-line'}"></i>`;
+    $('#btn-theme').title = dark ? 'Passer en mode clair' : 'Passer en mode sombre';
+}
+
 function applySettings() {
     const s = settings();
     document.title = s.title;
@@ -1312,6 +1318,13 @@ function bind() {
     let resizeTimer;
     addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (storyMode() !== state.storyMode) { renderStory(); observeReveals(); } }, 200); });
     $('#btn-admin').onclick = () => openAdmin();
+    $('#btn-theme').onclick = () => {
+        const dark = document.documentElement.dataset.theme !== 'dark';
+        if (dark) document.documentElement.dataset.theme = 'dark'; else delete document.documentElement.dataset.theme;
+        try { localStorage.setItem('picard2030_theme', dark ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+        updateThemeButton();
+    };
+    updateThemeButton();
     $('#btn-banner-export').onclick = exportData;
     $('#btn-reset').onclick = resetLocal;
     $('#import-file').onchange = e => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; };

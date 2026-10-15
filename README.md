@@ -35,6 +35,8 @@ La page est organisée en trois sections, accessibles depuis les raccourcis en h
 
 Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-bulle : dates, avancement réel et attendu, météo, et texte contextuel.
 
+L'outil s'affiche en **mode clair** par défaut. Le bouton 🌙 / ☀ de l'en-tête bascule en mode sombre, et le choix est mémorisé dans le navigateur.
+
 Le bouton **Rapport PDF** produit une version simplifiée A4 au style infographie, à diffuser en interne.
 
 ### Météo

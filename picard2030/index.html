@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Picard2030</title>
     <link rel="icon" type="image/svg+xml" href="logo/favicon.svg">
+    <script>try { if (localStorage.getItem('picard2030_theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}</script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -18,6 +19,7 @@
             </div>
         </div>
         <div class="topbar-actions">
+            <button class="btn btn-ghost btn-icon" id="btn-theme" title="Passer en mode sombre" aria-label="Changer de thème"><i class="ri-moon-line"></i></button>
             <a class="btn btn-ghost" id="btn-report" href="rapport.html" target="_blank" title="Version simplifiée à imprimer ou enregistrer en PDF"><i class="ri-file-pdf-2-line"></i><span>Rapport PDF</span></a>
             <button class="btn btn-primary" id="btn-admin"><i class="ri-settings-3-line"></i><span>Admin</span></button>
             <input type="file" id="import-file" accept=".js,.json" hidden>
