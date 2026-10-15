@@ -71,7 +71,8 @@ h1, h2, h3 { font-family: Lora, Georgia, "Times New Roman", serif; margin: 0; }
 }
 
 /* ─── Synthèse ────────────────────────────── */
-.cover { text-align: center; margin: 10mm 0 8mm; }
+.cover { text-align: center; margin: 6mm 0 8mm; }
+.cover-logo img { width: 34mm; height: auto; display: block; margin: 0 auto 5mm; }
 .cover h1 { font-size: 46px; letter-spacing: -.01em; }
 .summary { display: flex; align-items: center; justify-content: center; gap: 14mm; margin-bottom: 8mm; }
 .summary-main { text-align: center; }

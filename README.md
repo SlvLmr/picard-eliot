@@ -61,6 +61,18 @@ La source de vérité est **`picard2030/data/projets.js`**.
 1. **Via Claude** : décrivez le changement (« ERP : paramétrage à 70 % », « ajoute une action au thème Réseau de distribution… »). Claude modifie le fichier, puis commit et push.
 2. **Via l'admin** : les modifications sont d'abord enregistrées dans votre navigateur. Pour les partager, allez dans *Données → Exporter* et remplacez `picard2030/data/projets.js` par le fichier téléchargé.
 
+## Logo
+
+Le logo retenu est l'**emblème** : le carré Picard et « 2030 » en blanc, avec un trait en dégradé dont le halo est animé.
+
+| Fichier | Usage |
+|---|---|
+| `picard2030/logo/picard2030-embleme.svg` | Emblème blanc animé, fond transparent (pour fonds foncés) |
+| `picard2030/logo/picard2030-embleme-fixe.svg` | Même chose, sans animation (impression, documents) |
+| `picard2030/logo/picard2030-embleme-fond.svg` / `-fond-fixe.svg` | Emblème sur carré bleu nuit, animé ou fixe |
+| `picard2030/logo/favicon.svg` | Icône d'onglet |
+| `picard2030/logo/propositions.html` | Planche des propositions initiales |
+
 ## Fichiers
 
 | Fichier | Rôle |
@@ -69,3 +81,4 @@ La source de vérité est **`picard2030/data/projets.js`**.
 | `picard2030/core.js` | Calculs partagés (avancement, météo, échéances) |
 | `picard2030/rapport.html`, `rapport.js`, `rapport.css` | Rapport A4 / PDF |
 | `picard2030/data/projets.js` | Données |
+| `picard2030/logo/` | Logos (SVG) |

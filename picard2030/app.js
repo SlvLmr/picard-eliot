@@ -957,7 +957,6 @@ function applySettings() {
     const s = settings();
     document.title = s.title;
     $('#app-title').textContent = s.title;
-    $('#brand-mark').textContent = (s.title.trim()[0] || 'P').toUpperCase();
     $('#today-label').textContent = [s.subtitle, fmtDate(today)].filter(Boolean).join(' · ');
     $('#zoom-plan').textContent = `${s.planStart} → ${s.planEnd}`;
     document.documentElement.style.setProperty('--accent', s.accent);

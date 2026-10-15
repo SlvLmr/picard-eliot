@@ -45,6 +45,7 @@ function summaryPage() {
     return `<section class="page">
         ${band()}
         <header class="cover">
+            <div class="cover-logo"><img src="logo/picard2030-embleme-fond-fixe.svg" alt="Picard 2030"></div>
             <p class="kicker">État d'avancement · ${fmtDate(today)}</p>
             <h1>${esc(s.title)}</h1>
             ${s.subtitle ? `<p class="sub">${esc(s.subtitle)}</p>` : ''}

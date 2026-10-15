@@ -55,21 +55,17 @@ code { font-size: .9em; background: rgba(0,0,0,.06); padding: 1px 5px; border-ra
 .topbar {
     position: sticky; top: 0; z-index: 20;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 24px;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
+    padding: 8px 24px;
+    background: #14213d; color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    box-shadow: 0 6px 24px rgba(20, 33, 61, .25);
 }
-.brand { display: flex; align-items: center; gap: 12px; }
-.brand-mark {
-    width: 40px; height: 40px; border-radius: 11px;
-    display: grid; place-items: center;
-    font-weight: 800; font-size: 20px; color: #fff;
-    background: linear-gradient(135deg, #ea580c, #2563eb);
-}
-.brand h1 { font-size: 20px; letter-spacing: -.02em; }
-.brand h1 span { color: var(--accent); }
-.subtitle { margin: 0; color: var(--muted); font-size: 12px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-logo { height: 54px; width: auto; display: block; }
+.brand h1 { font-size: 20px; letter-spacing: -.02em; color: #fff; }
+.subtitle { margin: 0; color: #a9b4cc; font-size: 12px; }
+.topbar .btn-ghost { color: #fff; border-color: rgba(255, 255, 255, .22); background: transparent; }
+.topbar .btn-ghost:hover { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .4); }
 .topbar-actions { display: flex; gap: 8px; }
 
 /* ─── Buttons ─────────────────────────────── */
@@ -640,7 +636,9 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 }
 @media (max-width: 760px) {
     :root { --label-w: 170px; }
-    .topbar { padding: 10px 16px; }
+    .topbar { padding: 6px 16px; }
+    .brand-logo { height: 46px; }
+    .brand h1 { font-size: 17px; }
     .topbar-actions .btn span { display: none; }
     .container { padding: 16px 16px 40px; }
     .local-banner { padding: 10px 16px; }
