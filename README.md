@@ -20,15 +20,18 @@ Pour l'utiliser en local, ouvrez `picard2030/index.html` dans un navigateur, san
 
 ## Ce qu'on y trouve
 
-- **Onglets** : Vue d'ensemble, Commerce, Production.
-- **Jauges d'avancement** à tous les niveaux. L'avancement se calcule automatiquement de bas en haut : action → thème → rubrique → global.
-- **KPI** : avancement global, thèmes en cours, retards, échéances à venir, compte à rebours avant la prochaine échéance.
-- **Timeline** (6 mois, une année ou le plan complet) : chaque thème se déplie pour montrer ses actions. On y voit les barres d'avancement, les points d'échéance, les jalons et la ligne « aujourd'hui ».
-- **Info-bulles au survol** de chaque barre ou point : dates, avancement réel et attendu, météo, et texte contextuel.
-- **Cartes thèmes** avec jauge, météo, temps écoulé / travail réalisé, et la liste des actions.
-- **Rapport PDF** (bouton *Rapport PDF*) : version simplifiée en style infographie, à diffuser en interne.
-  - Page 1 : synthèse, prochaines échéances et points d'attention.
-  - Puis une page par rubrique, avec une timeline verticale.
+La page est organisée en trois sections, accessibles depuis les raccourcis en haut à droite :
+
+1. **Timeline** : une infographie verticale des grands thèmes, dans l'ordre chronologique, avec un repère « Aujourd'hui ».
+   - En vue d'ensemble, Commerce et Production sont côte à côte.
+   - Dans une rubrique, les thèmes alternent à gauche et à droite.
+   - Chaque thème affiche sa jauge, sa météo, son texte et ses actions.
+2. **Indicateurs** : compteurs animés, jauges par rubrique, météo des thèmes et des actions, prochaines échéances et points d'attention.
+3. **Gantt** : le détail des actions dans le temps (6 mois, une année ou le plan complet). Les thèmes se déplient, on y voit les points d'échéance, les jalons et la ligne « aujourd'hui ».
+
+Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-bulle : dates, avancement réel et attendu, météo, et texte contextuel.
+
+Le bouton **Rapport PDF** produit une version simplifiée A4 au style infographie, à diffuser en interne.
 
 ### Météo
 
@@ -46,7 +49,7 @@ Le bouton **Admin** ouvre quatre onglets. Chaque modification est **enregistrée
 
 | Onglet | Ce qu'on y règle |
 |---|---|
-| **Thèmes & actions** | Nom, rubrique, responsable, couleur, icône, dates et texte au survol du thème. Ses actions : nom, dates, avancement (curseur), texte au survol. Un thème peut être déplacé, dupliqué ou supprimé. |
+| **Thèmes & actions** | En-tête coloré avec la jauge du thème, mise à jour en direct. Paramètres du thème : rubrique, responsable, couleur, icône, dates, texte au survol. Les actions sont des cartes : nom, dates, avancement par curseur, bouton ✓ « terminée », texte au survol. Leur statut se met à jour pendant la saisie. Un thème peut être déplacé, dupliqué ou supprimé. |
 | **Rubriques** | Ajouter, renommer ou réordonner les rubriques, choisir leur couleur et leur icône. |
 | **Réglages** | Nom de l'outil, sous-titre, couleur principale, années du plan, seuils de la météo, horizon des échéances. |
 | **Données** | Exporter, importer, ouvrir le rapport PDF, ou annuler ses modifications. |

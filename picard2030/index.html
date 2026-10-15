@@ -31,44 +31,67 @@
     </div>
 
     <main class="container">
-        <nav class="pole-tabs" id="pole-tabs"></nav>
-        <section class="poles-overview" id="poles-overview"></section>
-        <section class="kpis" id="kpis"></section>
+        <div class="tabs-row">
+            <nav class="pole-tabs" id="pole-tabs"></nav>
+            <nav class="jump-nav" aria-label="Sections">
+                <a href="#sec-timeline"><i class="ri-git-commit-line"></i><span>Timeline</span></a>
+                <a href="#sec-indicateurs"><i class="ri-dashboard-3-line"></i><span>Indicateurs</span></a>
+                <a href="#sec-gantt"><i class="ri-bar-chart-horizontal-line"></i><span>Gantt</span></a>
+            </nav>
+        </div>
 
-        <section class="panel">
-            <div class="panel-head">
-                <h2><i class="ri-calendar-schedule-line"></i> Timeline</h2>
-                <div class="toolbar">
-                    <div class="segmented" id="zoom">
-                        <button data-zoom="semester">6 mois</button>
-                        <button data-zoom="year">Année</button>
-                        <button data-zoom="plan" id="zoom-plan">2026 → 2030</button>
-                    </div>
-                    <div class="nav-btns">
-                        <button class="btn btn-icon" id="nav-prev" title="Période précédente"><i class="ri-arrow-left-s-line"></i></button>
-                        <button class="btn btn-small" id="nav-today">Aujourd'hui</button>
-                        <button class="btn btn-icon" id="nav-next" title="Période suivante"><i class="ri-arrow-right-s-line"></i></button>
-                    </div>
-                    <button class="btn btn-small" id="toggle-all"></button>
-                    <select id="filter-owner" aria-label="Filtrer par responsable"></select>
-                </div>
-            </div>
-            <div class="gantt" id="gantt"></div>
-            <div class="legend">
-                <span><i class="lg lg-done"></i>Réalisé</span>
-                <span><i class="lg lg-todo"></i>Reste à faire</span>
-                <span><i class="lg lg-pt"></i>Échéance</span>
-                <span><i class="lg lg-ms"></i>Jalon</span>
-                <span><i class="lg lg-today"></i>Aujourd'hui</span>
-                <span class="legend-hint"><i class="ri-cursor-line"></i>Survolez une barre ou un point pour le détail</span>
-            </div>
+        <section class="section" id="sec-timeline">
+            <header class="section-head">
+                <span class="section-num">01</span>
+                <div><h2>Timeline</h2><p id="story-sub">Les grands thèmes dans l'ordre chronologique</p></div>
+            </header>
+            <div id="story"></div>
         </section>
 
-        <section class="panel">
-            <div class="panel-head">
-                <h2><i class="ri-dashboard-3-line"></i> Thèmes</h2>
+        <section class="section" id="sec-indicateurs">
+            <header class="section-head">
+                <span class="section-num">02</span>
+                <div><h2>Indicateurs</h2><p>Avancement, météo et échéances</p></div>
+            </header>
+            <div class="kpis" id="kpis"></div>
+            <div class="poles-overview" id="poles-overview"></div>
+            <div class="insights" id="insights"></div>
+        </section>
+
+        <section class="section" id="sec-gantt">
+            <header class="section-head">
+                <span class="section-num">03</span>
+                <div><h2>Gantt</h2><p>Le détail des actions dans le temps</p></div>
+            </header>
+            <div class="panel" data-reveal>
+                <div class="panel-head">
+                    <div class="toolbar">
+                        <div class="segmented" id="zoom">
+                            <button data-zoom="semester">6 mois</button>
+                            <button data-zoom="year">Année</button>
+                            <button data-zoom="plan" id="zoom-plan">2026 → 2030</button>
+                        </div>
+                        <div class="nav-btns">
+                            <button class="btn btn-icon" id="nav-prev" title="Période précédente"><i class="ri-arrow-left-s-line"></i></button>
+                            <button class="btn btn-small" id="nav-today">Aujourd'hui</button>
+                            <button class="btn btn-icon" id="nav-next" title="Période suivante"><i class="ri-arrow-right-s-line"></i></button>
+                        </div>
+                    </div>
+                    <div class="toolbar">
+                        <button class="btn btn-small" id="toggle-all"></button>
+                        <select id="filter-owner" aria-label="Filtrer par responsable"></select>
+                    </div>
+                </div>
+                <div class="gantt" id="gantt"></div>
+                <div class="legend">
+                    <span><i class="lg lg-done"></i>Réalisé</span>
+                    <span><i class="lg lg-todo"></i>Reste à faire</span>
+                    <span><i class="lg lg-pt"></i>Échéance</span>
+                    <span><i class="lg lg-ms"></i>Jalon</span>
+                    <span><i class="lg lg-today"></i>Aujourd'hui</span>
+                    <span class="legend-hint"><i class="ri-cursor-line"></i>Survolez une barre ou un point pour le détail</span>
+                </div>
             </div>
-            <div class="cards" id="cards"></div>
         </section>
     </main>
 

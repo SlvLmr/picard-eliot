@@ -12,6 +12,7 @@ const state = {
     editingId: null,
     adminTab: 'themes',
     collapsed: new Set(),
+    storyMode: null,
 };
 
 function $(sel) { return document.querySelector(sel); }
@@ -28,7 +29,7 @@ function visibleThemes() {
 function gauge(value, color, size = 96, stroke = 10, label = '', icon = '') {
     return `<div class="gauge" style="width:${size}px;height:${size}px">
         ${gaugeSvg(value, color, size, stroke, true)}
-        <div class="gauge-label">${icon ? `<i class="${esc(icon)}" style="color:${color}"></i>` : ''}<strong>${value}%</strong>${label ? `<small>${esc(label)}</small>` : ''}</div>
+        <div class="gauge-label">${icon ? `<i class="${esc(icon)}" style="color:${color}"></i>` : ''}<strong data-count="${value}" data-suffix="%">${value}%</strong>${label ? `<small>${esc(label)}</small>` : ''}</div>
     </div>`;
 }
 
@@ -46,6 +47,7 @@ function animateGauges(root = document) {
         root.querySelectorAll('.gauge-fg[data-offset]').forEach(el => { el.style.strokeDashoffset = el.dataset.offset; });
         root.querySelectorAll('.bar-fill').forEach(el => el.classList.add('in'));
     }));
+    root.querySelectorAll('[data-count]').forEach(countUp);
 }
 
 function dateSpan(start, end) {
@@ -73,7 +75,7 @@ function renderOverview() {
         const late = hs.filter(h => h === 'late').length, warn = hs.filter(h => h === 'warn').length;
         const nActions = themes.reduce((s, t) => s + t.actions.length, 0);
         const next = upcomingDeadlines(themes)[0];
-        return `<button class="pole-card" data-rubrique="${esc(r.id)}" style="--pole:${r.color}">
+        return `<button class="pole-card" data-rubrique="${esc(r.id)}" style="--pole:${r.color}" data-reveal>
             <div class="pole-card-head"><i class="${esc(r.icon)}"></i><h3>${esc(r.name)}</h3></div>
             <div class="pole-card-body">
                 ${gauge(weightedProgress(themes), r.color, 120, 12, 'avancement')}
@@ -106,11 +108,11 @@ function renderKpis() {
     const next = deadlines[0];
 
     $('#kpis').innerHTML = `
-        <div class="kpi kpi-gauge">${gauge(weightedProgress(themes), color, 88, 9)}<div><span class="kpi-label">Avancement global</span><span class="kpi-sub">pondéré par la durée</span></div></div>
-        <div class="kpi"><i class="ri-rocket-2-line kpi-icon"></i><span class="kpi-value">${active}<small>/${themes.length}</small></span><span class="kpi-label">Thèmes en cours</span></div>
-        <div class="kpi ${late ? 'kpi-alert' : ''}"><i class="ri-alarm-warning-line kpi-icon"></i><span class="kpi-value">${late}</span><span class="kpi-label">En retard</span><span class="kpi-sub">${warn} en vigilance</span></div>
-        <div class="kpi"><i class="ri-flag-2-line kpi-icon"></i><span class="kpi-value">${inHorizon}</span><span class="kpi-label">Échéances sous ${horizon} jours</span></div>
-        <div class="kpi kpi-next">${next
+        <div class="kpi kpi-gauge" data-reveal>${gauge(weightedProgress(themes), color, 88, 9)}<div><span class="kpi-label">Avancement global</span><span class="kpi-sub">pondéré par la durée</span></div></div>
+        <div class="kpi" data-reveal><i class="ri-rocket-2-line kpi-icon"></i><span class="kpi-value"><span data-count="${active}">${active}</span><small>/${themes.length}</small></span><span class="kpi-label">Thèmes en cours</span></div>
+        <div class="kpi ${late ? 'kpi-alert' : ''}" data-reveal><i class="ri-alarm-warning-line kpi-icon"></i><span class="kpi-value" data-count="${late}">${late}</span><span class="kpi-label">En retard</span><span class="kpi-sub">${warn} en vigilance</span></div>
+        <div class="kpi" data-reveal><i class="ri-flag-2-line kpi-icon"></i><span class="kpi-value" data-count="${inHorizon}">${inHorizon}</span><span class="kpi-label">Échéances sous ${horizon} jours</span></div>
+        <div class="kpi kpi-next" data-reveal>${next
             ? `<span class="kpi-countdown">${countdown(next.date)}</span><span class="kpi-label">Prochaine échéance</span><span class="kpi-sub">${esc(next.name)} · ${esc(next.theme.name)}</span>`
             : `<span class="kpi-label">Aucune échéance à venir</span>`}</div>`;
 }
@@ -209,36 +211,168 @@ function renderGantt() {
     $('#toggle-all').innerHTML = allOpen ? '<i class="ri-contract-up-down-line"></i> Replier' : '<i class="ri-expand-up-down-line"></i> Déplier';
 }
 
-// ─── Cartes thèmes ───────────────────────────────
-function renderCards() {
-    $('#cards').innerHTML = visibleThemes().map(t => {
-        const h = themeHealth(t), prog = themeProgress(t), el = timeElapsed(t), r = themeRange(t);
-        const rub = rubriqueOf(t.rubrique);
-        const next = upcomingDeadlines([t])[0];
-        return `<article class="card" data-id="${esc(t.id)}" tabindex="0" style="--c:${t.color}">
-            <div class="card-top">
-                ${gauge(prog, t.color, 84, 9, '', t.icon)}
-                <div class="card-title">
-                    <span class="chip" style="--pole:${rub.color}"><i class="${esc(rub.icon)}"></i>${esc(rub.name)}</span>
-                    <h3>${esc(t.name)}</h3>
-                    <small>${esc(t.owner)} · ${fmtMonth(r.start)} → ${fmtMonth(r.end)}</small>
-                </div>
+// ─── Animations (apparition au défilement, compteurs) ─
+let revealObserver = null;
+let instantRender = false;
+
+function countUp(el) {
+    const target = Number(el.dataset.count), suffix = el.dataset.suffix || '';
+    if (instantRender || !Number.isFinite(target) || matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = target + suffix; return; }
+    const t0 = performance.now(), dur = 900, run = el._run = (el._run || 0) + 1;
+    const step = now => {
+        if (el._run !== run) return;
+        const k = Math.min(1, (now - t0) / dur), eased = 1 - Math.pow(1 - k, 3);
+        el.textContent = Math.round(target * eased) + suffix;
+        if (k < 1) requestAnimationFrame(step);
+    };
+    el.textContent = '0' + suffix;
+    requestAnimationFrame(step);
+}
+
+function reveal(el) {
+    el.classList.add('revealed');
+    animateGauges(el);
+}
+
+function observeReveals() {
+    const els = document.querySelectorAll('[data-reveal]:not(.revealed)');
+    if (instantRender || !('IntersectionObserver' in window)) { els.forEach(reveal); return; }
+    revealObserver ||= new IntersectionObserver(entries => entries.forEach(e => {
+        if (e.isIntersecting) { revealObserver.unobserve(e.target); reveal(e.target); }
+    }), { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    els.forEach(el => revealObserver.observe(el));
+}
+
+// ─── 01 · Timeline simplifiée ────────────────────
+function storyMode() { return state.rubrique !== 'all' && innerWidth >= 900 ? 'alt' : 'compact'; }
+
+function storyActions(t, max = 4) {
+    if (!t.actions.length) return '';
+    const shown = t.actions.slice(0, max);
+    return `<ul class="sn-actions">${shown.map(a => {
+        const i = t.actions.indexOf(a);
+        return `<li data-tip="a|${esc(t.id)}|${i}"><span class="dot ${HEALTH[actionHealth(a)].cls}"></span><span class="sn-an">${esc(a.name)}</span>${isMilestone(a)
+            ? `<span class="sn-ams"><i class="ri-flag-2-line"></i>${fmtDate(a.start)}</span>`
+            : `${bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b>`}</li>`;
+    }).join('')}${t.actions.length > max ? `<li class="sn-more">+ ${t.actions.length - max} autre${t.actions.length - max > 1 ? 's' : ''} action${t.actions.length - max > 1 ? 's' : ''}</li>` : ''}</ul>`;
+}
+
+function storyCard(t, withGauge) {
+    const r = themeRange(t), h = themeHealth(t);
+    return `<article class="sn-card" data-id="${esc(t.id)}" tabindex="0">
+        <div class="sn-card-head">
+            <div>
+                <p class="sn-date">${fmtMonth(r.start)} <i class="ri-arrow-right-line"></i> ${fmtMonth(r.end)}</p>
+                <h3>${esc(t.name)}</h3>
+                <p class="sn-meta">${t.owner ? `<span>${esc(t.owner)}</span>` : ''}${healthBadge(h)}</p>
             </div>
-            ${healthBadge(h)}
-            <div class="card-bars">
-                <div class="bar-row"><span>Temps écoulé</span><b>${el}%</b></div>${bar(el, 'var(--muted-strong)', 'thin')}
-                <div class="bar-row"><span>Travail réalisé</span><b>${prog}%</b></div>${bar(prog, t.color, 'thin')}
-                <div class="bar-row sub"><span>Attendu à date</span><b>${themeExpected(t)}%</b></div>
-            </div>
-            ${t.actions.length ? `<ul class="card-actions">${t.actions.map((a, i) => `
-                <li data-tip="a|${esc(t.id)}|${i}">
-                    <span class="dot ${HEALTH[actionHealth(a)].cls}"></span>
-                    <span class="ca-name">${esc(a.name)}</span>
-                    ${isMilestone(a) ? `<span class="ca-ms"><i class="ri-flag-2-line"></i>${fmtDate(a.start)}</span>` : `${bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b>`}
-                </li>`).join('')}</ul>` : ''}
-            <div class="card-foot">${next ? `<span><i class="ri-flag-2-line"></i>${esc(next.name)} <em>${countdown(next.date)}</em></span>` : '<span>Aucune échéance à venir</span>'}</div>
-        </article>`;
-    }).join('') || '<div class="empty">Aucun thème pour ce filtre.</div>';
+            ${withGauge ? gauge(themeProgress(t), t.color, 70, 8, '', t.icon) : ''}
+        </div>
+        ${t.note ? `<p class="sn-note">${esc(t.note)}</p>` : ''}
+        ${storyActions(t)}
+    </article>`;
+}
+
+function storyVisual(t) {
+    return `<div class="sn-visual" data-id="${esc(t.id)}" data-tip="t|${esc(t.id)}">
+        ${gauge(themeProgress(t), t.color, 128, 13, 'réalisé', t.icon)}
+        <span class="sn-expected">attendu ${themeExpected(t)}%</span>
+    </div>`;
+}
+
+function storyTimeline(themes, mode) {
+    const sorted = themes.slice().sort((a, b) => themeRange(a).start - themeRange(b).start);
+    const todayIdx = sorted.findIndex(t => themeRange(t).start > today);
+    const todayRow = `<div class="sn-today" data-reveal><span><i class="ri-map-pin-2-fill"></i> Aujourd'hui · ${fmtDate(today)}</span></div>`;
+    const rows = sorted.map((t, i) => {
+        const r = themeRange(t);
+        const live = r.start <= today && r.end >= today && themeProgress(t) < 100;
+        const spine = `<div class="sn-spine"><span class="sn-seg"></span><span class="sn-knot ${live ? 'live' : ''}"></span><span class="sn-arm"></span></div>`;
+        let node;
+        if (mode === 'alt') {
+            const right = i % 2 === 0;
+            node = `<div class="sn ${right ? 'sn-right' : 'sn-left'}" style="--c:${t.color}" data-reveal>
+                <div class="sn-side sn-l">${right ? storyVisual(t) : storyCard(t, false)}</div>
+                ${spine}
+                <div class="sn-side sn-r">${right ? storyCard(t, false) : storyVisual(t)}</div>
+            </div>`;
+        } else {
+            node = `<div class="sn sn-compact" style="--c:${t.color}" data-reveal>${spine}<div class="sn-side">${storyCard(t, true)}</div></div>`;
+        }
+        return (i === todayIdx ? todayRow : '') + node;
+    }).join('') + (todayIdx === -1 && sorted.length ? todayRow : '');
+    return `<div class="story story-${mode}">
+        <div class="sn-cap top"></div>
+        ${rows || '<div class="empty">Aucun thème.</div>'}
+        <div class="sn-cap bottom"></div>
+    </div>`;
+}
+
+function renderStory() {
+    const mode = storyMode();
+    state.storyMode = mode;
+    if (state.rubrique === 'all') {
+        $('#story-sub').textContent = "Les grands thèmes de chaque rubrique, dans l'ordre chronologique";
+        $('#story').innerHTML = `<div class="story-cols">${data().rubriques.map(r => {
+            const themes = themesOf(r.id).filter(t => !state.owner || t.owner === state.owner);
+            return `<div class="story-col" style="--pole:${r.color}">
+                <header class="story-col-head" data-rubrique="${esc(r.id)}" data-reveal>
+                    ${gauge(weightedProgress(themes), r.color, 64, 7)}
+                    <div><h3><i class="${esc(r.icon)}"></i> ${esc(r.name)}</h3><p>${themes.length} thèmes · ${themes.reduce((n, t) => n + t.actions.length, 0)} actions</p></div>
+                    <i class="ri-arrow-right-up-line story-col-go" title="Ouvrir la rubrique"></i>
+                </header>
+                ${storyTimeline(themes, 'compact')}
+            </div>`;
+        }).join('')}</div>`;
+    } else {
+        const r = rubriqueOf(state.rubrique);
+        $('#story-sub').textContent = `Les thèmes ${r.name} dans l'ordre chronologique`;
+        $('#story').innerHTML = storyTimeline(visibleThemes(), mode);
+    }
+}
+
+// ─── 02 · Indicateurs (compléments) ──────────────
+function renderInsights() {
+    const themes = visibleThemes();
+    const actions = themes.flatMap(t => t.actions);
+    const order = ['done', 'ok', 'warn', 'late', 'upcoming'];
+    const stack = (items, healthOf, label) => {
+        const counts = Object.fromEntries(order.map(k => [k, 0]));
+        items.forEach(x => counts[healthOf(x)]++);
+        const total = items.length || 1;
+        return `<div class="meteo-row"><div class="meteo-label"><b data-count="${items.length}">${items.length}</b> ${label}</div>
+            <div class="meteo-bar">${order.filter(k => counts[k]).map(k => `<span class="${HEALTH[k].cls}" style="--w:${100 * counts[k] / total}%" title="${HEALTH[k].label} : ${counts[k]}">${counts[k]}</span>`).join('')}</div></div>`;
+    };
+    const deadlines = upcomingDeadlines(themes).slice(0, 5);
+    const attention = themes.flatMap(t => [
+        ...(['late', 'warn'].includes(themeHealth(t)) ? [{ t, name: t.name, h: themeHealth(t), tip: `t|${t.id}`, sub: 'Thème' }] : []),
+        ...t.actions.map((a, i) => ({ t, a, i })).filter(x => ['late', 'warn'].includes(actionHealth(x.a)))
+            .map(x => ({ t: x.t, name: x.a.name, h: actionHealth(x.a), tip: `a|${x.t.id}|${x.i}`, sub: x.t.name })),
+    ]).sort((a, b) => (a.h === 'late' ? 0 : 1) - (b.h === 'late' ? 0 : 1)).slice(0, 5);
+
+    $('#insights').innerHTML = `
+        <div class="insight" data-reveal>
+            <h3><i class="ri-sun-cloudy-line"></i> Météo</h3>
+            ${stack(themes, themeHealth, 'thèmes')}
+            ${stack(actions, actionHealth, 'actions')}
+            <div class="meteo-legend">${order.map(k => `<span><i class="dot ${HEALTH[k].cls}"></i>${HEALTH[k].label}</span>`).join('')}</div>
+        </div>
+        <div class="insight" data-reveal>
+            <h3><i class="ri-flag-2-line"></i> Prochaines échéances</h3>
+            ${deadlines.length ? `<ul class="ins-list">${deadlines.map(d => {
+                const n = daysBetween(today, d.date);
+                const tip = d.action ? `a|${d.theme.id}|${d.theme.actions.indexOf(d.action)}` : `t|${d.theme.id}`;
+                return `<li data-tip="${esc(tip)}"><span class="cd ${n <= 30 ? 'soon' : ''}">${countdown(d.date)}</span>
+                    <span class="ins-what"><b>${esc(d.name)}</b><small><i class="dot" style="--hc:${d.theme.color}"></i>${esc(d.theme.name)} · ${fmtDate(d.date)}</small></span></li>`;
+            }).join('')}</ul>` : '<p class="muted">Aucune échéance à venir.</p>'}
+        </div>
+        <div class="insight" data-reveal>
+            <h3><i class="ri-alarm-warning-line"></i> Points d'attention</h3>
+            ${attention.length ? `<ul class="ins-list">${attention.map(x => `
+                <li data-tip="${esc(x.tip)}"><span class="dot ${HEALTH[x.h].cls}"></span>
+                    <span class="ins-what"><b>${esc(x.name)}</b><small>${esc(x.sub)} · ${HEALTH[x.h].label}</small></span></li>`).join('')}</ul>`
+                : '<p class="ins-ok"><i class="ri-checkbox-circle-line"></i> Rien à signaler, tout est dans les temps.</p>'}
+        </div>`;
 }
 
 // ─── Info-bulles (survol) ────────────────────────
@@ -362,16 +496,22 @@ function renderAdmin() {
     const body = $('#admin-body');
     body.dataset.tab = state.adminTab;
     body.innerHTML = { themes: adminThemesHtml, rubriques: adminRubriquesHtml, settings: adminSettingsHtml, data: adminDataHtml }[state.adminTab]();
+    animateGauges(body);
 }
 
 // Thèmes & actions
 function adminThemeListHtml() {
     return data().rubriques.map(r => `
         <div class="admin-group" style="--pole:${r.color}"><i class="${esc(r.icon)}"></i>${esc(r.name)}</div>
-        ${themesOf(r.id).map(t => `
-            <button type="button" class="admin-item ${t.id === state.editingId ? 'active' : ''}" data-id="${esc(t.id)}">
-                <span class="swatch" style="background:${t.color}"></span><span>${esc(t.name || 'Sans nom')}</span><small>${t.actions.length}</small></button>`).join('')
-            || '<p class="admin-none">Aucun thème</p>'}
+        ${themesOf(r.id).map(t => {
+            const p = themeProgress(t);
+            return `<button type="button" class="admin-item ${t.id === state.editingId ? 'active' : ''}" data-id="${esc(t.id)}" style="--c:${t.color}">
+                <i class="${esc(t.icon || 'ri-folder-line')} ai-icon"></i>
+                <span class="ai-text"><span class="ai-name">${esc(t.name || 'Sans nom')}</span>
+                    <span class="ai-bar"><span style="width:${p}%"></span></span></span>
+                <span class="ai-pct">${p}%</span>
+            </button>`;
+        }).join('') || '<p class="admin-none">Aucun thème</p>'}
     `).join('');
 }
 
@@ -379,35 +519,50 @@ function adminThemesHtml() {
     const t = themeById(state.editingId);
     const owners = [...new Set(data().themes.map(x => x.owner).filter(Boolean))].sort();
     const form = !t ? '<div class="empty">Créez votre premier thème.</div>' : `
-        <div class="form-grid">
-            <label class="span-2">Nom du thème<input name="name" value="${esc(t.name)}"></label>
-            <label>Rubrique<select name="rubrique">${data().rubriques.map(r => `<option value="${esc(r.id)}" ${r.id === t.rubrique ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
-            <label>Responsable<input name="owner" value="${esc(t.owner)}" list="owners-list"></label>
-            <label>Couleur<input type="color" name="color" value="${esc(t.color)}"></label>
-            <label>Icône<span class="icon-pick"><i class="${esc(t.icon || 'ri-folder-line')}"></i><select name="icon">${iconOptions(t.icon)}</select></span></label>
-            <label>Date de début<input type="date" name="start" value="${esc(t.start || '')}"><small>vide = calculée depuis les actions</small></label>
-            <label>Date de fin<input type="date" name="end" value="${esc(t.end || '')}"><small>vide = calculée depuis les actions</small></label>
-            ${t.actions.length
-                ? `<label>Avancement<span class="computed">${themeProgress(t)}% <small>calculé à partir des actions</small></span></label>`
-                : `<label>Avancement<span class="range"><input type="range" name="progress" min="0" max="100" step="5" value="${Number(t.progress) || 0}"><output>${Number(t.progress) || 0}%</output></span><small>utilisé tant qu'il n'y a pas d'action</small></label>`}
-            <label class="span-3">Texte affiché au survol<textarea name="note" rows="2" placeholder="Contexte, objectif, point d'attention…">${esc(t.note)}</textarea></label>
-            <datalist id="owners-list">${owners.map(o => `<option value="${esc(o)}">`).join('')}</datalist>
-        </div>
-        <div class="form-section">
-            <div class="form-section-head">
-                <h3>Actions</h3>
-                <button type="button" class="btn btn-small" data-add-action><i class="ri-add-line"></i> Action</button>
+        <div class="ed-hero" style="--c:${esc(t.color)}">
+            <div id="ed-gauge">${gauge(themeProgress(t), t.color, 96, 10, '', t.icon)}</div>
+            <div class="ed-hero-main">
+                <input class="ed-title" name="name" value="${esc(t.name)}" placeholder="Nom du thème" aria-label="Nom du thème">
+                <div class="ed-hero-meta">
+                    <span id="ed-health">${healthBadge(themeHealth(t))}</span>
+                    <span id="ed-dates"><i class="ri-calendar-line"></i> ${dateSpan(themeRange(t).start, themeRange(t).end)}</span>
+                    <span id="ed-count"><i class="ri-list-check-2"></i> ${t.actions.length} action${t.actions.length > 1 ? 's' : ''}</span>
+                </div>
             </div>
-            <p class="help small">Pour un jalon (un point dans le temps), mettez la même date de début et de fin.</p>
-            <div class="rows" id="action-rows">${t.actions.map(actionRow).join('') || '<p class="admin-none" data-empty>Aucune action pour l\'instant.</p>'}</div>
+            <div class="ed-hero-tools">
+                <button type="button" class="btn btn-icon" data-move="-1" title="Monter"><i class="ri-arrow-up-line"></i></button>
+                <button type="button" class="btn btn-icon" data-move="1" title="Descendre"><i class="ri-arrow-down-line"></i></button>
+                <button type="button" class="btn btn-icon" data-duplicate title="Dupliquer"><i class="ri-file-copy-line"></i></button>
+                <button type="button" class="btn btn-icon btn-danger" data-delete title="Supprimer le thème"><i class="ri-delete-bin-line"></i></button>
+            </div>
         </div>
-        <div class="form-actions">
-            <button type="button" class="btn btn-danger" data-delete><i class="ri-delete-bin-line"></i> Supprimer le thème</button>
-            <span class="inline-actions">
-                <button type="button" class="btn btn-small" data-move="-1" title="Monter"><i class="ri-arrow-up-line"></i> Monter</button>
-                <button type="button" class="btn btn-small" data-move="1" title="Descendre"><i class="ri-arrow-down-line"></i> Descendre</button>
-                <button type="button" class="btn btn-small" data-duplicate><i class="ri-file-copy-line"></i> Dupliquer</button>
-            </span>
+
+        <div class="ed-card">
+            <h3><i class="ri-settings-4-line"></i> Paramètres du thème</h3>
+            <div class="form-grid">
+                <label>Rubrique<select name="rubrique">${data().rubriques.map(r => `<option value="${esc(r.id)}" ${r.id === t.rubrique ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
+                <label>Responsable<input name="owner" value="${esc(t.owner)}" list="owners-list" placeholder="Ex. Direction commerciale"></label>
+                <label>Couleur & icône<span class="color-icon">
+                    <input type="color" name="color" value="${esc(t.color)}">
+                    <span class="icon-pick"><i class="${esc(t.icon || 'ri-folder-line')}"></i><select name="icon">${iconOptions(t.icon)}</select></span>
+                </span></label>
+                <label>Date de début<input type="date" name="start" value="${esc(t.start || '')}"><small>vide = calculée depuis les actions</small></label>
+                <label>Date de fin<input type="date" name="end" value="${esc(t.end || '')}"><small>vide = calculée depuis les actions</small></label>
+                ${t.actions.length
+                    ? `<label>Avancement<span class="computed"><span id="ed-computed">${themeProgress(t)}%</span><small>calculé à partir des actions</small></span></label>`
+                    : `<label>Avancement<span class="range"><input type="range" name="progress" min="0" max="100" step="5" value="${Number(t.progress) || 0}" style="--val:${Number(t.progress) || 0}%"><output>${Number(t.progress) || 0}%</output></span><small>utilisé tant qu'il n'y a pas d'action</small></label>`}
+                <label class="span-3">Texte affiché au survol<textarea name="note" rows="2" placeholder="Contexte, objectif, point d'attention…">${esc(t.note)}</textarea></label>
+                <datalist id="owners-list">${owners.map(o => `<option value="${esc(o)}">`).join('')}</datalist>
+            </div>
+        </div>
+
+        <div class="ed-card">
+            <div class="form-section-head">
+                <h3><i class="ri-list-check-2"></i> Actions</h3>
+                <button type="button" class="btn btn-primary btn-small" data-add-action><i class="ri-add-line"></i> Ajouter une action</button>
+            </div>
+            <p class="help small"><i class="ri-lightbulb-flash-line"></i> Glissez le curseur pour l'avancement. Même date de début et de fin = jalon.</p>
+            <div class="rows" id="action-rows">${t.actions.map(a => actionRow(a, t)).join('') || '<p class="admin-none" data-empty>Aucune action pour l\'instant.</p>'}</div>
         </div>`;
     return `<div class="admin-split">
         <div class="admin-list">
@@ -418,20 +573,57 @@ function adminThemesHtml() {
     </div>`;
 }
 
-function actionRow(a = {}) {
+function actionRow(a = {}, t = themeById(state.editingId)) {
     const start = a.start || iso(today);
     const end = a.end || iso(new Date(parse(start).getTime() + 90 * DAY));
     const prog = Number(a.progress) || 0;
-    return `<div class="action-row">
-        <div class="row row-action">
-            <input name="a-name" placeholder="Nom de l'action" value="${esc(a.name || '')}">
-            <input type="date" name="a-start" value="${esc(start)}" title="Début">
-            <input type="date" name="a-end" value="${esc(end)}" title="Fin">
-            <div class="range"><input type="range" name="a-progress" min="0" max="100" step="5" value="${prog}"><output>${prog}%</output></div>
-            <button type="button" class="btn btn-icon" data-remove title="Supprimer l'action"><i class="ri-close-line"></i></button>
+    const h = actionHealth({ start, end, progress: prog });
+    return `<div class="action-row ${HEALTH[h].cls}" style="--c:${esc(t?.color || 'var(--accent)')}">
+        <div class="ar-top">
+            <span class="ar-status">${healthBadge(h)}</span>
+            <input class="ar-name" name="a-name" placeholder="Nom de l'action" value="${esc(a.name || '')}">
+            <button type="button" class="btn btn-icon ar-done ${prog >= 100 ? 'on' : ''}" data-done title="Marquer comme terminée"><i class="ri-check-line"></i></button>
+            <button type="button" class="btn btn-icon" data-remove title="Supprimer l'action"><i class="ri-delete-bin-6-line"></i></button>
+        </div>
+        <div class="ar-mid">
+            <label>Début<input type="date" name="a-start" value="${esc(start)}"></label>
+            <label>Fin<input type="date" name="a-end" value="${esc(end)}"></label>
+            <div class="range ar-range"><input type="range" name="a-progress" min="0" max="100" step="5" value="${prog}" style="--val:${prog}%"><output>${prog}%</output></div>
         </div>
         <input class="note-input" name="a-note" placeholder="Texte affiché au survol (facultatif)" value="${esc(a.note || '')}">
     </div>`;
+}
+
+// Met à jour en direct l'en-tête et les statuts pendant la saisie
+function liveRefresh(form) {
+    const t = themeById(state.editingId);
+    if (!t || !form.querySelector('.ed-hero')) return;
+    const prog = themeProgress(t), r = themeRange(t);
+    const hero = form.querySelector('.ed-hero');
+    hero.style.setProperty('--c', t.color);
+    const fg = hero.querySelector('.gauge-fg');
+    const c = Number(fg.getAttribute('stroke-dasharray'));
+    fg.setAttribute('stroke', t.color);
+    fg.style.strokeDashoffset = c * (1 - prog / 100);
+    const label = hero.querySelector('.gauge-label strong');
+    label._run = (label._run || 0) + 1;
+    label.textContent = prog + '%';
+    hero.querySelector('.gauge-label i').className = t.icon;
+    hero.querySelector('.gauge-label i').style.color = t.color;
+    $('#ed-health').innerHTML = healthBadge(themeHealth(t));
+    $('#ed-dates').innerHTML = `<i class="ri-calendar-line"></i> ${dateSpan(r.start, r.end)}`;
+    $('#ed-count').innerHTML = `<i class="ri-list-check-2"></i> ${t.actions.length} action${t.actions.length > 1 ? 's' : ''}`;
+    if ($('#ed-computed')) $('#ed-computed').textContent = prog + '%';
+    form.querySelectorAll('.action-row').forEach((row, i) => {
+        const a = t.actions[i];
+        if (!a) return;
+        const h = actionHealth(a);
+        row.className = `action-row ${HEALTH[h].cls}`;
+        row.style.setProperty('--c', t.color);
+        row.querySelector('.ar-status').innerHTML = healthBadge(h);
+        row.querySelector('.ar-done').classList.toggle('on', a.progress >= 100);
+    });
+    form.querySelectorAll('input[type="range"]').forEach(rg => rg.style.setProperty('--val', rg.value + '%'));
 }
 
 function readThemeForm(form) {
@@ -548,8 +740,9 @@ let saveTimer = null;
 function autosave(form) {
     if (!form) return;
     ({ theme: readThemeForm, rubriques: readRubriquesForm, settings: readSettingsForm })[form.dataset.form]?.(form);
+    if (form.dataset.form === 'theme') liveRefresh(form);
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => { persist(); applySettings(); renderAll(); flashSaved(); }, 250);
+    saveTimer = setTimeout(() => { persist(); applySettings(); renderInstant(); flashSaved(); }, 250);
 }
 
 function flashSaved() {
@@ -560,7 +753,16 @@ function flashSaved() {
     el._t = setTimeout(() => { el.classList.remove('saved'); el.innerHTML = '<i class="ri-save-line"></i> Enregistrement automatique'; }, 1500);
 }
 
-function commit(msg) { persist(); applySettings(); renderAdmin(); renderAll(); if (msg) toast(msg); }
+function commit(msg) { persist(); applySettings(); renderAdmin(); renderInstant(); if (msg) toast(msg); }
+
+// Rendu sans animation (pendant l'édition dans l'admin)
+function renderInstant() {
+    instantRender = true;
+    document.body.classList.add('instant');
+    renderAll();
+    instantRender = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('instant')));
+}
 
 function adminClick(t) {
     const tab = t.closest('[data-admin-tab]');
@@ -583,10 +785,22 @@ function adminClick(t) {
         const last = [...box.querySelectorAll('[name="a-end"]')].pop();
         const start = last?.value ? iso(new Date(parse(last.value).getTime() + DAY)) : (themeById(state.editingId)?.start || undefined);
         box.insertAdjacentHTML('beforeend', actionRow({ start }));
-        box.lastElementChild.querySelector('input').focus();
+        box.lastElementChild.classList.add('is-new');
+        box.lastElementChild.querySelector('.ar-name').focus();
         return autosave(form);
     }
-    if (t.closest('[data-remove]')) { t.closest('.action-row').remove(); return autosave(form); }
+    if (t.closest('[data-remove]')) {
+        const row = t.closest('.action-row');
+        row.classList.add('is-leaving');
+        return setTimeout(() => { row.remove(); autosave(form); }, 180);
+    }
+    const done = t.closest('[data-done]');
+    if (done) {
+        const range = done.closest('.action-row').querySelector('[name="a-progress"]');
+        range.value = Number(range.value) >= 100 ? 0 : 100;
+        range.nextElementSibling.textContent = range.value + '%';
+        return autosave(form);
+    }
     const move = t.closest('[data-move]');
     if (move) {
         const list = data().themes, i = list.findIndex(x => x.id === state.editingId);
@@ -724,12 +938,13 @@ function renderOwnerFilter() {
 
 function renderAll() {
     renderTabs();
-    renderOverview();
     renderOwnerFilter();
+    renderStory();
     renderKpis();
+    renderOverview();
+    renderInsights();
     renderGantt();
-    renderCards();
-    animateGauges();
+    observeReveals();
 }
 
 function setRubrique(id) {
@@ -766,7 +981,7 @@ function bind() {
         if (rub) return setRubrique(rub.dataset.rubrique);
         const zoom = t.closest('[data-zoom]');
         if (zoom) { state.zoom = zoom.dataset.zoom; state.anchor = startOfMonth(state.zoom === 'year' ? new Date(state.anchor.getFullYear(), 0, 1) : today); return renderGantt(); }
-        const row = t.closest('.g-row, .card');
+        const row = t.closest('.g-row, .sn-card, .sn-visual');
         if (row) return openDrawer(row.dataset.id);
         if (t.closest('[data-close]') || t === $('#overlay')) return closeDrawer();
         const edit = t.closest('[data-edit]');
@@ -782,7 +997,7 @@ function bind() {
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') { closeDrawer(); closeAdmin(); hideTip(); }
-        if (e.key === 'Enter' && e.target.matches('.g-row, .card')) openDrawer(e.target.dataset.id);
+        if (e.key === 'Enter' && e.target.matches('.g-row, .sn-card')) openDrawer(e.target.dataset.id);
     });
 
     $('#admin-body').addEventListener('input', e => {
@@ -800,7 +1015,9 @@ function bind() {
     $('#nav-prev').onclick = () => { state.anchor = addMonths(state.anchor, state.zoom === 'year' ? -12 : -6); renderGantt(); };
     $('#nav-next').onclick = () => { state.anchor = addMonths(state.anchor, state.zoom === 'year' ? 12 : 6); renderGantt(); };
     $('#nav-today').onclick = () => { state.anchor = startOfMonth(today); if (state.zoom === 'plan') state.zoom = 'year'; renderGantt(); };
-    $('#filter-owner').onchange = e => { state.owner = e.target.value; renderKpis(); renderGantt(); renderCards(); animateGauges(); };
+    $('#filter-owner').onchange = e => { state.owner = e.target.value; renderAll(); };
+    let resizeTimer;
+    addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (storyMode() !== state.storyMode) { renderStory(); observeReveals(); } }, 200); });
     $('#btn-admin').onclick = () => openAdmin();
     $('#btn-banner-export').onclick = exportData;
     $('#btn-reset').onclick = resetLocal;
