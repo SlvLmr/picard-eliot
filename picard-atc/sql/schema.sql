@@ -31,7 +31,7 @@ $$;
 -- ─── Référentiel ───────────────────────────────────────────
 create table public.commerciaux (
   id uuid primary key default gen_random_uuid(),
-  code text unique,                 -- libellé exact dans le fichier « Répartition budget ATC » (ex. « RONDIA Rudy »)
+  code text unique,                 -- libellé exact dans le fichier « Répartition budget ATC » (ex. « DUPONT Jean »)
   prenom text not null default '',
   nom text not null,
   equipe text not null default 'DIR', -- IDF, NORD, OUEST, RA, PACA, DIR

@@ -185,7 +185,7 @@ function renderFiche(c) {
                 <label class="field">Fonction<select data-f="fonction"><option value="">—</option>${fonctions.map(f => `<option ${f === c.fonction ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label>
                 <label class="field">E-mail<input type="email" data-f="email" value="${esc(c.email || '')}"></label>
                 <label class="field">Téléphone<input data-f="telephone" value="${esc(c.telephone || '')}"></label>
-                <label class="field full">Libellé dans le fichier Répartition<input data-f="code" value="${esc(c.code || '')}" placeholder="ex. RONDIA Rudy"></label>
+                <label class="field full">Libellé dans le fichier Répartition<input data-f="code" value="${esc(c.code || '')}" placeholder="ex. DUPONT Jean"></label>
             </div></div>
 
         <div class="f-block"><h4><i class="ri-community-line"></i>IAP · installateurs agréés</h4>
