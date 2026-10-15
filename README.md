@@ -1,5 +1,7 @@
 # Picard2030
 
+> Le dépôt contient aussi l'outil **PICARD-ATC** (pilotage du chiffre des commerciaux), dans le dossier [`picard-atc/`](picard-atc/README.md).
+
 Timeline interactive pour suivre l'avancement du plan **Picard2030**.
 
 ## Structure
