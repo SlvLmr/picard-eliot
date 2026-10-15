@@ -175,8 +175,8 @@ function sparkline(who, b) {
     const max = Math.max(...vals) || 1, w = 92, h = 34;
     const xy = vals.map((v, i) => [i / (vals.length - 1) * w, h - 3 - v / max * (h - 6)]);
     const line = smoothPath(xy);
-    return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><linearGradient id="sg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7c83ff" stop-opacity=".45"/><stop offset="1" stop-color="#7c83ff" stop-opacity="0"/></linearGradient><linearGradient id="sl" x1="0" x2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
-        <path d="${line}L${w} ${h}L0 ${h}Z" fill="url(#sg)"/><path d="${line}" fill="none" stroke="url(#sl)" stroke-width="2" stroke-linecap="round"/></svg>`;
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><linearGradient id="sg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1cc9c8" stop-opacity=".22"/><stop offset="1" stop-color="#1cc9c8" stop-opacity="0"/></linearGradient><linearGradient id="sl" x1="0" x2="1"><stop offset="0" stop-color="#0fb5d0"/><stop offset="1" stop-color="#00e3a0"/></linearGradient></defs>
+        <path d="${line}L${w} ${h}L0 ${h}Z" fill="url(#sg)"/><path d="${line}" fill="none" stroke="url(#sl)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 }
 
 function smoothPath(pts) {
@@ -201,7 +201,7 @@ function renderKpis(animate) {
     const jr = workdaysBetween(addDays(b.ref, 1), b.fin);
     const reste = k.objectif ? Math.max(0, k.objectif - k.ca) : null;
     const cards = [
-        { icon: 'ri-money-euro-circle-line', kc: 'linear-gradient(135deg,#6366f1,#22d3ee)', label: "Chiffre d'affaires HT", val: k.ca, fmt: v => euros(v),
+        { icon: 'ri-money-euro-circle-line', kc: 'linear-gradient(135deg,#0fb5d0,#00e3a0)', label: "Chiffre d'affaires HT", val: k.ca, fmt: v => euros(v),
             row: `${delta(k.evol)}<span>vs ${euros(k.caN1)} en N-1</span>`, extra: sparkline(S.who, b),
             sub: `<span>Objectif ${b.label}</span><b>${euros(k.objectif)}</b>` },
         { icon: 'ri-flight-land-line', kc: 'linear-gradient(135deg,#8b5cf6,#ec4899)', label: 'Atterrissage prévu', val: k.projection, fmt: v => euros(v),
@@ -228,8 +228,6 @@ function countUp(el, to, fmt, ms = 900) {
 }
 
 // ─── Jauges ─────────────────────────────────────────────────
-function gaugeColor(key) { return { ok: ['#16a34a', '#4ade80'], warn: ['#f59e0b', '#fcd34d'], late: ['#dc2626', '#fb7185'], none: ['#6366f1', '#22d3ee'] }[key]; }
-
 function renderGauges() {
     const el = $('#gauges');
     if (!el.dataset.ready) {
@@ -238,27 +236,27 @@ function renderGauges() {
     }
     for (const g of $$('.gauge', el)) {
         const p = g.dataset.period; const k = kpisFor(S.who, p); const b = bounds(p);
-        const st = statut(k.rythme, S.base.reglages); const [c1, c2] = gaugeColor(st.key);
+        const st = statut(k.rythme, S.base.reglages); const [c1, c2] = ['#0fb5d0', '#00e3a0'];
         g.classList.toggle('on', p === S.period);
         $('.g-title', g).textContent = { mois: MOIS_LONG[b.ref.getMonth()].replace(/^./, m => m.toUpperCase()), trimestre: b.label.split(' ')[0], annee: String(b.ref.getFullYear()) }[p];
         $('.g-sub', g).textContent = k.objectif ? `${euros(k.ca)} / ${euros(k.objectif)}` : 'Aucun objectif';
         const s = $('.g-status', g); s.className = 'g-status ' + st.key; s.innerHTML = `<i class="${st.icon}"></i>${st.label}`;
         const chart = S.charts['g' + p] || (S.charts['g' + p] = echarts.init($('.g-chart', g), null, { renderer: 'svg' }));
-        const val = Math.min(k.atteinte ?? 0, 120), mark = Math.min(k.attendu ?? 0, 120);
+        const val = Math.min(k.atteinte ?? 0, 100), mark = Math.min(k.attendu ?? 0, 100);
         const track = css('--surface-3');
         chart.setOption({
             animationDuration: 1100, animationEasingUpdate: 'cubicOut', animationDurationUpdate: 900,
             series: [
-                { type: 'gauge', startAngle: 210, endAngle: -30, min: 0, max: 120, radius: '92%', center: ['50%', '58%'],
-                  progress: { show: true, roundCap: true, width: 13, itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: c1 }, { offset: 1, color: c2 }]), shadowBlur: 12, shadowColor: c1 + '88' } },
-                  axisLine: { roundCap: true, lineStyle: { width: 13, color: [[1, track]] } },
+                { type: 'gauge', startAngle: 90, endAngle: -270, min: 0, max: 100, radius: '88%', center: ['50%', '50%'],
+                  progress: { show: true, roundCap: false, width: 9, itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: c1 }, { offset: 1, color: c2 }]), shadowBlur: 10, shadowColor: 'rgba(15,181,208,.35)' } },
+                  axisLine: { roundCap: false, lineStyle: { width: 9, color: [[1, track]] } },
                   pointer: { show: false }, anchor: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, title: { show: false },
-                  detail: { valueAnimation: true, offsetCenter: [0, '2%'], fontSize: g.offsetWidth < 170 ? 19 : 26, fontWeight: 800, fontFamily: 'Plus Jakarta Sans', color: css('--text'), formatter: () => k.atteinte == null ? '—' : `${Math.round(k.atteinte)}%` },
+                  detail: { valueAnimation: true, offsetCenter: [0, 0], fontSize: g.offsetWidth < 170 ? 20 : 26, fontWeight: 300, fontFamily: 'Roboto', color: css('--text'), formatter: () => k.atteinte == null ? '—' : `${Math.round(k.atteinte)}%` },
                   data: [{ value: val }] },
                 // Repère « attendu à date »
-                { type: 'gauge', startAngle: 210, endAngle: -30, min: 0, max: 120, radius: '92%', center: ['50%', '58%'],
+                { type: 'gauge', startAngle: 90, endAngle: -270, min: 0, max: 100, radius: '88%', center: ['50%', '50%'],
                   axisLine: { show: false }, progress: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false }, title: { show: false }, anchor: { show: false },
-                  pointer: { show: k.attendu != null, icon: 'rect', length: '24%', width: 3, offsetCenter: [0, '-74%'], itemStyle: { color: css('--target'), shadowBlur: 4, shadowColor: 'rgba(0,0,0,.4)' } },
+                  pointer: { show: k.attendu != null, icon: 'rect', length: '14%', width: 2, offsetCenter: [0, '-80%'], itemStyle: { color: css('--target') } },
                   data: [{ value: mark }] },
             ],
         });
@@ -270,13 +268,13 @@ function renderGauges() {
 function baseAxis() {
     return {
         axisLine: { lineStyle: { color: css('--chart-grid') } }, axisTick: { show: false },
-        axisLabel: { color: css('--chart-axis'), fontSize: 11, fontFamily: 'Plus Jakarta Sans' },
+        axisLabel: { color: css('--chart-axis'), fontSize: 11, fontFamily: 'Roboto' },
         splitLine: { lineStyle: { color: css('--chart-grid') } },
     };
 }
 const tooltipStyle = () => ({
     backgroundColor: css('--surface-3'), borderColor: css('--line-strong'), borderWidth: 1, padding: [8, 12],
-    textStyle: { color: css('--text'), fontSize: 12, fontFamily: 'Plus Jakarta Sans' }, extraCssText: 'border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.3);backdrop-filter:blur(8px)',
+    textStyle: { color: css('--text'), fontSize: 12, fontFamily: 'Roboto' }, extraCssText: 'border-radius:0;box-shadow:0 12px 30px rgba(0,0,0,.25)',
 });
 
 function renderTrajectory() {
@@ -297,7 +295,7 @@ function renderTrajectory() {
     if (hasProj) proj[dates.length - 1] = k.projection;
     const hasObj = k.objectif > 0;
     $('#traj-sub').textContent = `· ${b.label}`;
-    const colors = { real: '#7c83ff', obj: css('--target'), n1: css('--n1'), proj: '#22d3ee' };
+    const colors = { real: '#1cc9c8', obj: css('--target'), n1: css('--n1'), proj: '#00e3a0' };
     $('#traj-legend').innerHTML = `<span><i class="lg-line" style="border-color:${colors.real}"></i>Réalisé</span>${hasObj ? `<span><i class="lg-line lg-dash" style="border-color:${colors.obj}"></i>Objectif</span>` : ''}<span><i class="lg-line" style="border-color:${colors.n1}"></i>N-1</span><span><i class="lg-line lg-dash" style="border-color:${colors.proj}"></i>Atterrissage</span>`;
     const chart = S.charts.traj || (S.charts.traj = echarts.init($('#chart-traj'), null, { renderer: 'svg' }));
     const fmtDate = s => { const d = parseIso(s); return S.period === 'mois' ? String(d.getDate()) : MOIS[d.getMonth()]; };
@@ -310,17 +308,17 @@ function renderTrajectory() {
             axisLabel: { ...baseAxis().axisLabel, formatter: fmtDate, interval: S.period === 'mois' ? 3 : S.period === 'trimestre' ? 10 : 21 } },
         yAxis: { type: 'value', ...baseAxis(), axisLine: { show: false }, splitLine: { lineStyle: { color: css('--chart-grid'), type: [3, 4] } }, axisLabel: { ...baseAxis().axisLabel, formatter: v => euros(v) } },
         series: [
-            { name: 'N-1', type: 'line', data: n1Vals, ...smooth, lineStyle: { width: 1.6, color: colors.n1 }, itemStyle: { color: colors.n1 }, z: 1,
-              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(127,136,166,.14)' }, { offset: 1, color: 'rgba(127,136,166,0)' }]) } },
-            ...(hasObj ? [{ name: 'Objectif', type: 'line', data: objAll.map(o => o[1]), ...smooth, lineStyle: { width: 2, type: [6, 5], color: colors.obj }, itemStyle: { color: colors.obj }, z: 2 }] : []),
-            { name: 'Atterrissage', type: 'line', data: proj, connectNulls: true, showSymbol: false, lineStyle: { width: 2.2, type: [2, 5], cap: 'round', color: colors.proj }, itemStyle: { color: colors.proj }, z: 3,
-              markPoint: hasProj ? { symbol: 'circle', symbolSize: 8, itemStyle: { color: colors.proj, shadowBlur: 10, shadowColor: colors.proj }, data: [{ coord: [dates.length - 1, k.projection] }],
-                  label: { show: true, position: 'left', distance: 8, formatter: () => euros(k.projection), color: colors.proj, fontWeight: 800, fontSize: 11.5 } } : undefined },
+            { name: 'N-1', type: 'line', data: n1Vals, ...smooth, lineStyle: { width: 1.3, color: colors.n1 }, itemStyle: { color: colors.n1 }, z: 1,
+              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(63,135,148,.35)' }, { offset: 1, color: 'rgba(63,135,148,.02)' }]) } },
+            ...(hasObj ? [{ name: 'Objectif', type: 'line', data: objAll.map(o => o[1]), ...smooth, lineStyle: { width: 1.3, type: [5, 5], color: colors.obj, opacity: .75 }, itemStyle: { color: colors.obj }, z: 2 }] : []),
+            { name: 'Atterrissage', type: 'line', data: proj, connectNulls: true, showSymbol: false, lineStyle: { width: 1.8, type: [2, 5], cap: 'round', color: colors.proj }, itemStyle: { color: colors.proj }, z: 3,
+              markPoint: hasProj ? { symbol: 'circle', symbolSize: 6, itemStyle: { color: colors.proj }, data: [{ coord: [dates.length - 1, k.projection] }],
+                  label: { show: true, position: 'left', distance: 8, formatter: () => euros(k.projection), color: colors.proj, fontWeight: 600, fontSize: 11 } } : undefined },
             { name: 'Réalisé', type: 'line', data: real, ...smooth, z: 4,
-              lineStyle: { width: 3.2, cap: 'round', color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#22d3ee' }]), shadowBlur: 14, shadowColor: 'rgba(99,102,241,.55)', shadowOffsetY: 6 },
+              lineStyle: { width: 2.4, cap: 'round', color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0fb5d0' }, { offset: 1, color: '#00e3a0' }]), shadowBlur: 12, shadowColor: 'rgba(15,181,208,.35)', shadowOffsetY: 5 },
               itemStyle: { color: colors.real },
-              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(99,102,241,.42)' }, { offset: .6, color: 'rgba(34,211,238,.10)' }, { offset: 1, color: 'rgba(34,211,238,0)' }]) },
-              markPoint: idxRef >= 0 ? { symbol: 'circle', symbolSize: 13, itemStyle: { color: '#22d3ee', borderColor: css('--surface'), borderWidth: 3, shadowBlur: 12, shadowColor: '#22d3ee' }, label: { show: false }, data: [{ coord: [idxRef, last] }] } : undefined },
+              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(0,227,160,.55)' }, { offset: .7, color: 'rgba(15,181,208,.12)' }, { offset: 1, color: 'rgba(15,181,208,0)' }]) },
+              markPoint: idxRef >= 0 ? { symbol: 'circle', symbolSize: 9, itemStyle: { color: '#00e3a0', borderColor: css('--surface'), borderWidth: 2, shadowBlur: 10, shadowColor: 'rgba(0,227,160,.6)' }, label: { show: false }, data: [{ coord: [idxRef, last] }] } : undefined },
         ],
     }, true);
 }
@@ -342,7 +340,7 @@ function renderMonths() {
     const nCur = n.map((v, m) => m === cur - 1 ? v : m === cur ? kM.projection : null);
     $('#months-sub').textContent = `· ${y} vs ${y - 1}`;
     const hasObj = obj.some(Boolean);
-    $('#months-legend').innerHTML = `<span><i class="lg-line" style="border-color:#7c83ff;border-top-width:3px"></i>${y}</span><span><i class="lg-line lg-dash" style="border-color:#22d3ee"></i>${MOIS_LONG[cur]} projeté</span><span><i class="lg-line" style="border-color:${css('--n1')}"></i>${y - 1}</span>${hasObj ? `<span><i class="lg-line lg-dash" style="border-color:${css('--target')}"></i>Objectif</span>` : ''}`;
+    $('#months-legend').innerHTML = `<span><i class="lg-line" style="border-color:#1cc9c8"></i>${y}</span><span><i class="lg-line lg-dash" style="border-color:#00e3a0"></i>${MOIS_LONG[cur]} projeté</span><span><i class="lg-line" style="border-color:${css('--n1')}"></i>${y - 1}</span>${hasObj ? `<span><i class="lg-line lg-dash" style="border-color:${css('--target')}"></i>Objectif</span>` : ''}`;
     const chart = S.charts.months || (S.charts.months = echarts.init($('#chart-months'), null, { renderer: 'svg' }));
     const smooth = { smooth: .5, smoothMonotone: 'x' };
     chart.setOption({
@@ -354,14 +352,14 @@ function renderMonths() {
         xAxis: { type: 'category', data: MOIS.map(m => m.replace('.', '')), boundaryGap: false, ...baseAxis(), splitLine: { show: false } },
         yAxis: { type: 'value', ...baseAxis(), axisLine: { show: false }, splitLine: { lineStyle: { color: css('--chart-grid'), type: [3, 4] } }, axisLabel: { ...baseAxis().axisLabel, formatter: v => euros(v) } },
         series: [
-            { name: String(y - 1), type: 'line', data: n1, ...smooth, showSymbol: false, z: 1, lineStyle: { width: 1.8, color: css('--n1') }, itemStyle: { color: css('--n1') },
-              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(127,136,166,.18)' }, { offset: 1, color: 'rgba(127,136,166,0)' }]) } },
-            ...(hasObj ? [{ name: 'Objectif', type: 'line', data: obj, ...smooth, showSymbol: false, z: 2, lineStyle: { width: 1.8, type: [6, 5], color: css('--target') }, itemStyle: { color: css('--target') } }] : []),
-            { name: 'Projection', type: 'line', data: nCur, ...smooth, showSymbol: false, z: 3, lineStyle: { width: 2.4, type: [2, 5], cap: 'round', color: '#22d3ee' }, itemStyle: { color: '#22d3ee' } },
-            { name: String(y), type: 'line', data: nDone, ...smooth, z: 4, symbol: 'circle', symbolSize: 7, showSymbol: true,
-              itemStyle: { color: '#22d3ee', borderColor: css('--surface'), borderWidth: 2 },
-              lineStyle: { width: 3.2, cap: 'round', color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#22d3ee' }]), shadowBlur: 14, shadowColor: 'rgba(99,102,241,.5)', shadowOffsetY: 6 },
-              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(99,102,241,.45)' }, { offset: .7, color: 'rgba(34,211,238,.08)' }, { offset: 1, color: 'rgba(34,211,238,0)' }]) },
+            { name: String(y - 1), type: 'line', data: n1, ...smooth, showSymbol: false, z: 1, lineStyle: { width: 1.3, color: css('--n1') }, itemStyle: { color: css('--n1') },
+              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(63,135,148,.35)' }, { offset: 1, color: 'rgba(63,135,148,.02)' }]) } },
+            ...(hasObj ? [{ name: 'Objectif', type: 'line', data: obj, ...smooth, showSymbol: false, z: 2, lineStyle: { width: 1.3, type: [5, 5], color: css('--target'), opacity: .75 }, itemStyle: { color: css('--target') } }] : []),
+            { name: 'Projection', type: 'line', data: nCur, ...smooth, showSymbol: false, z: 3, lineStyle: { width: 1.8, type: [2, 5], cap: 'round', color: '#00e3a0' }, itemStyle: { color: '#00e3a0' } },
+            { name: String(y), type: 'line', data: nDone, ...smooth, z: 4, symbol: 'circle', symbolSize: 5, showSymbol: true,
+              itemStyle: { color: '#00e3a0', borderColor: css('--surface'), borderWidth: 1.5 },
+              lineStyle: { width: 2.4, cap: 'round', color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0fb5d0' }, { offset: 1, color: '#00e3a0' }]), shadowBlur: 12, shadowColor: 'rgba(15,181,208,.35)', shadowOffsetY: 5 },
+              areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(0,227,160,.55)' }, { offset: .7, color: 'rgba(15,181,208,.12)' }, { offset: 1, color: 'rgba(15,181,208,0)' }]) },
               emphasis: { scale: 1.6 } },
         ],
     }, true);
@@ -376,11 +374,10 @@ function renderRank() {
         const rows = actifs().map(c => ({ c, k: kpisFor(c.id) })).sort((a, b) => (b.k.rythme ?? -1) - (a.k.rythme ?? -1));
         $('#rank').innerHTML = rows.map(({ c, k }, i) => {
             const st = statut(k.rythme, reg);
-            const col = { ok: 'linear-gradient(90deg,#16a34a,#4ade80)', warn: 'linear-gradient(90deg,#f59e0b,#fcd34d)', late: 'linear-gradient(90deg,#dc2626,#fb7185)', none: 'var(--grad)' }[st.key];
             return `<button class="rank-row" data-who="${c.id}" style="animation-delay:${i * 30}ms" title="${esc(st.label)} · rythme ${pct(k.rythme)}">
                 <span class="avatar" style="--c:${c.couleur}">${esc(initials(c))}</span>
                 <span><span class="r-name">${esc(fullName(c))}<small>${euros(k.ca)}</small></span>
-                <span class="bar"><span style="background:${col}" data-w="${Math.min(100, (k.atteinte || 0) / 1.2)}"></span>${k.attendu != null ? `<i style="left:${Math.min(100, k.attendu / 1.2)}%"></i>` : ''}</span></span>
+                <span class="bar"><span data-w="${Math.min(100, (k.atteinte || 0) / 1.2)}"></span>${k.attendu != null ? `<i style="left:${Math.min(100, k.attendu / 1.2)}%"></i>` : ''}</span></span>
                 <span class="r-val">${pct(k.atteinte)}<small class="${st.key}"><i class="${st.icon}"></i>${k.evol == null ? '' : pct(k.evol, { sign: true })}</small></span>
             </button>`;
         }).join('') || '<div class="empty"><i class="ri-user-add-line"></i>Ajoutez vos commerciaux dans l\'admin</div>';
@@ -416,8 +413,8 @@ async function renderClients() {
         const rows = await S.store.parSegment(iso(b.debut), iso(b.ref), S.who);
         const max = rows[0]?.[1] || 1;
         const suivis = new Set(S.who ? commercial(S.who)?.clientele || [] : []);
-        $('#clients').innerHTML = rows.map(([n, ca, nb], i) => `<div class="client-row" style="animation-delay:${i * 30}ms"><span class="num"><i class="${suivis.has(n) ? 'ri-star-fill' : 'ri-donut-chart-fill'}" style="color:${SEG_COLORS[i % SEG_COLORS.length]}" title="${suivis.has(n) ? 'Clientèle suivie' : ''}"></i></span>
-            <span><span class="c-name">${esc(n)}</span><span class="bar"><span data-w="${ca / max * 100}" style="background:${SEG_COLORS[i % SEG_COLORS.length]}"></span></span></span>
+        $('#clients').innerHTML = rows.map(([n, ca, nb], i) => `<div class="client-row" style="animation-delay:${i * 30}ms"><span class="num">${suivis.has(n) ? '<i class="ri-star-fill grad-text" title="Clientèle suivie"></i>' : i + 1}</span>
+            <span><span class="c-name">${esc(n)}</span><span class="bar"><span data-w="${ca / max * 100}"></span></span></span>
             <span class="r-val">${pct(ca / total * 100)}<small>${euros(+ca)} · ${nb} cde${nb > 1 ? 's' : ''}</small></span></div>`).join('') || '<div class="empty"><i class="ri-pie-chart-line"></i>Ajoutez une colonne « Type client » au fichier pour voir cette répartition</div>';
     } else {
         const rows = await S.store.topClients(iso(b.debut), iso(b.ref), S.who, 7);
@@ -429,9 +426,8 @@ async function renderClients() {
     requestAnimationFrame(() => $$('#clients .bar > span').forEach(s => s.style.width = s.dataset.w + '%'));
 }
 // ─── Gammes produits ────────────────────────────────────────
-const GAMME_STYLE = { 'serrures': ['ri-lock-2-fill', '#2a78d6'], 'portes blindees': ['ri-shield-keyhole-fill', '#6250d6'], 'portes techniques': ['ri-door-lock-box-fill', '#1baf7a'],
-    'portes de hall': ['ri-building-4-fill', '#eb6834'], 'eliot': ['ri-bluetooth-connect-fill', '#e87ba4'] };
-const gammeStyle = (g, i) => GAMME_STYLE[norm(g)] || ['ri-stack-fill', SEG_COLORS[(i + 2) % SEG_COLORS.length]];
+const GAMME_ICONE = { 'serrures': 'ri-lock-2-line', 'portes blindees': 'ri-shield-keyhole-line', 'portes techniques': 'ri-door-lock-box-line', 'portes de hall': 'ri-building-4-line', 'eliot': 'ri-bluetooth-connect-line' };
+const gammeIcone = g => GAMME_ICONE[norm(g)] || 'ri-stack-line';
 
 async function renderGammes() {
     const b = bounds(S.period);
@@ -444,9 +440,9 @@ async function renderGammes() {
     if (!n.length || (n.length === 1 && n[0][0] === 'Non renseignée')) { el.hidden = true; return; }
     el.hidden = false;
     el.innerHTML = ordre.map((g, i) => {
-        const v = cur.get(g) || { ca: 0, mg: 0 }; const p1 = prev.get(g) || 0; const [icon, color] = gammeStyle(g, i);
+        const v = cur.get(g) || { ca: 0, mg: 0 }; const p1 = prev.get(g) || 0; const icon = gammeIcone(g);
         const ev = p1 ? (v.ca / p1 - 1) * 100 : null;
-        return `<div class="gamme" style="--g:${color};animation-delay:${i * 50}ms" title="${esc(g)} : ${euros(v.ca, { compact: false })} · marge ${pct(v.ca ? v.mg / v.ca * 100 : null, { dec: 1 })}">
+        return `<div class="gamme" style="animation-delay:${i * 50}ms" title="${esc(g)} : ${euros(v.ca, { compact: false })} · marge ${pct(v.ca ? v.mg / v.ca * 100 : null, { dec: 1 })}">
             <div class="g-top"><i class="${icon}"></i>${esc(g)}</div>
             <div class="g-val">${euros(v.ca)}<small>${pct(v.ca / total * 100)} du CA</small></div>
             <div class="g-mix"><span data-w="${v.ca / total * 100}"></span></div>
@@ -454,8 +450,6 @@ async function renderGammes() {
     }).join('');
     requestAnimationFrame(() => $$('#gammes .g-mix span').forEach(s => s.style.width = s.dataset.w + '%'));
 }
-
-const SEG_COLORS = ['#7c83ff', '#22d3ee', '#1baf7a', '#eda100', '#e87ba4', '#eb6834', '#9085e9', '#64748b'];
 
 // ─── Carte ──────────────────────────────────────────────────
 const MAP = { vb: null, full: [0, 0, CARTE.w, CARTE.h], anim: 0 };
@@ -474,12 +468,20 @@ function buildMap(svg, { badges = true } = {}) {
     el('path', { d: CARTE.fond, class: 'fond' }, svg);
     const gIn = el('g', { class: 'insets' }, svg);
     for (const i of CARTE.insets) {
-        el('rect', { x: i.x, y: i.y, width: i.w, height: i.h, rx: 12, class: 'inset-box', 'data-zone': i.code }, gIn);
+        el('rect', { x: i.x, y: i.y, width: i.w, height: i.h, class: 'inset-box', 'data-zone': i.code }, gIn);
         el('text', { x: i.x + 9, y: i.y + 16, class: 'inset-label' }, gIn).textContent = i.nom.replace('Saint-Pierre-et-Miquelon', 'St-Pierre-et-M.').replace('Polynésie française', 'Polynésie').replace('Nouvelle-Calédonie', 'N.-Calédonie');
     }
+    const defs = $('defs', svg);
+    const sh = el('linearGradient', { id: 'sheen-' + svg.id, gradientUnits: 'userSpaceOnUse', x1: 0, y1: 0, x2: CARTE.w, y2: CARTE.h }, defs);
+    el('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': .55 }, sh);
+    el('stop', { offset: .5, 'stop-color': '#fff', 'stop-opacity': 0 }, sh);
+    el('stop', { offset: 1, 'stop-color': '#000', 'stop-opacity': .45 }, sh);
     const land = el('g', { class: 'land' }, svg);
     const gz = el('g', { class: 'zones' }, land);
     for (const z of CARTE.zones) el('path', { d: z.d, class: 'z', 'data-zone': z.code }, gz);
+    // Reflet : un léger dégradé de lumière sur l'ensemble, les couleurs des ATC restent unies
+    const gs = el('g', { class: 'sheen', fill: `url(#sheen-${svg.id})` }, land);
+    for (const z of CARTE.zones) el('path', { d: z.d, 'fill-rule': 'evenodd' }, gs);
     const gb = el('g', { class: 'borders' }, land);
     for (const b of CARTE.borders) { const p = el('path', { d: b.d, class: 'b' }, gb); p._a = b.a; p._b = b.b; }
     el('g', { class: 'zlabels' }, svg);
@@ -503,12 +505,12 @@ function paintBorders(svg, ownerOf, selected) {
 }
 
 function seqColor(t) { // une seule teinte, du clair au foncé (bleu)
-    const stops = document.documentElement.dataset.theme === 'light' ? ['#cde2fb', '#6da7ec', '#2a78d6', '#184f95', '#0d366b'] : ['#1d2a52', '#256abf', '#3987e5', '#6da7ec', '#cde2fb'];
+    const stops = document.documentElement.dataset.theme === 'light' ? ['#d9f2f3', '#86d9df', '#0fb5d0', '#0b8aa0', '#0b5e6e'] : ['#33505b', '#147d8f', '#0fb5d0', '#3fdcbc', '#b9f7e4'];
     return interpolate(stops, t);
 }
 function divColor(t) { // -1 … +1 : rouge ↔ gris ↔ vert
-    const neutral = document.documentElement.dataset.theme === 'light' ? '#e6e8ef' : '#2e3550';
-    return t < 0 ? interpolate([neutral, '#f08080', '#d03b3b'], -t) : interpolate([neutral, '#5fc77a', '#0ca30c'], t);
+    const neutral = document.documentElement.dataset.theme === 'light' ? '#e3eaed' : '#3a5460';
+    return t < 0 ? interpolate([neutral, '#f3a0a6', '#e0606f'], -t) : interpolate([neutral, '#7ee8c6', '#00c38c'], t);
 }
 function interpolate(stops, t) {
     t = Math.max(0, Math.min(1, t)); const n = stops.length - 1; const i = Math.min(n - 1, Math.floor(t * n)); const f = t * n - i;
@@ -552,12 +554,12 @@ function renderBadges(svg) {
         const b = el('g', { class: 'badge' + (S.who === id ? ' on' : ''), 'data-who': id }, g);
         b.style.transform = `translate(${x}px, ${y}px) scale(var(--s))`;
         if (S.who === id) {
-            const w = 22 + fullName(c).length * 6.6;
-            el('rect', { x: -15, y: -15, width: w + 18, height: 30, rx: 15, class: 'badge-pill' }, b);
-            el('text', { x: 20, y: 4.5, class: 'badge-name' }, b).textContent = fullName(c);
+            const w = 20 + fullName(c).length * 6.3;
+            el('rect', { x: -14, y: -14, width: w + 16, height: 28, class: 'badge-pill' }, b);
+            el('text', { x: 18, y: 4, class: 'badge-name' }, b).textContent = fullName(c);
         }
-        el('circle', { r: 13, fill: c.couleur, class: 'badge-dot' }, b);
-        el('text', { y: 4, class: 'badge-txt' }, b).textContent = initials(c);
+        el('circle', { r: 11, fill: c.couleur, class: 'badge-dot' }, b);
+        el('text', { y: 3.3, class: 'badge-txt' }, b).textContent = initials(c);
     }
 }
 

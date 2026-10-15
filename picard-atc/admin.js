@@ -11,7 +11,7 @@ const TABS = [
     ['objectifs', 'ri-focus-3-line', 'Objectifs'],
     ['reglages', 'ri-equalizer-line', 'Réglages'],
 ];
-const PALETTE = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948', '#0e7490', '#a16207', '#be185d', '#475569'];
+const PALETTE = ['#0fb5d0', '#00e3a0', '#5b8def', '#9d8df1', '#f2a65a', '#2ec4a6', '#7fb3ff', '#1aa3c9', '#7ee8c6', '#b3a6ff', '#f28fa8', '#8aa3ab'];
 
 function openModal(id) { const m = $('#' + id); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
 function closeModal(id) { const m = $('#' + id); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }

@@ -5,20 +5,20 @@
    faites dans l'admin sont gardées dans ce navigateur.
    ============================================================ */
 
-const DEMO_KEY = 'commerce_demo_v1';
+const DEMO_KEY = 'picard_atc_demo_v3';
 
 const DEMO_EQUIPE = [
-    ['Camille', 'Laurent', 'CLA', '#2a78d6', ['75', '77', '78', '91', '92', '93', '94', '95'], 3.6],
-    ['Julien', 'Moreau', 'JMO', '#eb6834', ['59', '62', '80', '02', '60', 'BE-BRU', 'BE-WBR', 'BE-VBR', 'BE-VAN', 'BE-VLI', 'BE-WLG', 'BE-WNA', 'BE-WHT', 'BE-WLX', 'BE-VWV', 'BE-VOV'], 2.9],
-    ['Sophie', 'Lefèvre', 'SLE', '#1baf7a', ['08', '51', '10', '52', '54', '55', '57', '67', '68', '88', 'LU'], 2.4],
-    ['Thomas', 'Girard', 'TGI', '#eda100', ['01', '38', '69', '73', '74', '42', '07', '26', 'CH-GE', 'CH-VD', 'CH-VS', 'CH-NE', 'CH-FR', 'CH-JU', 'CH-BE', 'CH-BS', 'CH-BL', 'CH-SO', 'CH-AG', 'CH-LU', 'CH-ZG', 'CH-ZH', 'CH-SZ', 'CH-UR', 'CH-OW', 'CH-NW', 'CH-GL', 'CH-SH', 'CH-TG', 'CH-SG', 'CH-AR', 'CH-AI', 'CH-GR', 'CH-TI'], 3.1],
-    ['Léa', 'Fontaine', 'LFO', '#e87ba4', ['04', '05', '06', '13', '83', '84', '2A', '2B'], 2.7],
-    ['Antoine', 'Mercier', 'AME', '#008300', ['09', '11', '12', '30', '31', '32', '34', '46', '48', '65', '66', '81', '82'], 2.5],
-    ['Chloé', 'Dubois', 'CDU', '#6250d6', ['16', '17', '19', '23', '24', '33', '40', '47', '64', '79', '86', '87'], 2.3],
-    ['Maxime', 'Rousseau', 'MRO', '#e34948', ['22', '29', '35', '56', '44', '49', '53', '72', '85'], 2.6],
-    ['Inès', 'Garnier', 'IGA', '#0e7490', ['14', '27', '50', '61', '76', '18', '28', '36', '37', '41', '45'], 2.2],
-    ['Hugo', 'Lambert', 'HLA', '#a16207', ['03', '15', '43', '63', '21', '25', '39', '58', '70', '71', '89', '90'], 1.9],
-    ['Manon', 'Chevalier', 'MCH', '#be185d', ['971', '972', '973', '974', '976', '975', '987', '988'], 1.1],
+    ['Camille', 'Laurent', 'CLA', '#0fb5d0', ['75', '77', '78', '91', '92', '93', '94', '95'], 3.6],
+    ['Julien', 'Moreau', 'JMO', '#00e3a0', ['59', '62', '80', '02', '60', 'BE-BRU', 'BE-WBR', 'BE-VBR', 'BE-VAN', 'BE-VLI', 'BE-WLG', 'BE-WNA', 'BE-WHT', 'BE-WLX', 'BE-VWV', 'BE-VOV'], 2.9],
+    ['Sophie', 'Lefèvre', 'SLE', '#5b8def', ['08', '51', '10', '52', '54', '55', '57', '67', '68', '88', 'LU'], 2.4],
+    ['Thomas', 'Girard', 'TGI', '#9d8df1', ['01', '38', '69', '73', '74', '42', '07', '26', 'CH-GE', 'CH-VD', 'CH-VS', 'CH-NE', 'CH-FR', 'CH-JU', 'CH-BE', 'CH-BS', 'CH-BL', 'CH-SO', 'CH-AG', 'CH-LU', 'CH-ZG', 'CH-ZH', 'CH-SZ', 'CH-UR', 'CH-OW', 'CH-NW', 'CH-GL', 'CH-SH', 'CH-TG', 'CH-SG', 'CH-AR', 'CH-AI', 'CH-GR', 'CH-TI'], 3.1],
+    ['Léa', 'Fontaine', 'LFO', '#f2a65a', ['04', '05', '06', '13', '83', '84', '2A', '2B'], 2.7],
+    ['Antoine', 'Mercier', 'AME', '#2ec4a6', ['09', '11', '12', '30', '31', '32', '34', '46', '48', '65', '66', '81', '82'], 2.5],
+    ['Chloé', 'Dubois', 'CDU', '#7fb3ff', ['16', '17', '19', '23', '24', '33', '40', '47', '64', '79', '86', '87'], 2.3],
+    ['Maxime', 'Rousseau', 'MRO', '#1aa3c9', ['22', '29', '35', '56', '44', '49', '53', '72', '85'], 2.6],
+    ['Inès', 'Garnier', 'IGA', '#7ee8c6', ['14', '27', '50', '61', '76', '18', '28', '36', '37', '41', '45'], 2.2],
+    ['Hugo', 'Lambert', 'HLA', '#b3a6ff', ['03', '15', '43', '63', '21', '25', '39', '58', '70', '71', '89', '90'], 1.9],
+    ['Manon', 'Chevalier', 'MCH', '#f28fa8', ['971', '972', '973', '974', '976', '975', '987', '988'], 1.1],
 ];
 // Performance de l'année en cours par rapport à l'objectif (fictif) et croissance vs N-1
 const DEMO_PERF = [1.06, 0.93, 1.02, 1.12, 0.84, 0.98, 1.0, 0.89, 1.04, 0.95, 1.09];
