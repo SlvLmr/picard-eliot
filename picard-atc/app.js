@@ -46,8 +46,6 @@ async function loadAll() {
     S.ref = S.base.etat?.derniere_date ? parseIso(S.base.etat.derniere_date) : new Date();
     if (S.who && !isEquipe(S.who) && !commercial(S.who)) S.who = null;
     document.title = S.base.reglages.nom || 'PICARD-ATC';
-    $('#app-name').textContent = S.base.reglages.nom || 'PICARD-ATC';
-    $('#app-sub').textContent = S.base.reglages.sous_titre || '';
 }
 
 function renderAll({ animate = true } = {}) {
@@ -72,8 +70,7 @@ function renderSide() {
     const q = norm($('#search').value);
     const soc = Kc(null, S.period); const r = ringHtml(soc);
     const ring = $('#team-ring'); ring.innerHTML = r.html; ring.setAttribute('style', r.style);
-    $('#team-count').textContent = `${actifs().length} fiches · ${euros(soc.realise)}`;
-    $('#team-stack').innerHTML = equipesUtilisees().map(e => `<span class="avatar" style="--c:${e.couleur}"></span>`).join('');
+    $('#team-count').textContent = `${actifs().filter(c => c.equipe !== 'DIR').length} ATC · ${euros(soc.realise)}`;
     $('#team-all').classList.toggle('active', !S.who);
     let i = 0;
     const html = equipesUtilisees().map(e => {
@@ -124,7 +121,7 @@ function renderHead() {
             <div><h1>Équipe ${esc(e.nom)}</h1><div class="meta"><span><i class="ri-calendar-2-line"></i>${lab} · ${src}</span><span><i class="ri-user-star-line"></i>${ms.map(c => esc(c.prenom || c.nom)).join(', ')}</span></div></div>`;
     } else {
         $('#who').innerHTML = `<span class="team-hero"><i class="ri-building-2-fill"></i></span>
-            <div><h1>Toute la société</h1><div class="meta"><span><i class="ri-calendar-2-line"></i>${lab} · ${src}</span><span><i class="ri-user-star-line"></i>${equipesUtilisees().filter(e => e.code !== 'DIR').length} équipes · ${actifs().filter(c => c.equipe !== 'DIR').length} ATC</span></div></div>`;
+            <div><h1>Tous les ATC</h1><div class="meta"><span><i class="ri-calendar-2-line"></i>${lab} · ${src}</span><span><i class="ri-user-star-line"></i>${equipesUtilisees().filter(e => e.code !== 'DIR').length} équipes · ${actifs().filter(c => c.equipe !== 'DIR').length} ATC</span></div></div>`;
     }
     $$('#period button').forEach(b => b.classList.toggle('on', b.dataset.period === S.period));
     moveGlider($('#period'));
@@ -618,7 +615,7 @@ function renderPotentiel() {
         const pot = zones.reduce((s, x) => s + (zi[x]?.potentiel || 0), 0), iap = zones.reduce((s, x) => s + (zi[x]?.iap || 0), 0);
         const ka = Kc(S.who, 'annee');
         box.innerHTML = `<header><span><i class="ri-focus-3-line"></i>Potentiel ${exemple}</span></header>
-            <h4>${S.who ? (isEquipe(S.who) ? 'Équipe ' + esc(equipeDe(S.who.slice(3)).nom) : esc(fullName(commercial(S.who)))) : 'Toute la société'}</h4>
+            <h4>${S.who ? (isEquipe(S.who) ? 'Équipe ' + esc(equipeDe(S.who.slice(3)).nom) : esc(fullName(commercial(S.who)))) : 'Tous les ATC'}</h4>
             <div class="pt-big">${euros(pot)}<small>potentiel annuel · ${zones.length} zones</small></div>
             <div class="pt-grid">
                 <span>Atterrissage ${S.ref.getFullYear()}<b>${euros(ka.projection)}</b></span>
