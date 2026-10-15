@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commerce · Pilotage</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script>try { if (localStorage.getItem('commerce_theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+    <!-- ─── Menu de gauche : l'équipe ─── -->
+    <aside class="side" id="side">
+        <a class="brand" href="./" title="Vue d'ensemble">
+            <span class="brand-mark"><i class="ri-line-chart-fill"></i></span>
+            <span class="brand-text"><strong id="app-name">Commerce</strong><small id="app-sub">Pilotage du chiffre</small></span>
+        </a>
+
+        <button class="team-item" id="team-all" data-who="">
+            <span class="team-stack" id="team-stack"></span>
+            <span class="ti-text"><strong>Toute l'équipe</strong><small id="team-count"></small></span>
+            <span class="ring" id="team-ring"></span>
+        </button>
+
+        <div class="side-search">
+            <i class="ri-search-line"></i>
+            <input id="search" type="search" placeholder="Rechercher un commercial" aria-label="Rechercher un commercial">
+        </div>
+        <nav class="team-list" id="team-list" aria-label="Commerciaux"></nav>
+
+        <div class="side-foot">
+            <div class="live" id="live" title="Données synchronisées">
+                <span class="live-dot"></span>
+                <span><strong id="live-label">Données au —</strong><small id="live-sub"></small></span>
+            </div>
+            <div class="side-actions">
+                <button class="icon-btn" id="btn-theme" title="Mode clair / sombre" aria-label="Changer de thème"><i class="ri-sun-line"></i></button>
+                <button class="admin-btn" id="btn-admin"><i class="ri-shield-keyhole-line"></i>Admin</button>
+            </div>
+        </div>
+    </aside>
+    <div class="side-scrim" id="side-scrim"></div>
+
+    <!-- ─── Tableau de bord ─── -->
+    <main class="main" id="main">
+        <div class="demo-banner" id="demo-banner" hidden>
+            <i class="ri-flask-line"></i>
+            <span><strong>Mode démonstration</strong> — données fictives. Branchez Supabase dans <code>config.js</code> pour passer sur vos vraies données.</span>
+        </div>
+
+        <header class="head">
+            <button class="icon-btn burger" id="btn-menu" aria-label="Ouvrir la liste des commerciaux"><i class="ri-menu-2-line"></i></button>
+            <div class="who" id="who"></div>
+            <div class="head-tools">
+                <div class="seg" id="period" role="tablist" aria-label="Période">
+                    <button data-period="mois" role="tab">Mois</button>
+                    <button data-period="trimestre" role="tab">Trimestre</button>
+                    <button data-period="annee" role="tab">Année</button>
+                    <span class="seg-glider"></span>
+                </div>
+            </div>
+        </header>
+
+        <section class="signals" id="signals" aria-live="polite"></section>
+
+        <section class="kpis" id="kpis"></section>
+
+        <section class="gammes" id="gammes" aria-label="Gammes produits"></section>
+
+        <section class="grid-a">
+            <div class="col">
+                <article class="card gauges-card">
+                    <header class="card-head">
+                        <h2><i class="ri-dashboard-3-line"></i>Objectifs</h2>
+                        <span class="hint"><i class="ri-cursor-line"></i>Cliquez sur une jauge pour changer de période</span>
+                    </header>
+                    <div class="gauges" id="gauges"></div>
+                    <div class="gauge-legend">
+                        <span><i class="gl gl-done"></i>Réalisé</span>
+                        <span><i class="gl gl-mark"></i>Attendu à date</span>
+                    </div>
+                </article>
+                <article class="card">
+                    <header class="card-head">
+                        <h2><i class="ri-route-line"></i>Trajectoire <small id="traj-sub"></small></h2>
+                        <div class="legend-inline" id="traj-legend"></div>
+                    </header>
+                    <div class="chart" id="chart-traj" style="height:270px"></div>
+                </article>
+            </div>
+            <article class="card map-card">
+                <header class="card-head">
+                    <h2><i class="ri-map-2-line"></i>Secteurs</h2>
+                    <div class="seg seg-sm" id="map-mode" role="tablist" aria-label="Affichage de la carte">
+                        <button data-map="secteurs">Commerciaux</button>
+                        <button data-map="ca">Chiffre</button>
+                        <button data-map="evol">Évolution</button>
+                        <span class="seg-glider"></span>
+                    </div>
+                </header>
+                <div class="map-wrap" id="map-wrap">
+                    <svg id="map" role="img" aria-label="Carte des secteurs"></svg>
+                    <div class="map-zoom">
+                        <button class="icon-btn" id="map-in" title="Zoomer"><i class="ri-add-line"></i></button>
+                        <button class="icon-btn" id="map-out" title="Dézoomer"><i class="ri-subtract-line"></i></button>
+                        <button class="icon-btn" id="map-reset" title="Vue complète"><i class="ri-fullscreen-exit-line"></i></button>
+                    </div>
+                    <div class="map-legend" id="map-legend"></div>
+                </div>
+            </article>
+        </section>
+
+        <section class="grid-b">
+            <article class="card">
+                <header class="card-head">
+                    <h2><i class="ri-bar-chart-2-line"></i>Mois par mois <small id="months-sub"></small></h2>
+                    <div class="legend-inline" id="months-legend"></div>
+                </header>
+                <div class="chart" id="chart-months" style="height:260px"></div>
+            </article>
+            <article class="card" id="card-rank">
+                <header class="card-head">
+                    <h2 id="rank-title"></h2>
+                    <span class="hint" id="rank-hint"></span>
+                </header>
+                <div class="rank" id="rank"></div>
+            </article>
+            <article class="card">
+                <header class="card-head">
+                    <h2 id="clients-title"><i class="ri-building-2-line"></i>Clients <small id="clients-sub"></small></h2>
+                    <div class="seg seg-sm" id="clients-mode" role="tablist" aria-label="Vue clients">
+                        <button data-cmode="clients">Top clients</button>
+                        <button data-cmode="segments">Par clientèle</button>
+                        <span class="seg-glider"></span>
+                    </div>
+                </header>
+                <div class="clients" id="clients"></div>
+            </article>
+        </section>
+
+        <footer class="foot muted">Atterrissage : projection de fin de période au rythme actuel par rapport à l'objectif. Rythme : réalisé ÷ objectif attendu à date (au prorata des jours ouvrés).</footer>
+    </main>
+</div>
+
+<div class="tip" id="tip" role="tooltip"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- Connexion -->
+<div class="modal" id="login" aria-hidden="true" role="dialog" aria-labelledby="login-title">
+    <form class="login" id="login-form">
+        <button type="button" class="icon-btn modal-x" data-close title="Fermer"><i class="ri-close-line"></i></button>
+        <span class="login-ico"><i class="ri-shield-keyhole-fill"></i></span>
+        <h2 id="login-title">Administration</h2>
+        <p class="muted">Accès réservé aux deux administrateurs</p>
+        <label>E-mail<input type="email" name="email" autocomplete="username" required></label>
+        <label>Mot de passe<input type="password" name="password" autocomplete="current-password" required></label>
+        <p class="form-error" id="login-error" hidden></p>
+        <button type="submit" class="btn btn-primary btn-block" id="login-submit"><i class="ri-login-circle-line"></i>Se connecter</button>
+    </form>
+</div>
+
+<!-- Admin -->
+<div class="modal admin-modal" id="admin" aria-hidden="true" role="dialog" aria-labelledby="admin-title">
+    <div class="admin">
+        <header class="admin-head">
+            <h2 id="admin-title"><i class="ri-shield-keyhole-line"></i>Administration</h2>
+            <nav class="admin-tabs" id="admin-tabs"></nav>
+            <button class="icon-btn" data-close title="Fermer"><i class="ri-close-line"></i></button>
+        </header>
+        <div class="admin-body" id="admin-body"></div>
+        <footer class="admin-foot">
+            <span id="admin-status" class="muted"><i class="ri-save-3-line"></i> Enregistrement automatique</span>
+            <span class="admin-user"><i class="ri-user-3-line"></i><span id="admin-user"></span>
+                <button class="btn btn-ghost btn-sm" id="btn-logout"><i class="ri-logout-box-r-line"></i>Se déconnecter</button></span>
+        </footer>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+<script src="config.js"></script>
+<script src="data/carte.js"></script>
+<script src="core.js"></script>
+<script src="demo.js"></script>
+<script src="cloud.js"></script>
+<script src="app.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 # Picard2030
 
+> Le dépôt contient aussi l'outil **Commerce** (pilotage du chiffre des commerciaux), dans le dossier [`commerce/`](commerce/README.md).
+
 Timeline interactive pour suivre l'avancement du plan **Picard2030**.
 
 ## Structure
