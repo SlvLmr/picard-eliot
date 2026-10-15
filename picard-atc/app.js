@@ -265,7 +265,7 @@ function renderGauges() {
             animationDuration: 1100, animationEasingUpdate: 'cubicOut', animationDurationUpdate: 900,
             series: [
                 { type: 'gauge', startAngle: 90, endAngle: -270, min: 0, max: 100, radius: '88%', center: ['50%', '50%'],
-                  progress: { show: true, width: 9, itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0fb5d0' }, { offset: 1, color: '#00e3a0' }]) } },
+                  progress: { show: true, width: 9, itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#2563eb' }, { offset: 1, color: '#22d3ee' }]) } },
                   axisLine: { lineStyle: { width: 9, color: [[1, css('--surface-3')]] } },
                   pointer: { show: false }, anchor: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, title: { show: false },
                   detail: { valueAnimation: true, offsetCenter: [0, 0], fontSize: g.offsetWidth < 170 ? 20 : 26, fontWeight: 300, fontFamily: 'Roboto', color: css('--text'), formatter: () => k.atteinte == null ? '—' : `${Math.round(k.atteinte)}%` },
@@ -287,10 +287,10 @@ function baseAxis() {
 }
 const tooltipStyle = () => ({ backgroundColor: css('--surface-3'), borderColor: css('--line-strong'), borderWidth: 1, padding: [8, 12],
     textStyle: { color: css('--text'), fontSize: 12, fontFamily: 'Roboto' }, extraCssText: 'border-radius:0;box-shadow:0 12px 30px rgba(0,0,0,.25)' });
-const C = { real: '#00e3a0', real2: '#0fb5d0', proj: '#00e3a0' };
-const gradLine = () => new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0fb5d0' }, { offset: 1, color: '#00e3a0' }]);
-const gradArea = (a = .5) => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: `rgba(0,227,160,${a})` }, { offset: .7, color: 'rgba(15,181,208,.1)' }, { offset: 1, color: 'rgba(15,181,208,0)' }]);
-const n1Area = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(63,135,148,.35)' }, { offset: 1, color: 'rgba(63,135,148,.02)' }]);
+const C = { real: '#22d3ee', real2: '#2563eb', proj: '#22d3ee' };
+const gradLine = () => new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#2563eb' }, { offset: 1, color: '#22d3ee' }]);
+const gradArea = (a = .5) => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: `rgba(34,211,238,${a})` }, { offset: .7, color: 'rgba(37,99,235,.1)' }, { offset: 1, color: 'rgba(37,99,235,0)' }]);
+const n1Area = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(84,118,184,.35)' }, { offset: 1, color: 'rgba(84,118,184,.02)' }]);
 const smooth = { smooth: .45, smoothMonotone: 'x', showSymbol: false };
 
 function renderTrajectory() {
@@ -310,11 +310,11 @@ function renderTrajectory() {
         const proj = dates.map((_, i) => i === idx ? fact[idx] : i === dates.length - 1 ? k.projection : null);
         series = [
             { name: 'Objectif', type: 'line', data: obj, ...smooth, lineStyle: { width: 1.3, type: [5, 5], color: css('--target'), opacity: .75 }, itemStyle: { color: css('--target') } },
-            { name: 'Enregistré', type: 'line', data: enr, ...smooth, lineStyle: { width: 1.6, color: '#5b8def' }, itemStyle: { color: '#5b8def' } },
+            { name: 'Enregistré', type: 'line', data: enr, ...smooth, lineStyle: { width: 1.6, color: '#a78bfa' }, itemStyle: { color: '#a78bfa' } },
             { name: 'Atterrissage', type: 'line', data: proj, connectNulls: true, showSymbol: false, lineStyle: { width: 1.8, type: [2, 5], color: C.proj }, itemStyle: { color: C.proj } },
             { name: 'Facturé', type: 'line', data: fact, ...smooth, lineStyle: { width: 2.6, color: gradLine() }, itemStyle: { color: C.real }, areaStyle: { color: gradArea() } },
         ];
-        legend = [['Facturé', C.real], ['Enregistré', '#5b8def'], ['Objectif', css('--target'), 1], ['Atterrissage (carnet)', C.proj, 1]];
+        legend = [['Facturé', C.real], ['Enregistré', '#a78bfa'], ['Objectif', css('--target'), 1], ['Atterrissage (carnet)', C.proj, 1]];
         fmtX = s => String(parseIso(s).getDate()); interval = 3;
         $('#traj-sub').textContent = `· ${p.label} · jour par jour`;
     } else {
@@ -454,7 +454,7 @@ function renderCarnet() {
         yAxis: { type: 'value', ...baseAxis(), axisLine: { show: false }, axisLabel: { ...baseAxis().axisLabel, formatter: v => euros(v) } },
         series: [
             { name: 'Carnet total', type: 'line', data: pf.map(x => x.pf_total), ...smooth, lineStyle: { width: 2.2, color: gradLine() }, itemStyle: { color: C.real }, areaStyle: { color: gradArea(.4) } },
-            { name: 'Livrable ce mois', type: 'line', data: pf.map(x => x.lm_total), ...smooth, lineStyle: { width: 1.3, color: '#5b8def' }, itemStyle: { color: '#5b8def' } },
+            { name: 'Livrable ce mois', type: 'line', data: pf.map(x => x.lm_total), ...smooth, lineStyle: { width: 1.3, color: '#a78bfa' }, itemStyle: { color: '#a78bfa' } },
         ],
     });
 }
@@ -497,7 +497,7 @@ function paintBorders(svg, ownerOf, inSel) {
 }
 
 function seqColor(t) {
-    const stops = document.documentElement.dataset.theme === 'light' ? ['#d9f2f3', '#86d9df', '#0fb5d0', '#0b8aa0', '#0b5e6e'] : ['#33505b', '#147d8f', '#0fb5d0', '#3fdcbc', '#b9f7e4'];
+    const stops = document.documentElement.dataset.theme === 'light' ? ['#d9f2f3', '#86d9df', '#2563eb', '#0b8aa0', '#0b5e6e'] : ['#33505b', '#147d8f', '#2563eb', '#3fdcbc', '#b9f7e4'];
     return interpolate(stops, t);
 }
 function divColor(t) {
