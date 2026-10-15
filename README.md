@@ -26,7 +26,7 @@ La page est organisée en trois sections, accessibles depuis les raccourcis en h
 L'outil s'ouvre toujours sur la **vue d'ensemble**, avec la Timeline par thème (Commerce et Production côte à côte). Un **clic sur le logo** ramène à cette page.
 
 1. **Timeline**, avec deux vues :
-   - **Par thème** (par défaut) : l'infographie verticale des grands thèmes et de leurs jauges.
+   - **Par thème** (par défaut) : l'infographie verticale des grands thèmes et de leurs jauges. Un clic sur une carte déroule ses actions supplémentaires et son texte complet, directement dans la carte.
    - **Agenda** : le vrai calendrier, avec un point par événement daté, regroupés par mois, et « Aujourd'hui » à sa vraie place.
      - Jalons (◆) et rendez-vous de quelques jours : à leur date.
      - Actions : à leur échéance (⚑).
@@ -103,4 +103,5 @@ Projet Supabase **picard2030** (organisation Picard Serrures, région Francfort)
 
 - Table `messages` : dépôt ouvert à tous, lecture, modification et suppression réservées aux administrateurs (règles RLS).
 - Fonction `is_admin()` : liste des e-mails administrateurs.
+- Comptes : uniquement les deux administrateurs. Toute autre création de compte est refusée par la base (déclencheur `inscriptions_reservees` sur `auth.users`).
 - La clé utilisée dans `cloud.js` est la **clé publique** du projet. La sécurité repose sur les règles de la base, pas sur le secret de cette clé.

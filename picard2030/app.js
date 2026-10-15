@@ -12,6 +12,7 @@ const state = {
     editingId: null,
     adminTab: 'themes',
     collapsed: new Set(),
+    openCards: new Set(),
     storyMode: null,
     storySort: 'theme',
     openClusters: new Set(),
@@ -252,20 +253,28 @@ function observeReveals() {
 // ─── 01 · Timeline simplifiée ────────────────────
 function storyMode() { return state.rubrique !== 'all' && innerWidth >= 900 ? 'alt' : 'compact'; }
 
-function storyActions(t, max = 4) {
+// Carte de thème : les actions au-delà de 4 (et le texte complet) se déroulent dans la carte au clic
+const CARD_MAX = 4, NOTE_MAX = 140;
+function cardExpandable(t) { return t.actions.length > CARD_MAX || (t.note || '').length > NOTE_MAX; }
+
+function storyActions(t, open = false) {
     if (!t.actions.length) return '';
+    const max = open ? t.actions.length : CARD_MAX;
     const shown = t.actions.slice(0, max);
+    const more = t.actions.length - CARD_MAX;
     return `<ul class="sn-actions">${shown.map(a => {
         const i = t.actions.indexOf(a);
         return `<li data-tip="a|${esc(t.id)}|${i}"><span class="dot ${HEALTH[actionHealth(a)].cls}"></span><span class="sn-an">${esc(a.name)}</span>${isMilestone(a)
             ? `<span class="sn-ams"><i class="ri-flag-2-line"></i>${fmtDate(a.start)}</span>`
             : `${bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b>`}</li>`;
-    }).join('')}${t.actions.length > max ? `<li class="sn-more">+ ${t.actions.length - max} autre${t.actions.length - max > 1 ? 's' : ''} action${t.actions.length - max > 1 ? 's' : ''}</li>` : ''}</ul>`;
+    }).join('')}${more > 0 ? `<li class="sn-more">${open ? '<i class="ri-arrow-up-s-line"></i> Réduire'
+        : `<i class="ri-arrow-down-s-line"></i> ${more} autre${more > 1 ? 's' : ''} action${more > 1 ? 's' : ''}`}</li>` : ''}</ul>`;
 }
 
 function storyCard(t, withGauge) {
     const r = themeRange(t), h = themeHealth(t);
-    return `<article class="sn-card" data-id="${esc(t.id)}" tabindex="0">
+    const open = state.openCards.has(t.id), exp = cardExpandable(t);
+    return `<article class="sn-card ${exp ? 'is-expandable' : ''} ${open ? 'is-open' : ''}" data-id="${esc(t.id)}" ${exp ? `tabindex="0" aria-expanded="${open}"` : ''}>
         <div class="sn-card-head">
             <div>
                 <p class="sn-date">${fmtMonth(r.start)} <i class="ri-arrow-right-line"></i> ${fmtMonth(r.end)}</p>
@@ -275,8 +284,26 @@ function storyCard(t, withGauge) {
             ${withGauge ? gauge(themeProgress(t), t.color, 70, 8, '', t.icon) : ''}
         </div>
         ${t.note ? `<p class="sn-note">${esc(t.note)}</p>` : ''}
-        ${storyActions(t)}
+        ${storyActions(t, open)}
     </article>`;
+}
+
+// Déroule / replie une carte de thème sur place, sans redessiner toute la timeline
+function toggleStoryCard(id) {
+    const t = themeById(id);
+    if (!t || !cardExpandable(t)) return;
+    state.openCards.has(id) ? state.openCards.delete(id) : state.openCards.add(id);
+    hideTip();
+    const el = document.querySelector(`.sn-card[data-id="${CSS.escape(id)}"]`);
+    if (!el) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = storyCard(t, !!el.querySelector('.gauge'));
+    const card = tmp.firstElementChild;
+    card.querySelectorAll('.gauge-fg[data-offset]').forEach(g => { g.style.transition = 'none'; g.style.strokeDashoffset = g.dataset.offset; });
+    el.replaceWith(card);
+    card.querySelectorAll('.sn-actions li').forEach((li, k) => { if (k >= CARD_MAX) li.classList.add('is-new'); });
+    requestAnimationFrame(() => card.querySelectorAll('.bar-fill').forEach(b => b.classList.add('in')));
+    card.focus({ preventScroll: true });
 }
 
 function storyVisual(t) {
@@ -1329,7 +1356,7 @@ async function doLogout() {
 function goHome() {
     closeDrawer(); closeAdmin(); closeIdea(); closeLogin(); hideTip();
     Object.assign(state, { rubrique: 'all', storySort: 'theme', owner: '', zoom: 'semester', anchor: startOfMonth(today), showPast: false });
-    state.agThemes.clear(); state.openClusters.clear(); state.collapsed.clear();
+    state.agThemes.clear(); state.openClusters.clear(); state.collapsed.clear(); state.openCards.clear();
     renderAll();
     document.documentElement.style.scrollBehavior = 'auto';
     scrollTo(0, 0);
@@ -1384,7 +1411,9 @@ function bind() {
         if (rub) return setRubrique(rub.dataset.rubrique);
         const zoom = t.closest('[data-zoom]');
         if (zoom) { state.zoom = zoom.dataset.zoom; state.anchor = startOfMonth(state.zoom === 'year' ? new Date(state.anchor.getFullYear(), 0, 1) : today); return renderGantt(); }
-        const row = t.closest('.g-row, .sn-card, .sn-visual, .ag-card:not(.ag-cluster-card), .ag-item');
+        const card = t.closest('.sn-card, .sn-visual');
+        if (card) return toggleStoryCard(card.dataset.id);
+        const row = t.closest('.g-row, .ag-card:not(.ag-cluster-card), .ag-item');
         if (row) return openDrawer(row.dataset.id);
         if (t.closest('[data-close]') || t === $('#overlay')) return closeDrawer();
         const edit = t.closest('[data-edit]');
@@ -1405,7 +1434,8 @@ function bind() {
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') { closeDrawer(); closeAdmin(); closeIdea(); closeLogin(); hideTip(); }
-        if (e.key === 'Enter' && e.target.matches('.g-row, .sn-card, .ag-card[data-id]')) openDrawer(e.target.dataset.id);
+        if (e.key === 'Enter' && e.target.matches('.sn-card')) toggleStoryCard(e.target.dataset.id);
+        else if (e.key === 'Enter' && e.target.matches('.g-row, .ag-card[data-id]')) openDrawer(e.target.dataset.id);
     });
 
     $('#admin-body').addEventListener('input', e => {

@@ -290,8 +290,14 @@ html { scroll-behavior: smooth; }
 .sn-actions b { text-align: right; }
 .sn-an { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sn-ams { grid-column: span 2; text-align: right; color: var(--muted); display: inline-flex; gap: 4px; justify-content: flex-end; align-items: center; }
-.sn-actions li.sn-more { display: block; color: var(--muted); font-style: italic; cursor: default; }
-.sn-visual { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 4px; cursor: pointer; transition: transform .25s; }
+.sn-actions li.sn-more { display: flex; align-items: center; gap: 4px; color: var(--c); font-weight: 600; font-style: normal; cursor: pointer; }
+.sn-actions li.sn-more:hover { background: color-mix(in srgb, var(--c) 10%, transparent); }
+.story-alt .sn-left .sn-actions li.sn-more { justify-content: flex-start; }
+.sn-card { cursor: default; }
+.sn-card.is-expandable { cursor: pointer; }
+.sn-card.is-open .sn-note { -webkit-line-clamp: unset; display: block; }
+.sn-actions li.is-new { animation: itemIn .35s both cubic-bezier(.2, .8, .2, 1); }
+.sn-visual { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 4px; cursor: default; transition: transform .25s; }
 .sn-visual:hover { transform: scale(1.05); }
 .sn-expected { font-size: 12px; color: var(--muted); }
 
