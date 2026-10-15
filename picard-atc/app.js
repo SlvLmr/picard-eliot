@@ -83,7 +83,7 @@ function renderSide() {
         const head = e.code === 'DIR' ? '' : itemHtml('eq:' + e.code, `<span class="avatar eq" style="--c:${e.couleur}">${e.code === 'RA' ? 'RA' : e.code.slice(0, 2)}</span>`, `Équipe ${e.nom}`, `${ms.length} ATC · ${euros(ke.realise)}`, ke, i++, 'eq-item');
         return `<div class="group">${esc(e.nom)}</div>` + head + ms.map(c => {
             const k = Kc(c.id, S.period);
-            return itemHtml(c.id, `<span class="avatar" style="--c:${c.couleur}">${esc(initials(c))}</span>`, fullName(c), `${euros(k.realise)} · ${pct(k.atteinte)}`, k, i++, 'atc-item ' + (c.actif === false ? 'inactive' : ''));
+            return itemHtml(c.id, `<span class="avatar" style="--c:${c.couleur}">${esc(initials(c))}</span>`, fullName(c), `${euros(k.realise)} · ${pct(k.atteinte)}`, k, i++, 'side-atc ' + (c.actif === false ? 'inactive' : ''));
         }).join('');
     }).join('');
     $('#team-list').innerHTML = html || '<div class="empty">Aucun résultat</div>';
