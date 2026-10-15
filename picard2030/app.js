@@ -234,48 +234,37 @@ function storyMode() { return state.rubrique !== 'all' && innerWidth >= 900 ? 'a
 const CARD_MAX = 4, NOTE_MAX = 140;
 function cardExpandable(t) { return t.actions.length > CARD_MAX || (t.note || '').length > NOTE_MAX; }
 
-// Statut lisible d'une action, pour regrouper les actions dans la carte
-const ACT_GROUPS = [
-    { id: 'watch', label: 'À surveiller', icon: 'ri-error-warning-fill' },
-    { id: 'now',   label: 'En cours',     icon: 'ri-play-circle-fill' },
-    { id: 'next',  label: 'À venir',      icon: 'ri-time-fill' },
-    { id: 'done',  label: 'Terminées',    icon: 'ri-checkbox-circle-fill' },
-];
+// Les actions sont regroupées avec le même vocabulaire que le thème (météo).
+// Une action terminée n'a pas de statut à part : elle est simplement à 100 %.
+const ACT_ORDER = ['late', 'warn', 'ok', 'upcoming'];
 function actionGroup(a) {
     const h = actionHealth(a);
-    if (h === 'done') return 'done';
-    if (h === 'late' || h === 'warn') return 'watch';
-    return actionRange(a).start > today ? 'next' : 'now';
+    return h === 'done' ? 'ok' : h;
 }
 
 function storyActions(t, open = false) {
     if (!t.actions.length) return '';
-    // Actions triées par importance : à surveiller, en cours, à venir, terminées
+    // Les plus urgentes d'abord : en retard, vigilance, dans les temps, à venir
     const items = t.actions.map((a, i) => ({ a, i, g: actionGroup(a) }))
-        .sort((x, y) => ACT_GROUPS.findIndex(g => g.id === x.g) - ACT_GROUPS.findIndex(g => g.id === y.g) || x.i - y.i);
+        .sort((x, y) => ACT_ORDER.indexOf(x.g) - ACT_ORDER.indexOf(y.g) || x.i - y.i);
     const shown = open ? items : items.slice(0, CARD_MAX);
     const more = items.length - CARD_MAX;
-    const done = items.filter(x => x.g === 'done').length;
     let html = '', prev = null;
     shown.forEach(({ a, i, g }) => {
         if (g !== prev) {
-            const G = ACT_GROUPS.find(x => x.id === g);
-            html += `<li class="sn-group g-${g}"><i class="${G.icon}"></i>${G.label}<span>${items.filter(x => x.g === g).length}</span></li>`;
+            html += `<li class="sn-group">${healthBadge(g)}<span class="sn-count">${items.filter(x => x.g === g).length}</span></li>`;
             prev = g;
         }
         const r = actionRange(a);
-        html += `<li class="sn-act g-${g}" data-tip="a|${esc(t.id)}|${i}">
+        html += `<li class="sn-act ${HEALTH[g].cls}" data-tip="a|${esc(t.id)}|${i}">
             <span class="sn-an">${esc(a.name)}</span>
             ${isMilestone(a)
                 ? `<span class="sn-ams">Jalon · ${r.start.getDate()} ${MONTHS[r.start.getMonth()]}</span>`
-                : `<span class="sn-ap">${g === 'done' ? '<i class="ri-check-line"></i>' : bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b></span>`}
+                : `<span class="sn-ap">${bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b></span>`}
         </li>`;
     });
-    return `<div class="sn-acts">
-        <div class="sn-acts-head"><span>Actions</span><b>${done}/${items.length} terminée${done > 1 ? 's' : ''}</b></div>
-        <ul class="sn-actions">${html}${more > 0 ? `<li class="sn-more">${open ? '<i class="ri-arrow-up-s-line"></i> Réduire'
-            : `<i class="ri-arrow-down-s-line"></i> Voir les ${more} autre${more > 1 ? 's' : ''} action${more > 1 ? 's' : ''}`}</li>` : ''}</ul>
-    </div>`;
+    return `<ul class="sn-actions">${html}${more > 0 ? `<li class="sn-more">${open ? '<i class="ri-arrow-up-s-line"></i> Réduire'
+        : `<i class="ri-arrow-down-s-line"></i> Voir les ${more} autre${more > 1 ? 's' : ''} action${more > 1 ? 's' : ''}`}</li>` : ''}</ul>`;
 }
 
 function storyCard(t, withGauge) {
@@ -290,9 +279,14 @@ function storyCard(t, withGauge) {
             </div>
             ${withGauge ? gauge(themeProgress(t), t.color, 70, 8, '', t.icon) : ''}
         </div>
-        <div class="sn-sum">${healthBadge(h)}<span><b>${themeProgress(t)}%</b> réalisé · ${themeExpected(t)}% attendu à date</span></div>
         ${t.note ? `<p class="sn-note">${esc(t.note)}</p>` : ''}
-        ${storyActions(t, open)}
+        <div class="sn-acts">
+            <div class="sn-acts-head">
+                <span class="sn-acts-title">Actions${t.actions.length ? ` <small>${t.actions.length}</small>` : ''}</span>
+                <span class="sn-acts-sum">${withGauge ? '' : `<b>${themeProgress(t)}%</b> réalisé `}${healthBadge(h)}</span>
+            </div>
+            ${storyActions(t, open)}
+        </div>
     </article>`;
 }
 
