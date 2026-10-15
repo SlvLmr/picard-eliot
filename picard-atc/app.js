@@ -144,7 +144,7 @@ function renderSignals() {
     }
     if (!S.who || isEquipe(S.who)) {
         const late = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period) }))
-            .filter(x => statut(x.k.rythme, reg).key === 'late').sort((a, b) => a.k.rythme - b.k.rythme);
+            .filter(x => ['late', 'orange'].includes(statut(x.k.rythme, reg).key)).sort((a, b) => a.k.rythme - b.k.rythme);
         if (late.length) out.push({ cls: 'late', html: `<b>${late.length}</b> ATC en retard : ` + late.slice(0, 4).map(x => `<button class="chip-btn" data-who="${x.c.id}">${esc(x.c.prenom || x.c.nom)} ${pct(x.k.rythme)}</button>`).join(' ') });
         else out.push({ cls: 'ok', html: 'Aucun ATC en retard sur son rythme' });
     } else if (k.reste > 0 && p.joursRestants > 0) {
@@ -514,7 +514,7 @@ function zoneFill(code, maxPot) {
     if (!c) return 'var(--zone-empty)';
     if (S.mapMode === 'secteurs') return c.couleur;
     const k = Kc(c.id, S.period);
-    if (S.mapMode === 'atteinte') return k.rythme == null ? 'var(--zone-empty)' : divColor((k.rythme - 100) / 25);
+    if (S.mapMode === 'atteinte') { const st = statut(k.rythme, S.base.reglages); return st.key === 'none' ? 'var(--zone-empty)' : `color-mix(in srgb, var(--${st.key}) 78%, var(--surface-solid))`; }
     return k.evol == null ? 'var(--zone-empty)' : divColor(k.evol / 25);
 }
 
@@ -587,7 +587,8 @@ function renderMap() {
 function renderMapLegend(maxPot) {
     const el = $('#map-legend');
     el.hidden = S.mapMode === 'secteurs';
-    if (S.mapMode === 'atteinte') el.innerHTML = `<strong>Rythme vs budget à date</strong><div class="ramp" style="background:linear-gradient(90deg,${[-1, -.5, 0, .5, 1].map(divColor).join(',')})"></div><div class="ramp-lbl"><span>75 %</span><span>100 %</span><span>125 %</span></div>`;
+    if (S.mapMode === 'atteinte') { const r = S.base.reglages, o = r.seuil_orange ?? 60, j = r.seuil_jaune ?? 85, v = r.seuil_vert ?? 90;
+        el.innerHTML = `<strong>Rythme vs budget à date</strong><div class="ramp" style="background:linear-gradient(90deg,var(--late) 0 25%,var(--orange) 25% 50%,var(--warn) 50% 75%,var(--ok) 75%)"></div><div class="ramp-lbl"><span>≤ ${o} %</span><span>${o + 1}–${j}</span><span>${j + 1}–${v}</span><span>> ${v} %</span></div>`; }
     else if (S.mapMode === 'evol') el.innerHTML = `<strong>Évolution vs ${S.ref.getFullYear() - 1}</strong><div class="ramp" style="background:linear-gradient(90deg,${[-1, -.5, 0, .5, 1].map(divColor).join(',')})"></div><div class="ramp-lbl"><span>−25 %</span><span>0</span><span>+25 %</span></div>`;
     else if (S.mapMode === 'potentiel') el.innerHTML = `<strong>Potentiel de marché ${exemple}</strong><div class="ramp" style="background:linear-gradient(90deg,${[0, .25, .5, .75, 1].map(seqColor).join(',')})"></div><div class="ramp-lbl"><span>0</span><span>${euros(maxPot)}</span></div>`;
 }

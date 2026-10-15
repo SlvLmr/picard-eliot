@@ -35,7 +35,7 @@ function demoInitialState() {
     });
     const secteurs = {}; const idx = {};
     commerciaux.forEach(c => { const k = idx[c.equipe] = (idx[c.equipe] ?? -1) + 1; (ZONES_DEFAUT[c.equipe]?.[k] || []).forEach(z => secteurs[z] = c.id); });
-    return { reglages: { nom: 'PICARD-ATC', sous_titre: 'Pilotage du chiffre des ATC', lecture_publique: true, seuil_vert: 100, seuil_orange: 90,
+    return { reglages: { nom: 'PICARD-ATC', sous_titre: 'Pilotage du chiffre des ATC', lecture_publique: true, seuil_vert: 90, seuil_jaune: 85, seuil_orange: 60,
         types_clientele: ['Serruriers', 'Menuisiers', 'Installateurs', 'Négoces & distributeurs', 'Entreprises du bâtiment', 'Grands comptes', 'Collectivités', 'Syndics & bailleurs'],
         fonctions: ['ATC', 'Spécialiste Diamant', 'Spécialiste Hall', 'Chef de secteur', 'Direction'] },
         commerciaux, secteurs, zonesInfo: demoZonesInfo(), imports: [], donnees: null };
@@ -117,6 +117,7 @@ function createDemoStore() {
         const rang = {}; state.commerciaux.forEach(c => { const k = rang[c.equipe] = (rang[c.equipe] ?? -1) + 1; c.couleur = nuance(equipeDe(c.equipe).couleur, k); });
         state.palette = 2;
     }
+    if (state.reglages.seuil_jaune == null) Object.assign(state.reglages, { seuil_vert: 90, seuil_jaune: 85, seuil_orange: 60 });
     const listeners = [];
     const save = () => { try { localStorage.setItem(DEMO_KEY, JSON.stringify(state)); } catch (e) { console.warn('Stockage local plein', e); } listeners.forEach(f => f()); };
     let cache = null;

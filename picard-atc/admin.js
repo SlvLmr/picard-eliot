@@ -380,9 +380,10 @@ function tabReglages() {
             <div class="a-grid"><label class="field">Nom de l'outil<input data-r="nom" value="${esc(r.nom || '')}"></label>
             <label class="field">Sous-titre<input data-r="sous_titre" value="${esc(r.sous_titre || '')}"></label></div></div>
         <div class="a-section"><h3><i class="ri-traffic-light-line"></i>Statuts (rythme = réalisé ÷ budget attendu à date)</h3>
-            <div class="a-grid"><label class="field">« Dans les temps » à partir de (%)<input type="number" data-r="seuil_vert" value="${r.seuil_vert}"></label>
-            <label class="field">« En retard » en dessous de (%)<input type="number" data-r="seuil_orange" value="${r.seuil_orange}"></label></div>
-            <p class="muted" style="margin-top:8px;font-size:12.5px">Entre les deux : « Vigilance ».</p></div>
+            <div class="a-grid"><label class="field">Rouge jusqu'à (%)<input type="number" data-r="seuil_orange" value="${r.seuil_orange ?? 60}"></label>
+            <label class="field">Orange jusqu'à (%)<input type="number" data-r="seuil_jaune" value="${r.seuil_jaune ?? 85}"></label>
+            <label class="field">Jaune jusqu'à (%) · vert au-delà<input type="number" data-r="seuil_vert" value="${r.seuil_vert ?? 90}"></label></div>
+            <p class="muted" style="margin-top:8px;font-size:12.5px">Par défaut : rouge jusqu'à 60 %, orange de 61 à 85 %, jaune de 86 à 90 %, vert au-delà.</p></div>
         <div class="a-section"><h3><i class="ri-user-heart-line"></i>Types de clientèle</h3>
             <div class="chips-pick">${(r.types_clientele || []).map(t => `<span class="chip on">${esc(t)}<button data-rm-type="${esc(t)}" title="Retirer"><i class="ri-close-line"></i></button></span>`).join('')}</div>
             <div class="a-row" style="margin-top:10px;max-width:520px"><input id="add-type-r" placeholder="Nouveau type de clientèle" style="flex:1"><button class="btn btn-sm" data-add="types_clientele" data-src="add-type-r"><i class="ri-add-line"></i>Ajouter</button></div></div>

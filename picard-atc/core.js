@@ -129,9 +129,12 @@ function serieMois(D, ids, annee, gammes = CA_GAMMES) {
 // Statut selon le rythme (réalisé / attendu à date)
 function statut(rythme, reglages) {
     if (rythme == null) return { key: 'none', label: 'Sans budget', icon: 'ri-subtract-line' };
-    if (rythme >= reglages.seuil_vert) return { key: 'ok', label: 'Dans les temps', icon: 'ri-checkbox-circle-fill' };
-    if (rythme >= reglages.seuil_orange) return { key: 'warn', label: 'Vigilance', icon: 'ri-error-warning-fill' };
-    return { key: 'late', label: 'En retard', icon: 'ri-alarm-warning-fill' };
+    // Rouge jusqu'à 60 %, orange de 61 à 85 %, jaune de 86 à 90 %, vert au-delà (seuils réglables dans l'admin)
+    const r = Math.round(rythme);
+    if (r > (reglages.seuil_vert ?? 90)) return { key: 'ok', label: 'Dans les temps', icon: 'ri-checkbox-circle-fill' };
+    if (r > (reglages.seuil_jaune ?? 85)) return { key: 'warn', label: 'Vigilance', icon: 'ri-error-warning-fill' };
+    if (r > (reglages.seuil_orange ?? 60)) return { key: 'orange', label: 'En retard', icon: 'ri-error-warning-fill' };
+    return { key: 'late', label: 'Très en retard', icon: 'ri-alarm-warning-fill' };
 }
 
 // Données d'exemple déterministes (blocs non alimentés par les fichiers : clients, clientèle, marge)
