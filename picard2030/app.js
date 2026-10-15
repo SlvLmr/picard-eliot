@@ -1168,9 +1168,44 @@ function setRubrique(id) {
     renderAll();
 }
 
+// ─── Idées & remarques ───────────────────────────
+// Destinataires assemblés à l'exécution : ils n'apparaissent pas dans la page.
+const IDEA_TO = [['gdaillere', 'slamour'], ['picard-serrures', 'com']];
+function ideaRecipients() { return IDEA_TO[0].map(u => `${u}@${IDEA_TO[1].join('.')}`).join(','); }
+
+function openMailto(url) { location.href = url; }
+
+function openIdea() {
+    hideTip();
+    const sel = $('#idea-sujet');
+    sel.innerHTML = ['Picard 2030 en général', ...data().rubriques.map(r => r.name), "L'outil de suivi"]
+        .map(o => `<option ${state.rubrique !== 'all' && rubriqueOf(state.rubrique).name === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
+    $('#idea').classList.add('open');
+    $('#idea').setAttribute('aria-hidden', 'false');
+    setTimeout(() => $('#idea-form textarea').focus(), 50);
+}
+
+function closeIdea() {
+    $('#idea').classList.remove('open');
+    $('#idea').setAttribute('aria-hidden', 'true');
+}
+
+function sendIdea(e) {
+    e.preventDefault();
+    const f = new FormData($('#idea-form'));
+    const type = f.get('type'), sujet = f.get('sujet'), msg = String(f.get('message')).trim(), nom = String(f.get('nom')).trim();
+    if (!msg) return;
+    const subject = `[Picard 2030] ${type} · ${sujet}`;
+    const body = `${msg}\n\n---\n${type} · ${sujet}${nom ? `\nDe : ${nom}` : ''}\nEnvoyé depuis l'outil Picard 2030, le ${fmtDate(today)}`;
+    openMailto(`mailto:${ideaRecipients()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    closeIdea();
+    $('#idea-form').reset();
+    toast('Votre messagerie s\'ouvre : il ne reste qu\'à cliquer sur Envoyer. Merci !');
+}
+
 // Retour à la page par défaut (clic sur le logo)
 function goHome() {
-    closeDrawer(); closeAdmin(); hideTip();
+    closeDrawer(); closeAdmin(); closeIdea(); hideTip();
     Object.assign(state, { rubrique: 'all', storySort: 'theme', owner: '', zoom: 'year', anchor: startOfMonth(today), showPast: false });
     state.agThemes.clear(); state.openClusters.clear(); state.collapsed.clear();
     renderAll();
@@ -1242,7 +1277,7 @@ function bind() {
     document.addEventListener('scroll', hideTip, true);
 
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeDrawer(); closeAdmin(); hideTip(); }
+        if (e.key === 'Escape') { closeDrawer(); closeAdmin(); closeIdea(); hideTip(); }
         if (e.key === 'Enter' && e.target.matches('.g-row, .sn-card, .ag-card[data-id]')) openDrawer(e.target.dataset.id);
     });
 
@@ -1270,6 +1305,9 @@ function bind() {
     let resizeTimer;
     addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (storyMode() !== state.storyMode) { renderStory(); observeReveals(); } }, 200); });
     $('#btn-admin').onclick = () => openAdmin();
+    $('#btn-idea').onclick = openIdea;
+    $('#idea-form').addEventListener('submit', sendIdea);
+    $('#idea').addEventListener('click', e => { if (e.target === $('#idea') || e.target.closest('[data-idea-close]')) closeIdea(); });
     $('#brand-home').onclick = e => { e.preventDefault(); goHome(); };
     $('#btn-theme').onclick = () => {
         const dark = document.documentElement.dataset.theme !== 'dark';

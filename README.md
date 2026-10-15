@@ -39,6 +39,8 @@ Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-
 
 L'outil s'affiche en **mode clair** par défaut. Le bouton 🌙 / ☀ de l'en-tête bascule en mode sombre, et le choix est mémorisé dans le navigateur.
 
+En haut de page, la **boîte à idées** (« Soumettez-nous vos idées, remarques ») ouvre un petit formulaire : type (idée, remarque, question), sujet et message. À l'envoi, la messagerie de la personne s'ouvre avec le mail prêt, adressé à l'équipe Picard 2030. Les adresses ne sont pas affichées sur la page, mais elles apparaissent dans le champ « À » de la messagerie.
+
 Le bouton **Rapport PDF** produit une version simplifiée A4 au style infographie, à diffuser en interne.
 
 ### Météo

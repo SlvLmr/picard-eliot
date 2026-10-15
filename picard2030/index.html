@@ -34,6 +34,15 @@
     </div>
 
     <main class="container">
+        <section class="idea-box">
+            <span class="idea-ico" aria-hidden="true"><i class="ri-lightbulb-flash-fill"></i><i class="ri-sparkling-2-fill idea-spark"></i></span>
+            <div class="idea-text">
+                <strong>Soumettez-nous vos idées, remarques</strong>
+                <span>Une suggestion, une question, un point à corriger sur Picard 2030 ? On vous lit.</span>
+            </div>
+            <button class="btn idea-btn" id="btn-idea"><i class="ri-quill-pen-line"></i>Je partage mon idée</button>
+        </section>
+
         <div class="tabs-row">
             <nav class="pole-tabs" id="pole-tabs"></nav>
             <nav class="jump-nav" aria-label="Sections">
@@ -110,6 +119,37 @@
         <div class="drawer-inner" id="drawer-content"></div>
     </aside>
     <div class="overlay" id="overlay"></div>
+
+    <!-- Idées & remarques -->
+    <div class="modal idea-modal" id="idea" aria-hidden="true" role="dialog" aria-labelledby="idea-title">
+        <form class="idea-form" id="idea-form" autocomplete="off">
+            <div class="idea-head">
+                <span class="idea-ico small" aria-hidden="true"><i class="ri-lightbulb-flash-fill"></i></span>
+                <div><h2 id="idea-title">Vos idées & remarques</h2><p>Votre message sera adressé à l'équipe Picard 2030.</p></div>
+                <button type="button" class="btn btn-icon" data-idea-close title="Fermer"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="idea-body">
+                <div class="idea-types" role="radiogroup" aria-label="Type de message">
+                    <label><input type="radio" name="type" value="Idée" checked><span><i class="ri-lightbulb-line"></i>Idée</span></label>
+                    <label><input type="radio" name="type" value="Remarque"><span><i class="ri-chat-3-line"></i>Remarque</span></label>
+                    <label><input type="radio" name="type" value="Question"><span><i class="ri-question-line"></i>Question</span></label>
+                </div>
+                <label>Sujet concerné
+                    <select name="sujet" id="idea-sujet"></select>
+                </label>
+                <label>Votre message
+                    <textarea name="message" rows="5" maxlength="1500" required placeholder="Décrivez votre idée ou votre remarque…"></textarea>
+                </label>
+                <label><span>Votre nom <small>(facultatif)</small></span>
+                    <input name="nom" placeholder="Prénom Nom">
+                </label>
+            </div>
+            <div class="idea-foot">
+                <span class="muted"><i class="ri-mail-send-line"></i> Votre messagerie s'ouvrira avec le message prêt à envoyer.</span>
+                <button type="submit" class="btn btn-primary idea-send"><i class="ri-send-plane-fill"></i>Envoyer</button>
+            </div>
+        </form>
+    </div>
 
     <!-- Admin -->
     <div class="modal" id="admin" aria-hidden="true">
