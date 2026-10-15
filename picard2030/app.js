@@ -257,18 +257,48 @@ function storyMode() { return state.rubrique !== 'all' && innerWidth >= 900 ? 'a
 const CARD_MAX = 4, NOTE_MAX = 140;
 function cardExpandable(t) { return t.actions.length > CARD_MAX || (t.note || '').length > NOTE_MAX; }
 
+// Statut lisible d'une action, pour regrouper les actions dans la carte
+const ACT_GROUPS = [
+    { id: 'watch', label: 'À surveiller', icon: 'ri-error-warning-fill' },
+    { id: 'now',   label: 'En cours',     icon: 'ri-play-circle-fill' },
+    { id: 'next',  label: 'À venir',      icon: 'ri-time-fill' },
+    { id: 'done',  label: 'Terminées',    icon: 'ri-checkbox-circle-fill' },
+];
+function actionGroup(a) {
+    const h = actionHealth(a);
+    if (h === 'done') return 'done';
+    if (h === 'late' || h === 'warn') return 'watch';
+    return actionRange(a).start > today ? 'next' : 'now';
+}
+
 function storyActions(t, open = false) {
     if (!t.actions.length) return '';
-    const max = open ? t.actions.length : CARD_MAX;
-    const shown = t.actions.slice(0, max);
-    const more = t.actions.length - CARD_MAX;
-    return `<ul class="sn-actions">${shown.map(a => {
-        const i = t.actions.indexOf(a);
-        return `<li data-tip="a|${esc(t.id)}|${i}"><span class="dot ${HEALTH[actionHealth(a)].cls}"></span><span class="sn-an">${esc(a.name)}</span>${isMilestone(a)
-            ? `<span class="sn-ams"><i class="ri-flag-2-line"></i>${fmtDate(a.start)}</span>`
-            : `${bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b>`}</li>`;
-    }).join('')}${more > 0 ? `<li class="sn-more">${open ? '<i class="ri-arrow-up-s-line"></i> Réduire'
-        : `<i class="ri-arrow-down-s-line"></i> ${more} autre${more > 1 ? 's' : ''} action${more > 1 ? 's' : ''}`}</li>` : ''}</ul>`;
+    // Actions triées par importance : à surveiller, en cours, à venir, terminées
+    const items = t.actions.map((a, i) => ({ a, i, g: actionGroup(a) }))
+        .sort((x, y) => ACT_GROUPS.findIndex(g => g.id === x.g) - ACT_GROUPS.findIndex(g => g.id === y.g) || x.i - y.i);
+    const shown = open ? items : items.slice(0, CARD_MAX);
+    const more = items.length - CARD_MAX;
+    const done = items.filter(x => x.g === 'done').length;
+    let html = '', prev = null;
+    shown.forEach(({ a, i, g }) => {
+        if (g !== prev) {
+            const G = ACT_GROUPS.find(x => x.id === g);
+            html += `<li class="sn-group g-${g}"><i class="${G.icon}"></i>${G.label}<span>${items.filter(x => x.g === g).length}</span></li>`;
+            prev = g;
+        }
+        const r = actionRange(a);
+        html += `<li class="sn-act g-${g}" data-tip="a|${esc(t.id)}|${i}">
+            <span class="sn-an">${esc(a.name)}</span>
+            ${isMilestone(a)
+                ? `<span class="sn-ams">Jalon · ${r.start.getDate()} ${MONTHS[r.start.getMonth()]}</span>`
+                : `<span class="sn-ap">${g === 'done' ? '<i class="ri-check-line"></i>' : bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b></span>`}
+        </li>`;
+    });
+    return `<div class="sn-acts">
+        <div class="sn-acts-head"><span>Actions</span><b>${done}/${items.length} terminée${done > 1 ? 's' : ''}</b></div>
+        <ul class="sn-actions">${html}${more > 0 ? `<li class="sn-more">${open ? '<i class="ri-arrow-up-s-line"></i> Réduire'
+            : `<i class="ri-arrow-down-s-line"></i> Voir les ${more} autre${more > 1 ? 's' : ''} action${more > 1 ? 's' : ''}`}</li>` : ''}</ul>
+    </div>`;
 }
 
 function storyCard(t, withGauge) {
@@ -276,13 +306,14 @@ function storyCard(t, withGauge) {
     const open = state.openCards.has(t.id), exp = cardExpandable(t);
     return `<article class="sn-card ${exp ? 'is-expandable' : ''} ${open ? 'is-open' : ''}" data-id="${esc(t.id)}" ${exp ? `tabindex="0" aria-expanded="${open}"` : ''}>
         <div class="sn-card-head">
-            <div>
+            <div class="sn-titles">
                 <p class="sn-date">${fmtMonth(r.start)} <i class="ri-arrow-right-line"></i> ${fmtMonth(r.end)}</p>
                 <h3>${esc(t.name)}</h3>
-                <p class="sn-meta">${t.owner ? `<span>${esc(t.owner)}</span>` : ''}${healthBadge(h)}</p>
+                ${t.owner ? `<p class="sn-owner"><i class="ri-user-3-line"></i>${esc(t.owner)}</p>` : ''}
             </div>
             ${withGauge ? gauge(themeProgress(t), t.color, 70, 8, '', t.icon) : ''}
         </div>
+        <div class="sn-sum">${healthBadge(h)}<span><b>${themeProgress(t)}%</b> réalisé · ${themeExpected(t)}% attendu à date</span></div>
         ${t.note ? `<p class="sn-note">${esc(t.note)}</p>` : ''}
         ${storyActions(t, open)}
     </article>`;
@@ -301,7 +332,7 @@ function toggleStoryCard(id) {
     const card = tmp.firstElementChild;
     card.querySelectorAll('.gauge-fg[data-offset]').forEach(g => { g.style.transition = 'none'; g.style.strokeDashoffset = g.dataset.offset; });
     el.replaceWith(card);
-    card.querySelectorAll('.sn-actions li').forEach((li, k) => { if (k >= CARD_MAX) li.classList.add('is-new'); });
+    if (state.openCards.has(id)) card.querySelectorAll('.sn-actions li').forEach((li, k) => { li.style.setProperty('--i', k); li.classList.add('is-new'); });
     requestAnimationFrame(() => card.querySelectorAll('.bar-fill').forEach(b => b.classList.add('in')));
     card.focus({ preventScroll: true });
 }
