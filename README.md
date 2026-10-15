@@ -28,10 +28,9 @@ L'outil s'ouvre toujours sur la **vue d'ensemble**, avec la Timeline par thème 
 1. **Timeline**, avec deux vues :
    - **Par thème** (par défaut) : l'infographie verticale des grands thèmes et de leurs jauges. Un clic sur une carte déroule ses actions supplémentaires et son texte complet, directement dans la carte.
    - **Agenda** : le vrai calendrier, avec un point par événement daté, regroupés par mois, et « Aujourd'hui » à sa vraie place.
-     - Jalons (◆) et rendez-vous de quelques jours : à leur date.
-     - Actions : à leur échéance (⚑).
+     - Un seul type de point, à la couleur du thème. Le type (jalon, rendez-vous, échéance) et la mention « date estimée » sont écrits sur la carte.
      - Les échéances d'un même jour sont regroupées (par exemple « 27 échéances fin déc. ») et se déplient au clic.
-     - Les **dates estimées** sont en pointillé ; les événements des mois passés sont repliés.
+     - Le compte à rebours passe en rouge à moins de 7 jours. Les événements des mois passés sont repliés.
 2. **Indicateurs** : compteurs animés et jauges d'avancement, global et par rubrique.
 3. **Gantt** : le détail des actions dans le temps (6 mois, une année ou le plan complet). Les thèmes se déplient, on y voit les points d'échéance, les jalons et la ligne « aujourd'hui ».
 

@@ -513,6 +513,48 @@ html { scroll-behavior: smooth; }
     .ag-row[data-reveal], .ag-today[data-reveal] { opacity: 1; transform: none; }
 }
 
+
+/* ─── Agenda : version épurée (un seul type de point, frise neutre) ─── */
+.is-past .ag-spine::before, .ag-month.is-past .ag-spine::before, .ag-month.is-today .ag-spine::before { background: var(--muted-strong); animation: none; }
+.ag-dot, .ag-jalon .ag-dot, .ag-rdv .ag-dot, .ag-cluster .ag-dot {
+    top: 26px; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 0; border-radius: 50%;
+    background: var(--c); box-shadow: 0 0 0 3px var(--surface); font-size: 0; color: transparent; transform: scale(0);
+}
+.ag-row.revealed .ag-dot, .ag-jalon.revealed .ag-dot, .ag-rdv.revealed .ag-dot { transform: scale(1); }
+.ag-cluster .ag-dot { background: var(--pole-current); }
+.is-est .ag-dot, .ag-cluster.is-est .ag-dot { background: var(--c); border: 0; }
+.ag-cluster.is-est .ag-dot { background: var(--pole-current); }
+.is-done .ag-dot, .is-past .ag-dot { background: var(--muted-strong); }
+.is-done .ag-dot::after, .is-now .ag-dot::before { content: none; }
+.ag-row:hover .ag-dot { box-shadow: 0 0 0 3px var(--surface); filter: none; }
+.ag-date { font-weight: 700; color: var(--text); }
+.is-now .ag-date { color: var(--text); }
+.is-past .ag-date, .is-done .ag-date { color: var(--muted); font-weight: 600; }
+.ag-today { min-height: 34px; }
+.ag-today .ag-date { color: var(--late); font-size: 12px; padding-top: 8px; }
+.ag-today .ag-dot { top: 18px; width: 10px; height: 10px; margin: -5px 0 0 -5px; background: var(--late); transform: scale(1); }
+.ag-today .ag-dot::after { content: none; }
+.ag-today-body { margin-top: 10px; padding: 0 0 0 6px; background: linear-gradient(var(--late), var(--late)) left 8px / 100% 1px no-repeat; animation: none; }
+.ag-next { background: var(--surface); border: 0; padding: 0 8px; font-size: 12px; font-weight: 600; color: var(--late); }
+.is-now .ag-card { animation: none; border-color: var(--border); }
+.ag-when { border: 0; background: none; padding: 0; font-weight: 600; }
+.ag-when.later, .ag-when.past { color: var(--muted); }
+.ag-when.soon { color: var(--warn); background: none; }
+.ag-when.now { color: #fff; background: var(--late); padding: 3px 9px; animation: none; }
+.ag-when.done { color: var(--ok); background: none; }
+.ag-progress { display: inline-flex; align-items: center; gap: 8px; }
+.ag-track { width: 72px; height: 6px; border-radius: 99px; background: var(--border); overflow: hidden; }
+.ag-track span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--c); transition: width .9s .2s cubic-bezier(.2, .8, .2, 1); }
+.revealed .ag-track span, .is-open .ag-track span { width: var(--p); }
+.ag-cluster .ag-track span { background: var(--pole-current); }
+.ag-progress b { font-size: 12px; width: 32px; text-align: right; }
+.ag-side { gap: 6px; }
+.ag-row { padding: 0; }
+.ag-row .ag-card { margin: 5px 0; }
+.ag-month { padding-top: 0; }
+.ag-month-label { padding-top: 18px; }
+.ag-month-line { margin-top: 18px; }
+
 /* ─── Gantt : barres qui se remplissent ───── */
 .g-fill { width: 0; transition: width 1s .2s cubic-bezier(.2, .8, .2, 1); }
 .revealed .g-fill { width: var(--p); }

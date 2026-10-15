@@ -468,9 +468,8 @@ function agendaCard(e, showRubrique) {
                 ${warn ? healthBadge(e.h) : ''}
                 ${e.est ? '<span class="ag-est"><i class="ri-question-line"></i>date estimée</span>' : ''}
             </div>
-            ${e.kind === 'echeance' ? `<div class="ag-prog" title="${e.progress}% réalisé"><span style="--p:${e.progress}%"></span></div>` : ''}
         </div>
-        <div class="ag-side">${countdownChip(e)}${e.kind === 'echeance' ? `<b class="ag-pct">${e.progress}%</b>` : ''}</div>
+        <div class="ag-side">${countdownChip(e)}${e.kind === 'echeance' && !e.done ? `<span class="ag-progress" title="${e.progress}% réalisé"><span class="ag-track"><span style="--p:${e.progress}%"></span></span><b>${e.progress}%</b></span>` : ''}</div>
     </div>`;
 }
 
@@ -494,7 +493,7 @@ function agendaCluster(key, items, showRubrique) {
     const counts = Object.fromEntries(order.map(k => [k, items.filter(x => (x.done ? 'done' : x.h) === k).length]));
     return `<div class="ag-row ag-cluster ${past ? 'is-past' : ''} ${est ? 'is-est' : ''} ${open ? 'is-open' : ''} ${urgency(e0.date) === 'now' ? 'is-now' : ''}" style="--c:var(--pole-current)" data-reveal>
         <div class="ag-date">${agendaDate({ ...e0, est })}<small>${est && isMonthEnd(e0.date) ? e0.date.getFullYear() : DAYS[e0.date.getDay()]}</small></div>
-        <div class="ag-spine"><span class="ag-dot">${items.length}</span></div>
+        <div class="ag-spine"><span class="ag-dot"></span></div>
         <div class="ag-card ag-cluster-card">
             <button type="button" class="ag-cluster-head" data-cluster="${esc(key)}" aria-expanded="${open}">
                 <span class="ag-ico"><i class="ri-stack-line"></i></span>
@@ -503,7 +502,7 @@ function agendaCluster(key, items, showRubrique) {
                     <span class="ag-chips">${byTheme.map(b => `<span class="ag-chip" style="--c:${b.t.color}"><i class="${esc(b.t.icon || 'ri-folder-line')}"></i>${esc(b.t.name)}${b.n > 1 ? ` ×${b.n}` : ''}</span>`).join('')}</span>
                     <span class="ag-meteo" title="Météo des échéances">${order.filter(k => counts[k]).map(k => `<span class="${HEALTH[k].cls}" style="flex:${counts[k]}"></span>`).join('')}</span>
                 </span>
-                <span class="ag-side">${countdownChip({ ...e0, done: done === items.length })}<b class="ag-pct">${avg}%</b></span>
+                <span class="ag-side">${countdownChip({ ...e0, done: done === items.length })}<span class="ag-progress" title="Avancement moyen"><span class="ag-track"><span style="--p:${avg}%"></span></span><b>${avg}%</b></span></span>
                 <i class="ri-arrow-down-s-line ag-chevron"></i>
             </button>
             <ul class="ag-cluster-list">${items.map((x, k) => `
@@ -579,17 +578,12 @@ function renderAgenda(themes, showRubrique) {
             prevMonth = m;
         }
         if (x.today) html += `<div class="ag-today" data-reveal><div class="ag-date"><span class="ag-today-long">Aujourd'hui</span><span class="ag-today-short">Auj.</span><small>${today.getDate()} ${MONTHS[today.getMonth()]}</small></div>
-            <div class="ag-spine"><span class="ag-dot"><i class="ri-map-pin-user-fill"></i></span></div>
-            <div class="ag-today-body"><span class="ag-here"><i class="ri-sparkling-fill"></i>Vous êtes ici</span>
-            <span class="ag-next">${next7 ? `${next7} événement${next7 > 1 ? 's' : ''} dans les 15 prochains jours` : 'Rien dans les 15 prochains jours'}</span></div></div>`;
+            <div class="ag-spine"><span class="ag-dot"></span></div>
+            <div class="ag-today-body"><span class="ag-next">${next7 ? `${next7} événement${next7 > 1 ? 's' : ''} dans les 15 prochains jours` : 'Rien dans les 15 prochains jours'}</span></div></div>`;
         else if (x.cluster) html += agendaCluster(iso(x.date), x.cluster, showRubrique);
         else html += agendaRow(x.e, showRubrique);
     });
-    return `<div class="ag-bar">${toolbar}${scrub}</div><div class="agenda">${html}</div>
-        <div class="ag-legend">
-            <span><i class="ag-lg jalon"></i>Jalon</span><span><i class="ag-lg rdv"></i>Rendez-vous</span>
-            <span><i class="ag-lg ech"></i>Échéance</span><span><i class="ag-lg est"></i>Date estimée</span><span><i class="ag-lg done"></i>Fait</span>
-        </div>`;
+    return `<div class="ag-bar">${toolbar}${scrub}</div><div class="agenda">${html}</div>`;
 }
 
 // Surligne dans la frise le mois en cours de lecture
