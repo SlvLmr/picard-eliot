@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PICARD-ATC</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="favicon.png">
     <script>try { if (localStorage.getItem('commerce_theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -17,19 +17,19 @@
     <!-- ─── Menu de gauche : l'équipe ─── -->
     <aside class="side" id="side">
         <a class="brand" href="./" title="Vue d'ensemble">
-            <span class="brand-mark"><i class="ri-line-chart-fill"></i></span>
-            <span class="brand-text"><strong id="app-name">PICARD-ATC</strong><small id="app-sub">Pilotage du chiffre</small></span>
+            <img class="brand-logo" src="logo-picard.png" alt="Picard Serrures" width="320" height="74">
+            <span class="brand-sub"><strong id="app-name">PICARD-ATC</strong><small id="app-sub">Pilotage du chiffre</small></span>
         </a>
 
         <button class="team-item" id="team-all" data-who="">
             <span class="team-stack" id="team-stack"></span>
-            <span class="ti-text"><strong>Toute l'équipe</strong><small id="team-count"></small></span>
+            <span class="ti-text"><strong>Toute la société</strong><small id="team-count"></small></span>
             <span class="ring" id="team-ring"></span>
         </button>
 
         <div class="side-search">
             <i class="ri-search-line"></i>
-            <input id="search" type="search" placeholder="Rechercher un commercial" aria-label="Rechercher un commercial">
+            <input id="search" type="search" placeholder="Rechercher un ATC" aria-label="Rechercher un ATC">
         </div>
         <nav class="team-list" id="team-list" aria-label="Commerciaux"></nav>
 
@@ -76,7 +76,7 @@
             <div class="col">
                 <article class="card gauges-card">
                     <header class="card-head">
-                        <h2><i class="ri-dashboard-3-line"></i>Objectifs</h2>
+                        <h2><i class="ri-dashboard-3-line"></i>Budget</h2>
                         <span class="hint"><i class="ri-cursor-line"></i>Cliquez sur une jauge pour changer de période</span>
                     </header>
                     <div class="gauges" id="gauges"></div>
@@ -97,9 +97,10 @@
                 <header class="card-head">
                     <h2><i class="ri-map-2-line"></i>Secteurs</h2>
                     <div class="seg seg-sm" id="map-mode" role="tablist" aria-label="Affichage de la carte">
-                        <button data-map="secteurs">Commerciaux</button>
-                        <button data-map="ca">Chiffre</button>
+                        <button data-map="secteurs">ATC</button>
+                        <button data-map="atteinte">Rythme</button>
                         <button data-map="evol">Évolution</button>
+                        <button data-map="potentiel">Potentiel</button>
                         <span class="seg-glider"></span>
                     </div>
                 </header>
@@ -111,9 +112,18 @@
                         <button class="icon-btn" id="map-reset" title="Vue complète"><i class="ri-fullscreen-exit-line"></i></button>
                     </div>
                     <div class="map-legend" id="map-legend"></div>
+                    <aside class="potentiel" id="potentiel" aria-live="polite"></aside>
                 </div>
             </article>
         </section>
+
+        <article class="card" id="card-carnet">
+            <header class="card-head">
+                <h2>Carnet de commandes <small id="carnet-sub"></small></h2>
+                <span class="hint">Société · fichier « Valorisation du portefeuille »</span>
+            </header>
+            <div class="carnet" id="carnet"></div>
+        </article>
 
         <section class="grid-b">
             <article class="card">
@@ -132,7 +142,7 @@
             </article>
             <article class="card">
                 <header class="card-head">
-                    <h2 id="clients-title"><i class="ri-building-2-line"></i>Clients <small id="clients-sub"></small></h2>
+                    <h2 id="clients-title">Clients <small id="clients-sub"></small></h2>
                     <div class="seg seg-sm" id="clients-mode" role="tablist" aria-label="Vue clients">
                         <button data-cmode="clients">Top clients</button>
                         <button data-cmode="segments">Par clientèle</button>
@@ -143,7 +153,7 @@
             </article>
         </section>
 
-        <footer class="foot muted">Atterrissage : projection de fin de période au rythme actuel par rapport à l'objectif. Rythme : réalisé ÷ objectif attendu à date (au prorata des jours ouvrés).</footer>
+        <footer class="foot muted">Chiffres facturés. Rythme : réalisé ÷ budget attendu à date (au prorata des jours ouvrés). Atterrissage : mois en cours = facturé + livrable du carnet (société) ou rythme actuel (ATC), mois suivants = budget × rythme. Les blocs marqués « exemple » ne sont pas encore alimentés par les fichiers.</footer>
     </main>
 </div>
 
@@ -189,6 +199,7 @@
 <script src="core.js"></script>
 <script src="demo.js"></script>
 <script src="cloud.js"></script>
+<script src="parsers.js"></script>
 <script src="app.js"></script>
 <script src="admin.js"></script>
 </body>
