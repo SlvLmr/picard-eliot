@@ -13,7 +13,9 @@ const state = {
     adminTab: 'themes',
     collapsed: new Set(),
     storyMode: null,
-    storySort: 'date',
+    storySort: 'agenda',
+    openClusters: new Set(),
+    showPast: false,
     ganttSort: 'theme',
 };
 
@@ -179,10 +181,10 @@ function renderGantt() {
             const ar = actionRange(a), ah = actionHealth(a), tip = `a|${esc(t.id)}|${i}`;
             let at = '';
             if (isMilestone(a)) {
-                if (ar.start >= from && ar.start < to) at = `<div class="g-ms ${a.progress >= 100 ? 'done' : ''} ${ah === 'late' ? 'over' : ''}" style="left:${pct(ar.start)}%;--c:${t.color}" data-tip="${tip}"></div>`;
+                if (ar.start >= from && ar.start < to) at = `<div class="g-ms ${a.progress >= 100 ? 'done' : ''} ${ah === 'late' ? 'over' : ''} ${a.estimated ? 'is-est' : ''}" style="left:${pct(ar.start)}%;--c:${t.color}" data-tip="${tip}"></div>`;
             } else if (inView(ar.start, ar.end)) {
                 const end = new Date(ar.end.getTime() + DAY);
-                at = `<div class="g-bar" style="${span(ar.start, end)};--c:${t.color};--p:${a.progress}%" data-tip="${tip}"><div class="g-fill"></div></div>`;
+                at = `<div class="g-bar ${a.estimated ? 'is-est' : ''}" style="${span(ar.start, end)};--c:${t.color};--p:${a.progress}%" data-tip="${tip}"><div class="g-fill"></div></div>`;
                 if (end < to) at += `<div class="g-pt ${HEALTH[ah].cls}" style="left:${pct(end)}%;--c:${t.color}" data-tip="${tip}"></div>`;
             }
             return `<div class="g-row g-action" data-id="${esc(t.id)}">
@@ -283,9 +285,8 @@ function storyVisual(t) {
 }
 
 function storyTimeline(themes, mode) {
-    const sorted = sortThemes(themes, state.storySort);
-    // Par échéance : le repère « Aujourd'hui » sépare les thèmes échus des thèmes à venir
-    const todayIdx = state.storySort === 'date' ? sorted.findIndex(t => themeRange(t).end >= today) : -2;
+    const sorted = themes.slice();
+    const todayIdx = -2; // pas de repère « Aujourd'hui » dans la vue par thème
     const todayRow = `<div class="sn-today" data-reveal><span><i class="ri-map-pin-2-fill"></i> Aujourd'hui · ${fmtDate(today)}</span></div>`;
     const rows = sorted.map((t, i) => {
         const r = themeRange(t);
@@ -303,8 +304,7 @@ function storyTimeline(themes, mode) {
             node = `<div class="sn sn-compact" style="--c:${t.color}" data-reveal>${spine}<div class="sn-side">${storyCard(t, true)}</div></div>`;
         }
         return (i === todayIdx ? todayRow : '') + node;
-    }).join('') + (todayIdx === -1 && sorted.length ? todayRow : '');
-    // (todayIdx = -2 : pas de repère quand on trie par thème)
+    }).join('');
     return `<div class="story story-${mode}">
         <div class="sn-cap top"></div>
         ${rows || '<div class="empty">Aucun thème.</div>'}
@@ -312,11 +312,149 @@ function storyTimeline(themes, mode) {
     </div>`;
 }
 
+// ─── 01 · Vue Agenda : un point par événement daté ─
+// Jalon (début = fin) et rendez-vous (≤ 7 jours) : placés à leur date de début.
+// Autres actions : placées à leur échéance (date de fin).
+// Les échéances d'un même jour sont regroupées à partir de 3.
+const DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+
+function buildEvents(themes) {
+    const ev = [];
+    themes.forEach(t => {
+        if (!t.actions.length) {
+            const r = themeRange(t);
+            ev.push({ t, kind: 'echeance', date: r.end, start: r.start, end: r.end, name: t.name, est: false, done: themeProgress(t) >= 100, h: themeHealth(t), tip: `t|${t.id}` });
+        }
+        t.actions.forEach((a, i) => {
+            const r = actionRange(a), span = daysBetween(r.start, r.end);
+            const kind = isMilestone(a) ? 'jalon' : span <= 6 ? 'rdv' : 'echeance';
+            ev.push({ t, a, kind, date: kind === 'echeance' ? r.end : r.start, start: r.start, end: r.end, name: a.name,
+                est: !!a.estimated, done: a.progress >= 100, h: actionHealth(a), tip: `a|${t.id}|${i}` });
+        });
+    });
+    const rank = { jalon: 0, rdv: 1, echeance: 2 };
+    return ev.sort((x, y) => (x.date - y.date) || (rank[x.kind] - rank[y.kind]));
+}
+
+function isMonthEnd(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getDate() === 1; }
+
+function agendaDate(e) {
+    const d = e.date;
+    if (e.kind === 'rdv') {
+        const same = e.start.getMonth() === e.end.getMonth();
+        return `${e.start.getDate()}${same ? '' : ' ' + MONTHS[e.start.getMonth()]}–${e.end.getDate()} ${MONTHS[e.end.getMonth()]}`;
+    }
+    if (e.est && isMonthEnd(d)) return `fin ${MONTHS[d.getMonth()]}`;
+    return `${e.est ? '~ ' : ''}${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function agendaCard(e, showRubrique) {
+    const rub = rubriqueOf(e.t.rubrique);
+    const kindIcon = e.kind === 'echeance' ? 'ri-flag-2-line' : e.kind === 'rdv' ? 'ri-calendar-event-line' : 'ri-focus-3-line';
+    return `<div class="ag-card" data-id="${esc(e.t.id)}" data-tip="${esc(e.tip)}" tabindex="0">
+        <div class="ag-title"><i class="${kindIcon}"></i>${esc(e.name)}</div>
+        <div class="ag-meta">
+            <span class="ag-theme"><i class="${esc(e.t.icon || 'ri-folder-line')}"></i>${esc(e.t.name)}</span>
+            ${showRubrique ? `<span class="chip" style="--pole:${rub.color}">${esc(rub.name)}</span>` : ''}
+            ${e.done ? healthBadge('done') : e.date < today || e.h === 'late' || e.h === 'warn' ? healthBadge(e.h) : ''}
+            ${e.est ? '<span class="ag-est"><i class="ri-question-line"></i>date estimée</span>' : ''}
+        </div>
+    </div>`;
+}
+
+function agendaRow(e, showRubrique) {
+    const past = e.date < today;
+    return `<div class="ag-row ag-${e.kind} ${past ? 'is-past' : ''} ${e.done ? 'is-done' : ''} ${e.est ? 'is-est' : ''}" style="--c:${e.t.color}" data-reveal>
+        <div class="ag-date">${agendaDate(e)}<small>${e.kind === 'rdv' || (e.est && isMonthEnd(e.date)) ? '' : DAYS[e.date.getDay()]}</small></div>
+        <div class="ag-spine"><span class="ag-dot"></span></div>
+        ${agendaCard(e, showRubrique)}
+    </div>`;
+}
+
+function agendaCluster(key, items, showRubrique) {
+    const e0 = items[0], open = state.openClusters.has(key);
+    const est = items.every(x => x.est), past = e0.date < today;
+    const byTheme = [];
+    items.forEach(x => { const g = byTheme.find(b => b.t === x.t); g ? g.n++ : byTheme.push({ t: x.t, n: 1 }); });
+    const done = items.filter(x => x.done).length;
+    return `<div class="ag-row ag-cluster ${past ? 'is-past' : ''} ${est ? 'is-est' : ''} ${open ? 'is-open' : ''}" style="--c:var(--pole-current)" data-reveal>
+        <div class="ag-date">${agendaDate({ ...e0, est })}<small>${est && isMonthEnd(e0.date) ? e0.date.getFullYear() : DAYS[e0.date.getDay()]}</small></div>
+        <div class="ag-spine"><span class="ag-dot">${items.length}</span></div>
+        <div class="ag-card ag-cluster-card">
+            <button type="button" class="ag-cluster-head" data-cluster="${esc(key)}" aria-expanded="${open}">
+                <span class="ag-title"><i class="ri-stack-line"></i>${items.length} échéances${done ? ` · ${done} faite${done > 1 ? 's' : ''}` : ''}</span>
+                <span class="ag-chips">${byTheme.map(b => `<span class="ag-chip" style="--c:${b.t.color}"><i class="dot"></i>${esc(b.t.name)}${b.n > 1 ? ` ×${b.n}` : ''}</span>`).join('')}</span>
+                <i class="ri-arrow-down-s-line ag-chevron"></i>
+            </button>
+            <ul class="ag-cluster-list">${items.map(x => `
+                <li class="ag-item" data-id="${esc(x.t.id)}" data-tip="${esc(x.tip)}" style="--c:${x.t.color}">
+                    <span class="dot ${HEALTH[x.done ? 'done' : x.h].cls}"></span><span class="ag-item-name">${esc(x.name)}</span>
+                    <span class="ag-item-theme"><i class="${esc(x.t.icon || 'ri-folder-line')}"></i>${esc(x.t.name)}${showRubrique ? ' · ' + esc(rubriqueOf(x.t.rubrique).name) : ''}</span>
+                </li>`).join('')}</ul>
+        </div>
+    </div>`;
+}
+
+function renderAgenda(themes, showRubrique) {
+    const events = buildEvents(themes);
+    if (!events.length) return '<div class="empty">Aucun événement.</div>';
+    // Regroupement des échéances d'un même jour
+    const items = [];
+    for (let i = 0; i < events.length;) {
+        const e = events[i];
+        let j = i;
+        while (j < events.length && events[j].kind === 'echeance' && e.kind === 'echeance' && +events[j].date === +e.date) j++;
+        if (j - i >= 3) { items.push({ cluster: events.slice(i, j), date: e.date }); i = j; }
+        else { items.push({ e, date: e.date }); i++; }
+    }
+    // Repère « Aujourd'hui » à sa vraie place
+    const ti = items.findIndex(x => x.date > today);
+    items.splice(ti === -1 ? items.length : ti, 0, { today: true, date: today });
+
+    let html = '', prevMonth = null;
+    const mk = d => d.getFullYear() * 12 + d.getMonth();
+    // Les événements des mois précédents sont repliés par défaut
+    const cut = startOfMonth(today);
+    const old = items.filter(x => !x.today && x.date < cut);
+    if (old.length) {
+        const n = old.reduce((s, x) => s + (x.cluster ? x.cluster.length : 1), 0);
+        html += `<button type="button" class="ag-past-toggle" data-toggle-past><i class="ri-history-line"></i>
+            ${state.showPast ? 'Masquer' : 'Afficher'} ${n} événement${n > 1 ? 's' : ''} passé${n > 1 ? 's' : ''}
+            <small>${fmtMonth(old[0].date)} → ${fmtMonth(old[old.length - 1].date)}</small><i class="ri-arrow-${state.showPast ? 'up' : 'down'}-s-line"></i></button>`;
+    }
+    items.filter(x => state.showPast || x.today || x.date >= cut).forEach(x => {
+        const m = mk(x.date);
+        if (m !== prevMonth) {
+            if (prevMonth !== null && m - prevMonth > 1) {
+                const n = m - prevMonth - 1;
+                html += `<div class="ag-gap"><div></div><div class="ag-spine"></div><span>${n} mois sans échéance</span></div>`;
+            }
+            const d = x.date;
+            html += `<div class="ag-month ${d < startOfMonth(today) ? 'is-past' : ''}"><div class="ag-month-label">${MONTHS[d.getMonth()].replace('.', '')}<small>${d.getFullYear()}</small></div><div class="ag-spine"></div><div class="ag-month-line"></div></div>`;
+            prevMonth = m;
+        }
+        if (x.today) html += `<div class="ag-today"><div class="ag-date">Aujourd'hui<small>${today.getDate()} ${MONTHS[today.getMonth()]}</small></div><div class="ag-spine"><span class="ag-dot"></span></div><div class="ag-today-line"></div></div>`;
+        else if (x.cluster) html += agendaCluster(iso(x.date), x.cluster, showRubrique);
+        else html += agendaRow(x.e, showRubrique);
+    });
+    return `<div class="agenda">${html}</div>
+        <div class="ag-legend">
+            <span><i class="ag-lg jalon"></i>Jalon</span><span><i class="ag-lg rdv"></i>Rendez-vous</span>
+            <span><i class="ag-lg ech"></i>Échéance</span><span><i class="ag-lg est"></i>Date estimée</span><span><i class="ag-lg done"></i>Fait</span>
+        </div>`;
+}
+
 function renderStory() {
     const mode = storyMode();
     state.storyMode = mode;
+    if (state.storySort === 'agenda') {
+        const all = state.rubrique === 'all';
+        $('#story-sub').textContent = all ? "L'agenda réel de toutes les rubriques : jalons, rendez-vous et échéances" : `L'agenda réel ${rubriqueOf(state.rubrique).name} : jalons, rendez-vous et échéances`;
+        $('#story').innerHTML = renderAgenda(visibleThemes(), all);
+        return;
+    }
     if (state.rubrique === 'all') {
-        $('#story-sub').textContent = state.storySort === 'date' ? 'Les grands thèmes de chaque rubrique, classés par échéance' : 'Les grands thèmes de chaque rubrique, dans l\'ordre des thèmes';
+        $('#story-sub').textContent = 'Les grands thèmes de chaque rubrique et leur avancement';
         $('#story').innerHTML = `<div class="story-cols">${data().rubriques.map(r => {
             const themes = themesOf(r.id).filter(t => !state.owner || t.owner === state.owner);
             return `<div class="story-col" style="--pole:${r.color}">
@@ -330,7 +468,7 @@ function renderStory() {
         }).join('')}</div>`;
     } else {
         const r = rubriqueOf(state.rubrique);
-        $('#story-sub').textContent = state.storySort === 'date' ? `Les thèmes ${r.name}, classés par échéance` : `Les thèmes ${r.name}, dans l'ordre des thèmes`;
+        $('#story-sub').textContent = `Les thèmes ${r.name} et leur avancement`;
         $('#story').innerHTML = storyTimeline(visibleThemes(), mode);
     }
 }
@@ -400,7 +538,7 @@ function tipHtml(key) {
     return `<div class="tip-head" style="--c:${t.color}"><small>${esc(rub.name)} · ${esc(t.name)}</small><strong>${isMilestone(a) ? '<i class="ri-flag-2-line"></i> ' : ''}${esc(a.name)}</strong></div>
         <div class="tip-row"><i class="ri-calendar-line"></i>${isMilestone(a) ? 'Jalon · ' + fmtDate(r.start) : dateSpan(r.start, r.end)}${r.end >= today && a.progress < 100 ? ` <em>${countdown(r.end)}</em>` : ''}</div>
         <div class="tip-progress">${bar(a.progress, t.color)}<span><b>${a.progress}%</b> réalisé · attendu ${linearExpected(r.start, r.end)}%</span></div>
-        <div class="tip-row">${healthBadge(actionHealth(a))}</div>
+        <div class="tip-row">${healthBadge(actionHealth(a))}${a.estimated ? '<span class="muted"><i class="ri-question-line"></i> date estimée</span>' : ''}</div>
         ${a.note ? `<p class="tip-note">${esc(a.note)}</p>` : ''}`;
 }
 
@@ -593,6 +731,7 @@ function actionRow(a = {}, t = themeById(state.editingId)) {
             <label>Début<input type="date" name="a-start" value="${esc(start)}"></label>
             <label>Fin<input type="date" name="a-end" value="${esc(end)}"></label>
             <div class="range ar-range"><input type="range" name="a-progress" min="0" max="100" step="5" value="${prog}" style="--val:${prog}%"><output>${prog}%</output></div>
+            <label class="check ar-est" title="Cochez si la date n'est pas encore calée (ex. « fin 2026 »)"><input type="checkbox" name="a-est" ${a.estimated ? 'checked' : ''}> Date estimée</label>
         </div>
         <input class="note-input" name="a-note" placeholder="Texte affiché au survol (facultatif)" value="${esc(a.note || '')}">
     </div>`;
@@ -644,7 +783,7 @@ function readThemeForm(form) {
         const start = q('a-start') || iso(today);
         let end = q('a-end') || start;
         if (parse(end) < parse(start)) end = start;
-        return { name: q('a-name').trim(), start, end, progress: Number(q('a-progress')), note: q('a-note').trim() };
+        return { name: q('a-name').trim(), start, end, progress: Number(q('a-progress')), note: q('a-note').trim(), estimated: row.querySelector('[name="a-est"]').checked };
     });
     $('#admin-themes').innerHTML = adminThemeListHtml();
 }
@@ -983,6 +1122,15 @@ function bind() {
             if (t === $('#admin') || t.closest('#admin-close')) return closeAdmin();
             return adminClick(t);
         }
+        if (t.closest('[data-toggle-past]')) { state.showPast = !state.showPast; hideTip(); renderStory(); return observeReveals(); }
+        const cluster = t.closest('[data-cluster]');
+        if (cluster) {
+            const k = cluster.dataset.cluster;
+            state.openClusters.has(k) ? state.openClusters.delete(k) : state.openClusters.add(k);
+            const row = cluster.closest('.ag-row');
+            row.classList.toggle('is-open');
+            return cluster.setAttribute('aria-expanded', row.classList.contains('is-open'));
+        }
         const sortStory = t.closest('[data-sort-story]');
         if (sortStory) { state.storySort = sortStory.dataset.sortStory; saveUiPrefs(); renderStory(); renderSortButtons(); return observeReveals(); }
         const sortGantt = t.closest('[data-sort-gantt]');
@@ -998,7 +1146,7 @@ function bind() {
         if (rub) return setRubrique(rub.dataset.rubrique);
         const zoom = t.closest('[data-zoom]');
         if (zoom) { state.zoom = zoom.dataset.zoom; state.anchor = startOfMonth(state.zoom === 'year' ? new Date(state.anchor.getFullYear(), 0, 1) : today); return renderGantt(); }
-        const row = t.closest('.g-row, .sn-card, .sn-visual');
+        const row = t.closest('.g-row, .sn-card, .sn-visual, .ag-card:not(.ag-cluster-card), .ag-item');
         if (row) return openDrawer(row.dataset.id);
         if (t.closest('[data-close]') || t === $('#overlay')) return closeDrawer();
         const edit = t.closest('[data-edit]');
@@ -1014,7 +1162,7 @@ function bind() {
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') { closeDrawer(); closeAdmin(); hideTip(); }
-        if (e.key === 'Enter' && e.target.matches('.g-row, .sn-card')) openDrawer(e.target.dataset.id);
+        if (e.key === 'Enter' && e.target.matches('.g-row, .sn-card, .ag-card[data-id]')) openDrawer(e.target.dataset.id);
     });
 
     $('#admin-body').addEventListener('input', e => {
@@ -1046,7 +1194,7 @@ $('#local-banner').hidden = !store.isLocal;
 try { const saved = localStorage.getItem('picard2030_rubrique'); if (saved && (saved === 'all' || data().rubriques.some(r => r.id === saved))) state.rubrique = saved; } catch (e) { /* ignore */ }
 try {
     const sort = JSON.parse(localStorage.getItem('picard2030_sort'));
-    if (sort && ['date', 'theme'].includes(sort.story)) state.storySort = sort.story;
+    if (sort && ['agenda', 'theme'].includes(sort.story)) state.storySort = sort.story;
     if (sort && ['date', 'theme'].includes(sort.gantt)) state.ganttSort = sort.gantt;
 } catch (e) { /* ignore */ }
 bind();

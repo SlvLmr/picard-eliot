@@ -58,42 +58,48 @@ window.PICARD2030_DATA = {
           "start": "2026-09-01",
           "end": "2026-09-30",
           "progress": 100,
-          "note": "À confirmer : considérée comme faite, les 3 secteurs étant identifiés."
+          "note": "À confirmer : considérée comme faite, les 3 secteurs étant identifiés.",
+          "estimated": true
         },
         {
           "name": "Processus de recrutement des 3 nouveaux postes",
           "start": "2026-09-01",
           "end": "2026-12-31",
           "progress": 40,
-          "note": "IDF Est (fenêtriers) · Centre-Ouest (serruriers) · Ouest (serruriers). Avancement estimé, à confirmer."
+          "note": "IDF Est (fenêtriers) · Centre-Ouest (serruriers) · Ouest (serruriers). Avancement estimé, à confirmer.",
+          "estimated": true
         },
         {
           "name": "Construction du parcours d'intégration",
           "start": "2026-10-14",
           "end": "2026-11-30",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": false
         },
         {
           "name": "Passation (mode opératoire)",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Parcours départ à la retraite",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Secteur Nord : arbitrage",
           "start": "2027-12-31",
           "end": "2027-12-31",
           "progress": 0,
-          "note": "Jalon : décision sur l'ouverture du secteur Nord."
+          "note": "Jalon : décision sur l'ouverture du secteur Nord.",
+          "estimated": true
         }
       ]
     },
@@ -111,49 +117,56 @@ window.PICARD2030_DATA = {
           "start": "2027-01-04",
           "end": "2027-01-04",
           "progress": 0,
-          "note": "Jalon de départ de Picard 2030. Pendant la réunion commerciale, semaine du 4 au 8 janvier 2027."
+          "note": "Jalon de départ de Picard 2030. Pendant la réunion commerciale, semaine du 4 au 8 janvier 2027.",
+          "estimated": true
         },
         {
           "name": "Présentation individuelle des nouveaux secteurs",
           "start": "2026-10-01",
           "end": "2026-11-15",
           "progress": 70,
-          "note": "Avancement noté à 70 % au 14/10."
+          "note": "Avancement noté à 70 % au 14/10.",
+          "estimated": false
         },
         {
           "name": "Création d'un support de suivi (tous segments)",
           "start": "2026-10-01",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "Initialement prévu pour Hall & Tech, étendu à tous les segments."
+          "note": "Initialement prévu pour Hall & Tech, étendu à tous les segments.",
+          "estimated": true
         },
         {
           "name": "Nouvelle grille de rémunération / objectifs",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Réunion commerciale : présentation des objectifs individuels",
           "start": "2027-01-04",
           "end": "2027-01-08",
           "progress": 0,
-          "note": "Semaine du 4 au 8 janvier 2027. Sessions : séminaire, Lyon, Marseille, Paris (Eliot)."
+          "note": "Semaine du 4 au 8 janvier 2027. Sessions : séminaire, Lyon, Marseille, Paris (Eliot).",
+          "estimated": false
         },
         {
           "name": "Animation de la force commerciale",
           "start": "2027-01-01",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Passation des secteurs",
           "start": "2026-11-16",
           "end": "2027-03-31",
           "progress": 0,
-          "note": "Jusqu'à fin mars 2027."
+          "note": "Jusqu'à fin mars 2027.",
+          "estimated": true
         }
       ]
     },
@@ -171,77 +184,88 @@ window.PICARD2030_DATA = {
           "start": "2026-10-19",
           "end": "2026-10-19",
           "progress": 0,
-          "note": "Jalon. À confirmer : rattachement au programme IAP."
+          "note": "Jalon. À confirmer : rattachement au programme IAP.",
+          "estimated": false
         },
         {
           "name": "Définir le modèle de partenariat IAP Picard 2030",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Confirmer la nouvelle charte IAP (showroom enseigne)",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Refonte du contrat IAP (engagements, réciprocité)",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Refonte de la politique tarifaire & BFA",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Construire le parcours de performance IAP",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Construire le plan de recrutement / zones Picard 2030",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Construire le parcours d'intégration IAP",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Définir le modèle ambassadeurs / parrainage",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Définir et construire un comité stratégique IAP",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Plan marketing opérationnel IAP",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         }
       ]
     },
@@ -259,35 +283,40 @@ window.PICARD2030_DATA = {
           "start": "2026-10-09",
           "end": "2026-10-09",
           "progress": 100,
-          "note": "Jalon du 09/10. CP Serrures : Laurent Guillard."
+          "note": "Jalon du 09/10. CP Serrures : Laurent Guillard.",
+          "estimated": false
         },
         {
           "name": "Réunion cylindre Flexy",
           "start": "2026-10-22",
           "end": "2026-10-22",
           "progress": 0,
-          "note": "Jalon. Cylindre Nord A2P 3*."
+          "note": "Jalon. Cylindre Nord A2P 3*.",
+          "estimated": false
         },
         {
           "name": "Serrures : rationalisation des gammes Ermétis, P10 et P30",
           "start": "2026-10-22",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "Lancée le 22/10, livrable fin décembre. CP Serrures : Laurent Guillard."
+          "note": "Lancée le 22/10, livrable fin décembre. CP Serrures : Laurent Guillard.",
+          "estimated": true
         },
         {
           "name": "Portes palières : cabinet externe (avec Eliot)",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "En cours de discussion. Point d'attention : coordination avec Eliot."
+          "note": "En cours de discussion. Point d'attention : coordination avec Eliot.",
+          "estimated": true
         },
         {
           "name": "Hall & Tech : Christophe Kuti, chef produit",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         }
       ]
     },
@@ -305,28 +334,32 @@ window.PICARD2030_DATA = {
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Installation des prototypes chez 5 IAP",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "Portes test chez 5 Installateurs Agréés Picard (IAP), avec engagement de confidentialité."
+          "note": "Portes test chez 5 Installateurs Agréés Picard (IAP), avec engagement de confidentialité.",
+          "estimated": true
         },
         {
           "name": "Tarification publique validée",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Ressources",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         }
       ]
     },
@@ -344,14 +377,16 @@ window.PICARD2030_DATA = {
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Plan d'animation des réseaux",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         }
       ]
     },
@@ -369,42 +404,48 @@ window.PICARD2030_DATA = {
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Campagnes digitales",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Salons",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Ressources",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Presse",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Communication interne",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": "Site web, réseaux sociaux, newsletters. Suivi Picard 2030 (newsletter bimensuelle), guide des bonnes pratiques, événements internes."
+          "note": "Site web, réseaux sociaux, newsletters. Suivi Picard 2030 (newsletter bimensuelle), guide des bonnes pratiques, événements internes.",
+          "estimated": true
         }
       ]
     },
@@ -422,21 +463,24 @@ window.PICARD2030_DATA = {
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Communication client SAV",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Gestion du SAV fenêtriers",
           "start": "2026-10-14",
           "end": "2027-01-31",
           "progress": 0,
-          "note": "Groupe de travail avec Régis Di Dia et Léo Gaday."
+          "note": "Groupe de travail avec Régis Di Dia et Léo Gaday.",
+          "estimated": true
         }
       ]
     },
@@ -454,56 +498,64 @@ window.PICARD2030_DATA = {
           "start": "2026-10-14",
           "end": "2026-10-31",
           "progress": 100,
-          "note": "Coché ✓ dans les notes (échéance 31/10). À confirmer."
+          "note": "Coché ✓ dans les notes (échéance 31/10). À confirmer.",
+          "estimated": false
         },
         {
           "name": "Définir les segments de marché prioritaires",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Refonte de la gamme Eliot",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Construire le modèle Eliot",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Définir les règles commerciales de vente",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Plan de stabilisation IDF avec Sécuristes de France",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
-          "note": "Date non précisée : fin 2026 par défaut."
+          "note": "Date non précisée : fin 2026 par défaut.",
+          "estimated": true
         },
         {
           "name": "Consolider le plan de croissance 2027",
           "start": "2027-01-01",
           "end": "2027-12-31",
           "progress": 0,
-          "note": ""
+          "note": "",
+          "estimated": true
         },
         {
           "name": "Construire le développement national",
           "start": "2027-01-01",
           "end": "2028-12-31",
           "progress": 0,
-          "note": "2027 à 2028."
+          "note": "2027 à 2028.",
+          "estimated": true
         }
       ]
     },

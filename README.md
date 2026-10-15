@@ -11,6 +11,7 @@ Timeline interactive pour suivre l'avancement du plan **Picard2030**.
 - **Actions** : ce qui est fait concrètement dans chaque thème. Une action dont la date de début est égale à la date de fin est un **jalon**.
 
 Chaque thème et chaque action a une **date de début**, une **date de fin**, un **avancement en %** et un **texte contextuel**, affiché au survol.
+Une action peut être marquée **« date estimée »** (par exemple « fin 2026 ») pour la distinguer d'une date ferme.
 
 ## Ouvrir l'outil
 
@@ -22,10 +23,13 @@ Pour l'utiliser en local, ouvrez `picard2030/index.html` dans un navigateur, san
 
 La page est organisée en trois sections, accessibles depuis les raccourcis en haut à droite :
 
-1. **Timeline** : une infographie verticale des grands thèmes, dans l'ordre chronologique, avec un repère « Aujourd'hui ».
-   - En vue d'ensemble, Commerce et Production sont côte à côte.
-   - Dans une rubrique, les thèmes alternent à gauche et à droite.
-   - Chaque thème affiche sa jauge, sa météo, son texte et ses actions.
+1. **Timeline**, avec deux vues :
+   - **Agenda** (par défaut) : le vrai calendrier, avec un point par événement daté, regroupés par mois, et « Aujourd'hui » à sa vraie place.
+     - Jalons (◆) et rendez-vous de quelques jours : à leur date.
+     - Actions : à leur échéance (⚑).
+     - Les échéances d'un même jour sont regroupées (par exemple « 27 échéances fin déc. ») et se déplient au clic.
+     - Les **dates estimées** sont en pointillé ; les événements des mois passés sont repliés.
+   - **Par thème** : l'infographie verticale des grands thèmes avec leurs jauges.
 2. **Indicateurs** : compteurs animés, jauges par rubrique, météo des thèmes et des actions, prochaines échéances et points d'attention.
 3. **Gantt** : le détail des actions dans le temps (6 mois, une année ou le plan complet). Les thèmes se déplient, on y voit les points d'échéance, les jalons et la ligne « aujourd'hui ».
 

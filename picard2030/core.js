@@ -67,7 +67,7 @@ function normalize(d) {
         t.id ||= uid('t');
         t.actions ||= [];
         t.note ||= '';
-        t.actions.forEach(a => { a.note ||= ''; a.progress = clamp(Number(a.progress) || 0, 0, 100); });
+        t.actions.forEach(a => { a.note ||= ''; a.estimated = !!a.estimated; a.progress = clamp(Number(a.progress) || 0, 0, 100); });
     });
     return d;
 }
