@@ -15,7 +15,7 @@ create table public.reglages (
   nom text not null default 'PICARD-ATC',
   sous_titre text not null default 'Pilotage du chiffre des ATC',
   lecture_publique boolean not null default false,
-  -- statuts sur le rythme (réalisé ÷ attendu à date) : rouge ≤ orange < … ≤ jaune < … ≤ vert < vert
+  -- statuts sur le % du budget réalisé : rouge ≤ orange < … ≤ jaune < … ≤ vert < vert
   seuil_vert numeric not null default 90,    -- vert au-delà
   seuil_jaune numeric not null default 85,   -- jaune au-delà (jusqu'au seuil vert)
   seuil_orange numeric not null default 60,  -- orange au-delà (jusqu'au seuil jaune), rouge en dessous

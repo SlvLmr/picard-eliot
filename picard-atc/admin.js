@@ -379,7 +379,7 @@ function tabReglages() {
         <div class="a-section"><h3><i class="ri-palette-line"></i>Outil</h3>
             <div class="a-grid"><label class="field">Nom de l'outil<input data-r="nom" value="${esc(r.nom || '')}"></label>
             <label class="field">Sous-titre<input data-r="sous_titre" value="${esc(r.sous_titre || '')}"></label></div></div>
-        <div class="a-section"><h3><i class="ri-traffic-light-line"></i>Statuts (rythme = réalisé ÷ budget attendu à date)</h3>
+        <div class="a-section"><h3><i class="ri-traffic-light-line"></i>Statuts (% du budget réalisé)</h3>
             <div class="a-grid"><label class="field">Rouge jusqu'à (%)<input type="number" data-r="seuil_orange" value="${r.seuil_orange ?? 60}"></label>
             <label class="field">Orange jusqu'à (%)<input type="number" data-r="seuil_jaune" value="${r.seuil_jaune ?? 85}"></label>
             <label class="field">Jaune jusqu'à (%) · vert au-delà<input type="number" data-r="seuil_vert" value="${r.seuil_vert ?? 90}"></label></div>

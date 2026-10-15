@@ -126,7 +126,7 @@ function serieMois(D, ids, annee, gammes = CA_GAMMES) {
     return [...Array(12)].map((_, i) => agg(D.idx, ids, annee, [i + 1], gammes));
 }
 
-// Statut selon le rythme (réalisé / attendu à date)
+// Statut selon le % du budget réalisé (le chiffre affiché dans les jauges)
 function statut(rythme, reglages) {
     if (rythme == null) return { key: 'none', label: 'Sans budget', icon: 'ri-subtract-line' };
     // Rouge jusqu'à 60 %, orange de 61 à 85 %, jaune de 86 à 90 %, vert au-delà (seuils réglables dans l'admin)

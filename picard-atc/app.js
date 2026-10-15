@@ -57,7 +57,7 @@ const Kc = (who, p) => { const k = `${who}|${p}`; if (!S.kCache.has(k)) S.kCache
 
 // ─── Menu de gauche ─────────────────────────────────────────
 function ringHtml(k) {
-    const st = statut(k.rythme, S.base.reglages);
+    const st = statut(k.atteinte, S.base.reglages);
     const p = Math.max(0, Math.min(100, k.atteinte ?? 0));
     return { html: `<span>${k.atteinte == null ? '—' : Math.round(k.atteinte)}</span>`, style: `--p:${p}${st.key === 'none' ? '' : `;--rc:var(--${st.key})`}`, st };
 }
@@ -144,9 +144,9 @@ function renderSignals() {
     }
     if (!S.who || isEquipe(S.who)) {
         const late = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period) }))
-            .filter(x => ['late', 'orange'].includes(statut(x.k.rythme, reg).key)).sort((a, b) => a.k.rythme - b.k.rythme);
-        if (late.length) out.push({ cls: 'late', html: `<b>${late.length}</b> ATC en retard : ` + late.slice(0, 4).map(x => `<button class="chip-btn" data-who="${x.c.id}">${esc(x.c.prenom || x.c.nom)} ${pct(x.k.rythme)}</button>`).join(' ') });
-        else out.push({ cls: 'ok', html: 'Aucun ATC en retard sur son rythme' });
+            .filter(x => ['late', 'orange'].includes(statut(x.k.atteinte, reg).key)).sort((a, b) => a.k.atteinte - b.k.atteinte);
+        if (late.length) out.push({ cls: 'late', html: `<b>${late.length}</b> ATC en retard : ` + late.slice(0, 4).map(x => `<button class="chip-btn" data-who="${x.c.id}">${esc(x.c.prenom || x.c.nom)} ${pct(x.k.atteinte)}</button>`).join(' ') });
+        else out.push({ cls: 'ok', html: 'Aucun ATC en retard sur son budget' });
     } else if (k.reste > 0 && p.joursRestants > 0) {
         out.push({ cls: 'info', html: `Pour tenir le budget : <b>${euros(k.reste / p.joursRestants)}</b> par jour ouvré sur ${p.joursRestants} jours` });
     }
@@ -251,7 +251,7 @@ function renderGauges() {
     }
     for (const g of $$('.gauge', el)) {
         const p = g.dataset.period; const k = Kc(S.who, p); const pi = pinfo(p);
-        const st = statut(k.rythme, S.base.reglages);
+        const st = statut(k.atteinte, S.base.reglages);
         g.classList.toggle('on', p === S.period);
         $('.g-title', g).textContent = { mois: MOIS_LONG[pi.m - 1], trimestre: pi.label.split(' ')[0], annee: String(pi.y) }[p];
         $('.g-sub', g).textContent = k.budget ? `${euros(k.realise)} / ${euros(k.budget)}` : 'Aucun budget';
@@ -369,8 +369,8 @@ function renderMonths() {
 
 // ─── Classement / détail par gamme ──────────────────────────
 function rankRow(who, avatar, nom, k, i) {
-    const st = statut(k.rythme, S.base.reglages);
-    return `<button class="rank-row" data-who="${who}" style="animation-delay:${i * 25}ms" title="${esc(st.label)} · rythme ${pct(k.rythme)}">
+    const st = statut(k.atteinte, S.base.reglages);
+    return `<button class="rank-row" data-who="${who}" style="animation-delay:${i * 25}ms" title="${esc(st.label)} · ${pct(k.atteinte)} du budget">
         ${avatar}<span><span class="r-name">${esc(nom)}<small>${euros(k.realise)}</small></span>
         <span class="bar"><span data-w="${Math.min(100, (k.atteinte || 0))}"></span>${k.attendu != null ? `<i style="left:${Math.min(100, k.attendu)}%"></i>` : ''}</span></span>
         <span class="r-val">${pct(k.atteinte)}<small class="${st.key}">${k.evol == null ? '' : pct(k.evol, { sign: true })}</small></span></button>`;
@@ -379,7 +379,7 @@ function renderRank() {
     if (S.who && !isEquipe(S.who)) {
         $('#rank-title').innerHTML = 'Détail par gamme <small>· réalisé / budget</small>'; $('#rank-hint').innerHTML = '';
         $('#rank').innerHTML = GAMMES.map((g, i) => {
-            const k = K(S.who, S.period, [g.k]); const st = statut(k.rythme, S.base.reglages);
+            const k = K(S.who, S.period, [g.k]); const st = statut(k.atteinte, S.base.reglages);
             return `<div class="rank-row static" style="animation-delay:${i * 25}ms"><span class="g-ico"><i class="${g.icon}"></i></span>
                 <span><span class="r-name">${esc(g.nom)}<small>${euros(k.realise)} / ${euros(k.budget)}</small></span>
                 <span class="bar"><span data-w="${Math.min(100, k.atteinte || 0)}"></span>${k.attendu != null ? `<i style="left:${Math.min(100, k.attendu)}%"></i>` : ''}</span></span>
@@ -388,7 +388,7 @@ function renderRank() {
     } else {
         $('#rank-title').innerHTML = `Classement <small>· % du budget</small>`;
         $('#rank-hint').innerHTML = '<i class="ri-cursor-line"></i>Cliquez pour ouvrir';
-        const list = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period) })).sort((a, b) => (b.k.rythme ?? -1) - (a.k.rythme ?? -1));
+        const list = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period) })).sort((a, b) => (b.k.atteinte ?? -1) - (a.k.atteinte ?? -1));
         $('#rank').innerHTML = list.map(({ c, k }, i) => rankRow(c.id, `<span class="avatar" style="--c:${c.couleur}">${esc(initials(c))}</span>`, fullName(c), k, i)).join('') || '<div class="empty">Aucun ATC</div>';
     }
     requestAnimationFrame(() => $$('#rank .bar > span').forEach(s => s.style.width = s.dataset.w + '%'));
@@ -514,7 +514,7 @@ function zoneFill(code, maxPot) {
     if (!c) return 'var(--zone-empty)';
     if (S.mapMode === 'secteurs') return c.couleur;
     const k = Kc(c.id, S.period);
-    if (S.mapMode === 'atteinte') { const st = statut(k.rythme, S.base.reglages); return st.key === 'none' ? 'var(--zone-empty)' : `color-mix(in srgb, var(--${st.key}) 78%, var(--surface-solid))`; }
+    if (S.mapMode === 'atteinte') { const st = statut(k.atteinte, S.base.reglages); return st.key === 'none' ? 'var(--zone-empty)' : `color-mix(in srgb, var(--${st.key}) 78%, var(--surface-solid))`; }
     return k.evol == null ? 'var(--zone-empty)' : divColor(k.evol / 25);
 }
 
@@ -588,7 +588,7 @@ function renderMapLegend(maxPot) {
     const el = $('#map-legend');
     el.hidden = S.mapMode === 'secteurs';
     if (S.mapMode === 'atteinte') { const r = S.base.reglages, o = r.seuil_orange ?? 60, j = r.seuil_jaune ?? 85, v = r.seuil_vert ?? 90;
-        el.innerHTML = `<strong>Rythme vs budget à date</strong><div class="ramp" style="background:linear-gradient(90deg,var(--late) 0 25%,var(--orange) 25% 50%,var(--warn) 50% 75%,var(--ok) 75%)"></div><div class="ramp-lbl"><span>≤ ${o} %</span><span>${o + 1}–${j}</span><span>${j + 1}–${v}</span><span>> ${v} %</span></div>`; }
+        el.innerHTML = `<strong>Réalisé vs budget</strong><div class="ramp" style="background:linear-gradient(90deg,var(--late) 0 25%,var(--orange) 25% 50%,var(--warn) 50% 75%,var(--ok) 75%)"></div><div class="ramp-lbl"><span>≤ ${o} %</span><span>${o + 1}–${j}</span><span>${j + 1}–${v}</span><span>> ${v} %</span></div>`; }
     else if (S.mapMode === 'evol') el.innerHTML = `<strong>Évolution vs ${S.ref.getFullYear() - 1}</strong><div class="ramp" style="background:linear-gradient(90deg,${[-1, -.5, 0, .5, 1].map(divColor).join(',')})"></div><div class="ramp-lbl"><span>−25 %</span><span>0</span><span>+25 %</span></div>`;
     else if (S.mapMode === 'potentiel') el.innerHTML = `<strong>Potentiel de marché ${exemple}</strong><div class="ramp" style="background:linear-gradient(90deg,${[0, .25, .5, .75, 1].map(seqColor).join(',')})"></div><div class="ramp-lbl"><span>0</span><span>${euros(maxPot)}</span></div>`;
 }
@@ -634,7 +634,7 @@ function bindMap(svg) {
         if (MAP.moving) return;
         const bd = e.target.closest('.badge');
         if (bd) {
-            const c = commercial(bd.dataset.who); const k = Kc(c.id, S.period); const st = statut(k.rythme, S.base.reglages);
+            const c = commercial(bd.dataset.who); const k = Kc(c.id, S.period); const st = statut(k.atteinte, S.base.reglages);
             tip.innerHTML = `<h4><i class="dot" style="background:${c.couleur}"></i>${esc(fullName(c))}</h4>
                 <div class="t-row"><span>Facturé ${pinfo().label}</span><b>${euros(k.realise)}</b></div>
                 <div class="t-row"><span>Budget atteint</span><b>${pct(k.atteinte)}</b></div>
