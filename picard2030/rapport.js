@@ -36,7 +36,7 @@ function summaryPage() {
     const themes = rubs.flatMap(r => themesOf(r.id));
     const counts = Object.fromEntries(Object.keys(HEALTH).map(k => [k, 0]));
     themes.forEach(t => counts[themeHealth(t)]++);
-    const deadlines = upcomingDeadlines(themes).slice(0, 6);
+    const deadlines = upcomingDeadlines(themes).slice(0, 5);
     const attention = themes.flatMap(t => [
         ...(['late', 'warn'].includes(themeHealth(t)) ? [{ t, name: t.name, h: themeHealth(t), note: t.note, kind: 'Thème' }] : []),
         ...t.actions.filter(a => ['late', 'warn'].includes(actionHealth(a))).map(a => ({ t, name: a.name, h: actionHealth(a), note: a.note, kind: t.name })),
@@ -91,30 +91,60 @@ function summaryPage() {
 }
 
 // ─── Une page par rubrique (timeline verticale) ──
+// Choix des 5 étapes à montrer pour un thème : la dernière faite, l'étape en cours et les suivantes
+const STEPS = 5;
+function themeSteps(t) {
+    const acts = t.actions.map((a, i) => ({ a, i, d: actionRange(a).end }))
+        .sort((x, y) => (x.d - y.d) || (x.i - y.i));
+    if (acts.length <= STEPS) return { steps: acts, before: 0, after: 0 };
+    const cur = acts.findIndex(x => x.a.progress < 100);
+    const from = Math.max(0, Math.min((cur === -1 ? acts.length : cur) - 1, acts.length - STEPS));
+    return { steps: acts.slice(from, from + STEPS), before: from, after: acts.length - from - STEPS };
+}
+
+function stepState(a) {
+    if (a.progress >= 100) return 'done';
+    const h = actionHealth(a);
+    if (h === 'late') return 'late';
+    return actionRange(a).start <= today ? 'now' : 'next';
+}
+
+function themeRow(t) {
+    const h = themeHealth(t), prog = themeProgress(t);
+    const { steps, before, after } = themeSteps(t);
+    const lastDone = steps.reduce((k, x, i) => (x.a.progress >= 100 ? i : k), -1);
+    const span = Math.max(steps.length - 1, 0) * 20;                       // % de largeur entre 1re et dernière étape
+    const fill = lastDone > 0 ? lastDone * 20 : 0;
+    const head = `<div class="hrow-head">
+            <h3>${t.icon ? `<i class="${esc(t.icon)}"></i>` : ''}${esc(t.name)}</h3>
+            <p class="hrow-meta"><b>${prog}%</b>${pill(h)}</p>
+            ${opts.notes && t.note ? `<p class="hrow-note">${esc(t.note)}</p>` : ''}
+        </div>`;
+    if (!opts.actions || !steps.length) {
+        return `<div class="hrow" style="--c:${t.color}">${head}
+            <div class="htrack simple"><span class="hbar"><span style="width:${prog}%"></span></span></div></div>`;
+    }
+    return `<div class="hrow" style="--c:${t.color}">${head}
+        <div class="htrack">
+            <span class="hline" style="width:${span}%"></span>
+            <span class="hline fill" style="width:${fill}%"></span>
+            ${before ? `<span class="hmore before">+${before}</span>` : ''}
+            ${after ? `<span class="hmore after">+${after}</span>` : ''}
+            ${steps.map(({ a }) => {
+                const st = stepState(a), d = actionRange(a).end;
+                return `<div class="hstep ${st}">
+                    <span class="hdate">${isMilestone(a) ? `${d.getDate()} ` : ''}${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}</span>
+                    <span class="hnode">${st === 'done' ? '✓' : ''}</span>
+                    <span class="hname">${esc(a.name)}</span>
+                    <span class="hval">${isMilestone(a) ? 'Jalon' : `${a.progress}%`}</span>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>`;
+}
+
 function rubriquePage(r) {
     const themes = sortThemes(themesOf(r.id), 'date');
-    const nodes = themes.map((t, i) => {
-        const tr = themeRange(t), h = themeHealth(t), prog = themeProgress(t);
-        const content = `<div class="node-content">
-            <p class="node-date" style="color:${t.color}">${fmtMonth(tr.start)} → ${fmtMonth(tr.end)}</p>
-            <h3>${esc(t.name)}</h3>
-            <p class="node-meta">${t.owner ? esc(t.owner) + ' · ' : ''}${pill(h)}</p>
-            ${opts.notes && t.note ? `<p class="node-note">${esc(t.note)}</p>` : ''}
-            ${opts.actions && t.actions.length ? `<ul class="node-actions">${t.actions.map(a => {
-                const ah = actionHealth(a);
-                return `<li><span class="dot ${HEALTH[ah].cls}"></span><span class="an">${esc(a.name)}</span>${isMilestone(a)
-                    ? `<span class="ams"><i class="ri-flag-2-line"></i>${fmtDate(a.start)}</span>`
-                    : `<span class="abar"><span style="width:${a.progress}%;background:${t.color}"></span></span><b>${a.progress}%</b>`}</li>`;
-            }).join('')}</ul>` : ''}
-        </div>`;
-        const visual = `<div class="node-visual">${donut(prog, t.color, 112, 13, t.icon || 'ri-folder-line')}</div>`;
-        const right = i % 2 === 0;
-        return `<div class="node ${right ? 'right' : 'left'}" style="--c:${t.color}">
-            <div class="side side-l">${right ? visual : content}</div>
-            <div class="spine"><span class="seg"></span><span class="knot"></span><span class="arm"></span></div>
-            <div class="side side-r">${right ? content : visual}</div>
-        </div>`;
-    }).join('');
     const nActions = themes.reduce((n, t) => n + t.actions.length, 0);
     return `<section class="page" style="--rub:${r.color}">
         ${band()}
@@ -122,15 +152,15 @@ function rubriquePage(r) {
             <div>
                 <p class="kicker">${esc(settings().title)} · État d'avancement</p>
                 <h1><i class="${esc(r.icon)}"></i> ${esc(r.name)}</h1>
-                <p class="sub">${themes.length} thèmes · ${nActions} actions</p>
+                <p class="sub">${themes.length} thèmes · ${nActions} actions · classés par échéance</p>
             </div>
             ${donut(weightedProgress(themes), r.color, 110, 13)}
         </header>
-        <div class="vtl">
-            <div class="vtl-cap top"></div>
-            ${nodes || '<p class="muted center">Aucun thème dans cette rubrique.</p>'}
-            <div class="vtl-cap bottom"></div>
+        <div class="hlegend">
+            <span><i class="hnode-lg done">✓</i>Fait</span><span><i class="hnode-lg now"></i>En cours</span>
+            <span><i class="hnode-lg late"></i>En retard</span><span><i class="hnode-lg next"></i>À venir</span>
         </div>
+        <div class="hrows">${themes.map(themeRow).join('') || '<p class="muted center">Aucun thème dans cette rubrique.</p>'}</div>
         ${footer(r.name)}
     </section>`;
 }
