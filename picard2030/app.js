@@ -74,9 +74,9 @@ function renderTabs() {
 
 function renderOverview() {
     const el = $('#poles-overview');
-    el.hidden = state.rubrique !== 'all';
-    if (el.hidden) { el.innerHTML = ''; return; }
-    el.innerHTML = data().rubriques.map(r => {
+    // Vue d'ensemble : une carte par rubrique ; dans un onglet : la carte de la rubrique affichée
+    const rubs = state.rubrique === 'all' ? data().rubriques : data().rubriques.filter(r => r.id === state.rubrique);
+    el.innerHTML = rubs.map(r => {
         const themes = themesOf(r.id);
         const hs = themes.map(themeHealth);
         const late = hs.filter(h => h === 'late').length, warn = hs.filter(h => h === 'warn').length;
@@ -99,29 +99,6 @@ function renderOverview() {
                 </span>`).join('')}</div>
         </button>`;
     }).join('');
-}
-
-// ─── KPI ─────────────────────────────────────────
-function renderKpis() {
-    const themes = visibleThemes();
-    const color = state.rubrique === 'all' ? 'var(--accent)' : rubriqueOf(state.rubrique).color;
-    const hs = themes.map(themeHealth);
-    const active = hs.filter(h => h !== 'done' && h !== 'upcoming').length;
-    const late = hs.filter(h => h === 'late').length;
-    const warn = hs.filter(h => h === 'warn').length;
-    const horizon = settings().milestoneHorizon;
-    const deadlines = upcomingDeadlines(themes);
-    const inHorizon = deadlines.filter(d => daysBetween(today, d.date) <= horizon).length;
-    const next = deadlines[0];
-
-    $('#kpis').innerHTML = `
-        <div class="kpi kpi-gauge" data-reveal>${gauge(weightedProgress(themes), color, 88, 9)}<div><span class="kpi-label">Avancement global</span><span class="kpi-sub">pondéré par la durée</span></div></div>
-        <div class="kpi" data-reveal><i class="ri-rocket-2-line kpi-icon"></i><span class="kpi-value"><span data-count="${active}">${active}</span><small>/${themes.length}</small></span><span class="kpi-label">Thèmes en cours</span></div>
-        <div class="kpi ${late ? 'kpi-alert' : ''}" data-reveal><i class="ri-alarm-warning-line kpi-icon"></i><span class="kpi-value" data-count="${late}">${late}</span><span class="kpi-label">En retard</span><span class="kpi-sub">${warn} en vigilance</span></div>
-        <div class="kpi" data-reveal><i class="ri-flag-2-line kpi-icon"></i><span class="kpi-value" data-count="${inHorizon}">${inHorizon}</span><span class="kpi-label">Échéances sous ${horizon} jours</span></div>
-        <div class="kpi kpi-next" data-reveal>${next
-            ? `<span class="kpi-countdown">${countdown(next.date)}</span><span class="kpi-label">Prochaine échéance</span><span class="kpi-sub">${esc(next.name)} · ${esc(next.theme.name)}</span>`
-            : `<span class="kpi-label">Aucune échéance à venir</span>`}</div>`;
 }
 
 // ─── Timeline (Gantt) ────────────────────────────
@@ -1280,7 +1257,6 @@ function renderAll() {
     renderTabs();
     renderOwnerFilter();
     renderStory();
-    renderKpis();
     renderOverview();
     renderGantt();
     observeReveals();

@@ -632,26 +632,6 @@ html { scroll-behavior: smooth; }
 .bar-row b { color: var(--text); }
 .bar-row.sub { margin-top: 6px; font-style: italic; }
 
-/* ─── KPIs ────────────────────────────────── */
-.kpis { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr) 1.4fr; gap: 14px; }
-.kpi {
-    position: relative; overflow: hidden;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: var(--shadow); padding: 16px 18px;
-    display: flex; flex-direction: column; justify-content: center; gap: 2px;
-}
-.kpi::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--pole-current); }
-.kpi-gauge { flex-direction: row; align-items: center; gap: 14px; }
-.kpi-gauge > div:last-child { display: flex; flex-direction: column; }
-.kpi-icon { position: absolute; right: 14px; top: 12px; font-size: 22px; color: var(--muted-strong); }
-.kpi-value { font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
-.kpi-value small { font-size: 16px; color: var(--muted); font-weight: 600; }
-.kpi-label { font-weight: 600; }
-.kpi-sub { font-size: 12px; color: var(--muted); }
-.kpi-alert .kpi-value, .kpi-alert .kpi-icon { color: var(--late); }
-.kpi-alert::before { background: var(--late); }
-.kpi-countdown { font-size: 30px; font-weight: 800; color: var(--pole-current); letter-spacing: -.03em; }
-
 /* ─── Toolbar ─────────────────────────────── */
 .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .segmented { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
@@ -949,8 +929,6 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 /* ─── Responsive ──────────────────────────── */
 @media (max-width: 1100px) {
     .story-cols { grid-template-columns: 1fr; }
-    .kpis { grid-template-columns: repeat(3, 1fr); }
-    .kpi-gauge, .kpi-next { grid-column: span 3; }
 }
 @media (max-width: 760px) {
     :root { --label-w: 170px; }
@@ -1011,11 +989,6 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
     .g-action .g-label { padding-left: 20px; }
     .legend-hint { display: none; }
     .tip { width: 260px; }
-    .kpis { gap: 10px; }
-    .kpi { padding: 12px; }
-    .kpi-icon { display: none; }
-    .kpi-value, .kpi-countdown { font-size: 24px; }
-    .kpi-label { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .idea-box::after { display: none; }

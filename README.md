@@ -33,7 +33,7 @@ L'outil s'ouvre toujours sur la **vue d'ensemble**, avec la Timeline par thème 
      - Un seul type de point, à la couleur du thème. Le type (jalon, rendez-vous, échéance) et la mention « date estimée » sont écrits sur la carte.
      - Les échéances d'un même jour sont regroupées (par exemple « 27 échéances fin déc. ») et se déplient au clic.
      - Le compte à rebours passe en rouge à moins de 7 jours. Les événements des mois passés sont repliés.
-2. **Indicateurs** : compteurs animés et jauges d'avancement, global et par rubrique.
+2. **Indicateurs** : une carte par rubrique (jauge d'avancement, retards, vigilance, prochaine échéance, avancement de chaque thème).
 3. **Gantt** : le détail des actions dans le temps (6 mois, une année ou le plan complet). Les thèmes se déplient, on y voit les points d'échéance, les jalons et la ligne « aujourd'hui ».
 
 Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-bulle : dates, avancement réel et attendu, météo, et texte contextuel.
