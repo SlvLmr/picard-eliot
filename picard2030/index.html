@@ -145,9 +145,25 @@
                 </label>
             </div>
             <div class="idea-foot">
-                <span class="muted"><i class="ri-mail-send-line"></i> Votre messagerie s'ouvrira avec le message prêt à envoyer.</span>
+                <span class="muted"><i class="ri-lock-line"></i> Votre message est transmis directement et uniquement à l'équipe Picard 2030.</span>
                 <button type="submit" class="btn btn-primary idea-send"><i class="ri-send-plane-fill"></i>Envoyer</button>
             </div>
+        </form>
+    </div>
+
+    <!-- Connexion à l'administration -->
+    <div class="modal login-modal" id="login" aria-hidden="true" role="dialog" aria-labelledby="login-title">
+        <form class="login-form" id="login-form" autocomplete="on">
+            <div class="login-head">
+                <span class="login-ico"><i class="ri-lock-2-line"></i></span>
+                <h2 id="login-title">Administration</h2>
+                <p>Accès réservé à l'équipe Picard 2030</p>
+                <button type="button" class="btn btn-icon login-close" data-login-close title="Fermer"><i class="ri-close-line"></i></button>
+            </div>
+            <label>E-mail<input type="email" name="email" autocomplete="username" required></label>
+            <label>Mot de passe<input type="password" name="password" autocomplete="current-password" required></label>
+            <p class="login-error" id="login-error" hidden></p>
+            <button type="submit" class="btn btn-primary btn-block" id="login-submit"><i class="ri-login-box-line"></i> Se connecter</button>
         </form>
     </div>
 
@@ -160,14 +176,20 @@
                 <button class="btn btn-icon" id="admin-close" title="Fermer"><i class="ri-close-line"></i></button>
             </div>
             <div class="admin-body" id="admin-body"></div>
-            <div class="modal-foot"><span class="admin-status" id="admin-status"><i class="ri-save-line"></i> Enregistrement automatique</span></div>
+            <div class="modal-foot">
+                <span class="admin-status" id="admin-status"><i class="ri-save-line"></i> Enregistrement automatique</span>
+                <span class="admin-user"><i class="ri-shield-user-line"></i><span id="admin-user"></span>
+                    <button type="button" class="btn btn-small btn-ghost" id="btn-logout"><i class="ri-logout-box-r-line"></i> Se déconnecter</button></span>
+            </div>
         </div>
     </div>
 
     <div class="tip" id="tip" role="tooltip"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <script src="data/projets.js"></script>
     <script src="core.js"></script>
+    <script src="cloud.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

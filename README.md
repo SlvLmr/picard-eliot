@@ -39,7 +39,7 @@ Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-
 
 L'outil s'affiche en **mode clair** par défaut. Le bouton 🌙 / ☀ de l'en-tête bascule en mode sombre, et le choix est mémorisé dans le navigateur.
 
-En haut de page, la **boîte à idées** (« Soumettez-nous vos idées, remarques ») ouvre un petit formulaire : type (idée, remarque, question), sujet et message. À l'envoi, la messagerie de la personne s'ouvre avec le mail prêt, adressé à l'équipe Picard 2030. Les adresses ne sont pas affichées sur la page, mais elles apparaissent dans le champ « À » de la messagerie.
+En haut de page, la **boîte à idées** (« Soumettez-nous vos idées, remarques ») ouvre un petit formulaire : type (idée, remarque, question), sujet et message. Le message est enregistré directement dans la base Supabase, sans passer par la messagerie. Il n'est lisible que par les administrateurs, dans l'onglet **Messages** de l'admin.
 
 Le bouton **Rapport PDF** produit une version simplifiée A4 au style infographie, à diffuser en interne.
 
@@ -55,10 +55,13 @@ Ces seuils se règlent dans l'admin, onglet *Réglages*.
 
 ## Administration
 
+L'admin est **protégée par une connexion** (e-mail + mot de passe, via Supabase Auth). Seuls les comptes administrateurs déclarés dans la base y ont accès. La session reste ouverte sur le navigateur jusqu'à « Se déconnecter » (en bas de l'admin). Une pastille rouge sur le bouton Admin signale les nouveaux messages.
+
 Le bouton **Admin** ouvre quatre onglets. Chaque modification est **enregistrée automatiquement**.
 
 | Onglet | Ce qu'on y règle |
 |---|---|
+| **Messages** | Idées, remarques et questions reçues via la boîte à idées : filtrage, statut (nouveau / lu / traité), suppression. |
 | **Thèmes & actions** | En-tête coloré avec la jauge du thème, mise à jour en direct. Paramètres du thème : rubrique, responsable, couleur, icône, dates, texte au survol. Les actions sont des cartes : nom, dates, avancement par curseur, bouton ✓ « terminée », texte au survol. Leur statut se met à jour pendant la saisie. Un thème peut être déplacé, dupliqué ou supprimé. |
 | **Rubriques** | Ajouter, renommer ou réordonner les rubriques, choisir leur couleur et leur icône. |
 | **Réglages** | Nom de l'outil, sous-titre, couleur principale, années du plan, seuils de la météo, horizon des échéances. |
@@ -89,6 +92,15 @@ Le logo retenu est l'**emblème** : le carré Picard et « 2030 » en blanc, ave
 |---|---|
 | `picard2030/index.html`, `app.js`, `styles.css` | Application interactive |
 | `picard2030/core.js` | Calculs partagés (avancement, météo, échéances) |
+| `picard2030/cloud.js` | Connexion à Supabase (connexion admin, boîte à idées, messages) |
 | `picard2030/rapport.html`, `rapport.js`, `rapport.css` | Rapport A4 / PDF |
 | `picard2030/data/projets.js` | Données |
 | `picard2030/logo/` | Logos (SVG) |
+
+## Base de données (Supabase)
+
+Projet Supabase **picard2030** (organisation Picard Serrures, région Francfort).
+
+- Table `messages` : dépôt ouvert à tous, lecture, modification et suppression réservées aux administrateurs (règles RLS).
+- Fonction `is_admin()` : liste des e-mails administrateurs.
+- La clé utilisée dans `cloud.js` est la **clé publique** du projet. La sécurité repose sur les règles de la base, pas sur le secret de cette clé.

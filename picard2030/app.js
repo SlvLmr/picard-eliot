@@ -6,7 +6,7 @@
 
 const state = {
     rubrique: 'all',
-    zoom: 'year',
+    zoom: 'semester',
     anchor: startOfMonth(new Date()),
     owner: '',
     editingId: null,
@@ -672,6 +672,7 @@ function closeDrawer() {
 // Onglets : Thèmes, Rubriques, Réglages, Données. Enregistrement automatique.
 const ADMIN_TABS = [
     { id: 'themes', label: 'Thèmes & actions', icon: 'ri-folders-line' },
+    { id: 'messages', label: 'Messages', icon: 'ri-inbox-2-line' },
     { id: 'rubriques', label: 'Rubriques', icon: 'ri-layout-grid-line' },
     { id: 'settings', label: 'Réglages', icon: 'ri-equalizer-line' },
     { id: 'data', label: 'Données', icon: 'ri-database-2-line' },
@@ -697,10 +698,12 @@ function closeAdmin() {
 
 function renderAdmin() {
     $('#admin-tabs').innerHTML = ADMIN_TABS.map(t =>
-        `<button type="button" data-admin-tab="${t.id}" class="${state.adminTab === t.id ? 'active' : ''}"><i class="${t.icon}"></i><span>${t.label}</span></button>`).join('');
+        `<button type="button" data-admin-tab="${t.id}" class="${state.adminTab === t.id ? 'active' : ''}"><i class="${t.icon}"></i><span>${t.label}</span>${t.id === 'messages' && cloud.newCount ? `<b class="tab-badge">${cloud.newCount}</b>` : ''}</button>`).join('');
     const body = $('#admin-body');
     body.dataset.tab = state.adminTab;
-    body.innerHTML = { themes: adminThemesHtml, rubriques: adminRubriquesHtml, settings: adminSettingsHtml, data: adminDataHtml }[state.adminTab]();
+    $('#admin-user').textContent = cloud.email;
+    body.innerHTML = { themes: adminThemesHtml, messages: adminMessagesHtml, rubriques: adminRubriquesHtml, settings: adminSettingsHtml, data: adminDataHtml }[state.adminTab]();
+    if (state.adminTab === 'messages' && !state.messages) loadMessages();
     animateGauges(body);
 }
 
@@ -851,6 +854,51 @@ function readThemeForm(form) {
     $('#admin-themes').innerHTML = adminThemeListHtml();
 }
 
+// Messages de la boîte à idées
+const MSG_TYPES = { 'Idée': 'ri-lightbulb-line', 'Remarque': 'ri-chat-3-line', 'Question': 'ri-question-line' };
+const MSG_STATUTS = [['nouveau', 'Nouveau', 'ri-mail-unread-line'], ['lu', 'Lu', 'ri-mail-open-line'], ['traité', 'Traité', 'ri-checkbox-circle-line']];
+
+async function loadMessages() {
+    try { state.messages = await fetchMessages(); state.messagesError = ''; }
+    catch (e) { state.messages = []; state.messagesError = e.message; }
+    updateAdminBadge();
+    if ($('#admin').classList.contains('open') && state.adminTab === 'messages') renderAdmin();
+}
+
+function updateAdminBadge() {
+    const b = $('#btn-admin');
+    b.querySelector('.admin-badge')?.remove();
+    if (cloud.isAdmin && cloud.newCount) b.insertAdjacentHTML('beforeend', `<b class="admin-badge" title="${cloud.newCount} nouveau(x) message(s)">${cloud.newCount}</b>`);
+}
+
+function adminMessagesHtml() {
+    if (!state.messages) return '<div class="admin-pane"><p class="muted"><i class="ri-loader-4-line spin"></i> Chargement des messages…</p></div>';
+    if (state.messagesError) return `<div class="admin-pane"><p class="help">Impossible de charger les messages : ${esc(state.messagesError)}</p></div>`;
+    const f = state.msgFilter || 'tous';
+    const list = state.messages.filter(m => f === 'tous' || m.statut === f);
+    const count = k => state.messages.filter(m => m.statut === k).length;
+    return `<div class="admin-pane msg-pane">
+        <div class="msg-head">
+            <div class="segmented">${[['tous', `Tous (${state.messages.length})`], ...MSG_STATUTS.map(([k, l]) => [k, `${l}s (${count(k)})`])]
+                .map(([k, l]) => `<button type="button" class="${f === k ? 'active' : ''}" data-msg-filter="${k}">${l}</button>`).join('')}</div>
+            <button type="button" class="btn btn-small" data-msg-reload><i class="ri-refresh-line"></i> Actualiser</button>
+        </div>
+        ${list.length ? list.map(m => `
+            <article class="msg ${m.statut === 'nouveau' ? 'is-new' : ''}">
+                <div class="msg-top">
+                    <span class="msg-type"><i class="${MSG_TYPES[m.type] || 'ri-chat-3-line'}"></i>${esc(m.type)}</span>
+                    <span class="msg-sujet">${esc(m.sujet)}</span>
+                    <span class="msg-meta">${m.nom ? `<i class="ri-user-line"></i>${esc(m.nom)} · ` : ''}${new Date(m.created_at).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                </div>
+                <p class="msg-text">${esc(m.message)}</p>
+                <div class="msg-actions">
+                    <div class="segmented">${MSG_STATUTS.map(([k, l, ic]) => `<button type="button" class="${m.statut === k ? 'active' : ''}" data-msg-status="${k}" data-msg-id="${m.id}"><i class="${ic}"></i> ${l}</button>`).join('')}</div>
+                    <button type="button" class="btn btn-small btn-danger" data-msg-delete="${m.id}"><i class="ri-delete-bin-line"></i> Supprimer</button>
+                </div>
+            </article>`).join('') : `<div class="empty"><i class="ri-inbox-2-line"></i><br>${state.messages.length ? 'Aucun message dans cette catégorie.' : 'Aucun message pour le moment.'}</div>`}
+    </div>`;
+}
+
 // Rubriques
 function adminRubriquesHtml() {
     return `<form class="admin-pane" data-form="rubriques" autocomplete="off" onsubmit="return false">
@@ -971,6 +1019,30 @@ function renderInstant() {
 }
 
 function adminClick(t) {
+    const mf = t.closest('[data-msg-filter]');
+    if (mf) { state.msgFilter = mf.dataset.msgFilter; return renderAdmin(); }
+    if (t.closest('[data-msg-reload]')) { state.messages = null; renderAdmin(); return; }
+    const ms = t.closest('[data-msg-status]');
+    if (ms) {
+        const id = Number(ms.dataset.msgId), statut = ms.dataset.msgStatus;
+        setMessageStatus(id, statut).then(() => {
+            const m = state.messages.find(x => x.id === id); if (m) m.statut = statut;
+            cloud.newCount = state.messages.filter(x => x.statut === 'nouveau').length;
+            updateAdminBadge(); renderAdmin();
+        }).catch(e => toast('Erreur : ' + e.message, true));
+        return;
+    }
+    const md = t.closest('[data-msg-delete]');
+    if (md) {
+        if (!confirm('Supprimer définitivement ce message ?')) return;
+        const id = Number(md.dataset.msgDelete);
+        deleteMessage(id).then(() => {
+            state.messages = state.messages.filter(x => x.id !== id);
+            cloud.newCount = state.messages.filter(x => x.statut === 'nouveau').length;
+            updateAdminBadge(); renderAdmin(); toast('Message supprimé');
+        }).catch(e => toast('Erreur : ' + e.message, true));
+        return;
+    }
     const tab = t.closest('[data-admin-tab]');
     if (tab) { state.adminTab = tab.dataset.adminTab; return renderAdmin(); }
     const item = t.closest('.admin-item');
@@ -1169,12 +1241,7 @@ function setRubrique(id) {
 }
 
 // ─── Idées & remarques ───────────────────────────
-// Destinataires assemblés à l'exécution : ils n'apparaissent pas dans la page.
-const IDEA_TO = [['gdaillere', 'slamour'], ['picard-serrures', 'com']];
-function ideaRecipients() { return IDEA_TO[0].map(u => `${u}@${IDEA_TO[1].join('.')}`).join(','); }
-
-function openMailto(url) { location.href = url; }
-
+// Les messages sont enregistrés dans la base Supabase ; seuls les admins peuvent les lire.
 function openIdea() {
     hideTip();
     const sel = $('#idea-sujet');
@@ -1190,23 +1257,78 @@ function closeIdea() {
     $('#idea').setAttribute('aria-hidden', 'true');
 }
 
-function sendIdea(e) {
+async function sendIdea(e) {
     e.preventDefault();
     const f = new FormData($('#idea-form'));
-    const type = f.get('type'), sujet = f.get('sujet'), msg = String(f.get('message')).trim(), nom = String(f.get('nom')).trim();
-    if (!msg) return;
-    const subject = `[Picard 2030] ${type} · ${sujet}`;
-    const body = `${msg}\n\n---\n${type} · ${sujet}${nom ? `\nDe : ${nom}` : ''}\nEnvoyé depuis l'outil Picard 2030, le ${fmtDate(today)}`;
-    openMailto(`mailto:${ideaRecipients()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
-    closeIdea();
-    $('#idea-form').reset();
-    toast('Votre messagerie s\'ouvre : il ne reste qu\'à cliquer sur Envoyer. Merci !');
+    const msg = { type: f.get('type'), sujet: f.get('sujet'), message: String(f.get('message')).trim(), nom: String(f.get('nom')).trim() };
+    if (!msg.message) return;
+    const btn = $('#idea-form .idea-send');
+    btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line spin"></i>Envoi…';
+    try {
+        await submitMessage(msg);
+        closeIdea();
+        $('#idea-form').reset();
+        toast('Merci ! Votre message a bien été transmis à l\'équipe Picard 2030.');
+    } catch (err) {
+        toast("L'envoi n'a pas abouti. Vérifiez votre connexion et réessayez.", true);
+    } finally {
+        btn.disabled = false; btn.innerHTML = '<i class="ri-send-plane-fill"></i>Envoyer';
+    }
+}
+
+// ─── Connexion à l'administration ────────────────
+function openLogin() {
+    hideTip();
+    $('#login-error').hidden = true;
+    $('#login').classList.add('open');
+    $('#login').setAttribute('aria-hidden', 'false');
+    setTimeout(() => $('#login-form [name="email"]').focus(), 50);
+}
+
+function closeLogin() {
+    $('#login').classList.remove('open');
+    $('#login').setAttribute('aria-hidden', 'true');
+}
+
+async function requestAdmin() {
+    if (cloud.isAdmin || await refreshSession()) { openAdmin(); return; }
+    if (!cloud.client) return toast('Connexion impossible : service indisponible. Vérifiez votre connexion internet.', true);
+    openLogin();
+}
+
+async function doLogin(e) {
+    e.preventDefault();
+    const f = new FormData($('#login-form'));
+    const btn = $('#login-submit');
+    btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Connexion…';
+    try {
+        await signIn(String(f.get('email')).trim(), String(f.get('password')));
+        $('#login-form').reset();
+        closeLogin();
+        state.messages = null;
+        loadMessages();
+        openAdmin();
+        toast('Connecté');
+    } catch (err) {
+        $('#login-error').textContent = err.message;
+        $('#login-error').hidden = false;
+    } finally {
+        btn.disabled = false; btn.innerHTML = '<i class="ri-login-box-line"></i> Se connecter';
+    }
+}
+
+async function doLogout() {
+    await signOut();
+    state.messages = null;
+    closeAdmin();
+    updateAdminBadge();
+    toast('Déconnecté');
 }
 
 // Retour à la page par défaut (clic sur le logo)
 function goHome() {
-    closeDrawer(); closeAdmin(); closeIdea(); hideTip();
-    Object.assign(state, { rubrique: 'all', storySort: 'theme', owner: '', zoom: 'year', anchor: startOfMonth(today), showPast: false });
+    closeDrawer(); closeAdmin(); closeIdea(); closeLogin(); hideTip();
+    Object.assign(state, { rubrique: 'all', storySort: 'theme', owner: '', zoom: 'semester', anchor: startOfMonth(today), showPast: false });
     state.agThemes.clear(); state.openClusters.clear(); state.collapsed.clear();
     renderAll();
     document.documentElement.style.scrollBehavior = 'auto';
@@ -1266,7 +1388,12 @@ function bind() {
         if (row) return openDrawer(row.dataset.id);
         if (t.closest('[data-close]') || t === $('#overlay')) return closeDrawer();
         const edit = t.closest('[data-edit]');
-        if (edit) { closeDrawer(); return openAdmin(edit.dataset.edit); }
+        if (edit) {
+            closeDrawer();
+            if (cloud.isAdmin) return openAdmin(edit.dataset.edit);
+            state.editingId = edit.dataset.edit; state.adminTab = 'themes';
+            return requestAdmin();
+        }
     });
 
     document.addEventListener('mousemove', e => {
@@ -1277,7 +1404,7 @@ function bind() {
     document.addEventListener('scroll', hideTip, true);
 
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeDrawer(); closeAdmin(); closeIdea(); hideTip(); }
+        if (e.key === 'Escape') { closeDrawer(); closeAdmin(); closeIdea(); closeLogin(); hideTip(); }
         if (e.key === 'Enter' && e.target.matches('.g-row, .sn-card, .ag-card[data-id]')) openDrawer(e.target.dataset.id);
     });
 
@@ -1304,7 +1431,10 @@ function bind() {
     $('#filter-owner').onchange = e => { state.owner = e.target.value; renderAll(); };
     let resizeTimer;
     addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (storyMode() !== state.storyMode) { renderStory(); observeReveals(); } }, 200); });
-    $('#btn-admin').onclick = () => openAdmin();
+    $('#btn-admin').onclick = requestAdmin;
+    $('#login-form').addEventListener('submit', doLogin);
+    $('#login').addEventListener('click', e => { if (e.target === $('#login') || e.target.closest('[data-login-close]')) closeLogin(); });
+    $('#btn-logout').onclick = doLogout;
     $('#btn-idea').onclick = openIdea;
     $('#idea-form').addEventListener('submit', sendIdea);
     $('#idea').addEventListener('click', e => { if (e.target === $('#idea') || e.target.closest('[data-idea-close]')) closeIdea(); });
@@ -1331,5 +1461,6 @@ try {
     if (sort && ['date', 'theme'].includes(sort.gantt)) state.ganttSort = sort.gantt;
 } catch (e) { /* ignore */ }
 bind();
+if (initCloud()) refreshSession().then(ok => { if (ok) loadMessages(); });
 applySettings();
 renderAll();
