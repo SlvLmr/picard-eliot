@@ -107,6 +107,13 @@ window.PICARD2030_DATA = {
       "note": "Nouveaux secteurs, outils de suivi, rémunération et animation de la force commerciale.",
       "actions": [
         {
+          "name": "Séminaire stratégique Picard 2030 : lancement",
+          "start": "2027-01-04",
+          "end": "2027-01-04",
+          "progress": 0,
+          "note": "Jalon de départ de Picard 2030. Pendant la réunion commerciale, semaine du 4 au 8 janvier 2027."
+        },
+        {
           "name": "Présentation individuelle des nouveaux secteurs",
           "start": "2026-10-01",
           "end": "2026-11-15",
@@ -285,6 +292,45 @@ window.PICARD2030_DATA = {
       ]
     },
     {
+      "id": "c-reflex-confort",
+      "rubrique": "commerce",
+      "name": "Marketing produits · Reflet / Confort",
+      "owner": "",
+      "color": "#a78bfa",
+      "icon": "ri-lightbulb-line",
+      "note": "Thème rattaché à Marketing produits. Dates non précisées dans les notes : fin 2026 par défaut.",
+      "actions": [
+        {
+          "name": "Tarification",
+          "start": "2026-10-14",
+          "end": "2026-12-31",
+          "progress": 0,
+          "note": ""
+        },
+        {
+          "name": "Installation des prototypes chez 5 IAP",
+          "start": "2026-10-14",
+          "end": "2026-12-31",
+          "progress": 0,
+          "note": "Portes test chez 5 Installateurs Agréés Picard (IAP), avec engagement de confidentialité."
+        },
+        {
+          "name": "Tarification publique validée",
+          "start": "2026-10-14",
+          "end": "2026-12-31",
+          "progress": 0,
+          "note": ""
+        },
+        {
+          "name": "Ressources",
+          "start": "2026-10-14",
+          "end": "2026-12-31",
+          "progress": 0,
+          "note": ""
+        }
+      ]
+    },
+    {
       "id": "c-mkt-operationnel",
       "rubrique": "commerce",
       "name": "Marketing opérationnel",
@@ -439,7 +485,7 @@ window.PICARD2030_DATA = {
           "note": ""
         },
         {
-          "name": "Plan de stabilisation IDF avec les sécuristes",
+          "name": "Plan de stabilisation IDF avec Sécuristes de France",
           "start": "2026-10-14",
           "end": "2026-12-31",
           "progress": 0,
@@ -458,45 +504,6 @@ window.PICARD2030_DATA = {
           "end": "2028-12-31",
           "progress": 0,
           "note": "2027 à 2028."
-        }
-      ]
-    },
-    {
-      "id": "c-reflex-confort",
-      "rubrique": "commerce",
-      "name": "Chapitre Reflet / Confort",
-      "owner": "",
-      "color": "#a16207",
-      "icon": "ri-flag-2-line",
-      "note": "Dates non précisées dans les notes : fin 2026 par défaut.",
-      "actions": [
-        {
-          "name": "Tarification",
-          "start": "2026-10-14",
-          "end": "2026-12-31",
-          "progress": 0,
-          "note": ""
-        },
-        {
-          "name": "Installation des prototypes chez 5 IAP",
-          "start": "2026-10-14",
-          "end": "2026-12-31",
-          "progress": 0,
-          "note": "Portes test chez 5 Installateurs Agréés Picard (IAP), avec engagement de confidentialité."
-        },
-        {
-          "name": "Tarification publique validée",
-          "start": "2026-10-14",
-          "end": "2026-12-31",
-          "progress": 0,
-          "note": ""
-        },
-        {
-          "name": "Ressources",
-          "start": "2026-10-14",
-          "end": "2026-12-31",
-          "progress": 0,
-          "note": ""
         }
       ]
     },
