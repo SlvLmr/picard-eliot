@@ -13,6 +13,8 @@ const state = {
     adminTab: 'themes',
     collapsed: new Set(),
     storyMode: null,
+    storySort: 'date',
+    ganttSort: 'theme',
 };
 
 function $(sel) { return document.querySelector(sel); }
@@ -192,8 +194,8 @@ function renderGantt() {
     };
 
     const groups = state.rubrique === 'all'
-        ? data().rubriques.map(r => ({ r, items: themes.filter(t => t.rubrique === r.id) })).filter(g => g.items.length)
-        : [{ r: null, items: themes }];
+        ? data().rubriques.map(r => ({ r, items: sortThemes(themes.filter(t => t.rubrique === r.id), state.ganttSort) })).filter(g => g.items.length)
+        : [{ r: null, items: sortThemes(themes, state.ganttSort) }];
     const rows = groups.map(g =>
         (g.r ? `<div class="g-group" style="--pole:${g.r.color}"><i class="${esc(g.r.icon)}"></i>${esc(g.r.name)}<span>${weightedProgress(g.items)}%</span></div>` : '') +
         g.items.map(themeRows).join('')).join('');
@@ -281,8 +283,9 @@ function storyVisual(t) {
 }
 
 function storyTimeline(themes, mode) {
-    const sorted = themes.slice().sort((a, b) => themeRange(a).start - themeRange(b).start);
-    const todayIdx = sorted.findIndex(t => themeRange(t).start > today);
+    const sorted = sortThemes(themes, state.storySort);
+    // Par échéance : le repère « Aujourd'hui » sépare les thèmes échus des thèmes à venir
+    const todayIdx = state.storySort === 'date' ? sorted.findIndex(t => themeRange(t).end >= today) : -2;
     const todayRow = `<div class="sn-today" data-reveal><span><i class="ri-map-pin-2-fill"></i> Aujourd'hui · ${fmtDate(today)}</span></div>`;
     const rows = sorted.map((t, i) => {
         const r = themeRange(t);
@@ -301,6 +304,7 @@ function storyTimeline(themes, mode) {
         }
         return (i === todayIdx ? todayRow : '') + node;
     }).join('') + (todayIdx === -1 && sorted.length ? todayRow : '');
+    // (todayIdx = -2 : pas de repère quand on trie par thème)
     return `<div class="story story-${mode}">
         <div class="sn-cap top"></div>
         ${rows || '<div class="empty">Aucun thème.</div>'}
@@ -312,7 +316,7 @@ function renderStory() {
     const mode = storyMode();
     state.storyMode = mode;
     if (state.rubrique === 'all') {
-        $('#story-sub').textContent = "Les grands thèmes de chaque rubrique, dans l'ordre chronologique";
+        $('#story-sub').textContent = state.storySort === 'date' ? 'Les grands thèmes de chaque rubrique, classés par échéance' : 'Les grands thèmes de chaque rubrique, dans l\'ordre des thèmes';
         $('#story').innerHTML = `<div class="story-cols">${data().rubriques.map(r => {
             const themes = themesOf(r.id).filter(t => !state.owner || t.owner === state.owner);
             return `<div class="story-col" style="--pole:${r.color}">
@@ -326,7 +330,7 @@ function renderStory() {
         }).join('')}</div>`;
     } else {
         const r = rubriqueOf(state.rubrique);
-        $('#story-sub').textContent = `Les thèmes ${r.name} dans l'ordre chronologique`;
+        $('#story-sub').textContent = state.storySort === 'date' ? `Les thèmes ${r.name}, classés par échéance` : `Les thèmes ${r.name}, dans l'ordre des thèmes`;
         $('#story').innerHTML = storyTimeline(visibleThemes(), mode);
     }
 }
@@ -936,7 +940,17 @@ function renderOwnerFilter() {
         owners.map(o => `<option ${o === state.owner ? 'selected' : ''}>${esc(o)}</option>`).join('');
 }
 
+function renderSortButtons() {
+    document.querySelectorAll('[data-sort-story]').forEach(b => b.classList.toggle('active', b.dataset.sortStory === state.storySort));
+    document.querySelectorAll('[data-sort-gantt]').forEach(b => b.classList.toggle('active', b.dataset.sortGantt === state.ganttSort));
+}
+
+function saveUiPrefs() {
+    try { localStorage.setItem('picard2030_sort', JSON.stringify({ story: state.storySort, gantt: state.ganttSort })); } catch (e) { /* ignore */ }
+}
+
 function renderAll() {
+    renderSortButtons();
     renderTabs();
     renderOwnerFilter();
     renderStory();
@@ -969,6 +983,10 @@ function bind() {
             if (t === $('#admin') || t.closest('#admin-close')) return closeAdmin();
             return adminClick(t);
         }
+        const sortStory = t.closest('[data-sort-story]');
+        if (sortStory) { state.storySort = sortStory.dataset.sortStory; saveUiPrefs(); renderStory(); renderSortButtons(); return observeReveals(); }
+        const sortGantt = t.closest('[data-sort-gantt]');
+        if (sortGantt) { state.ganttSort = sortGantt.dataset.sortGantt; saveUiPrefs(); renderGantt(); return renderSortButtons(); }
         const toggle = t.closest('[data-toggle]');
         if (toggle) {
             const id = toggle.dataset.toggle;
@@ -1026,6 +1044,11 @@ function bind() {
 loadData();
 $('#local-banner').hidden = !store.isLocal;
 try { const saved = localStorage.getItem('picard2030_rubrique'); if (saved && (saved === 'all' || data().rubriques.some(r => r.id === saved))) state.rubrique = saved; } catch (e) { /* ignore */ }
+try {
+    const sort = JSON.parse(localStorage.getItem('picard2030_sort'));
+    if (sort && ['date', 'theme'].includes(sort.story)) state.storySort = sort.story;
+    if (sort && ['date', 'theme'].includes(sort.gantt)) state.ganttSort = sort.gantt;
+} catch (e) { /* ignore */ }
 bind();
 applySettings();
 renderAll();

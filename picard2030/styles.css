@@ -121,6 +121,8 @@ html { scroll-behavior: smooth; }
 }
 .section-head h2 { font-size: 22px; letter-spacing: -.02em; }
 .section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+.section-head .section-tools { margin-left: auto; }
+.segmented button i { margin-right: 2px; }
 
 /* ─── Apparition au défilement ────────────── */
 [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.2, .8, .2, 1); }
@@ -661,6 +663,9 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
     .ed-hero { flex-wrap: wrap; }
     .ed-hero-tools { width: 100%; justify-content: flex-end; }
     .jump-nav span { display: none; }
+    .section-head { flex-wrap: wrap; }
+    .section-head .section-tools { margin-left: 0; width: 100%; }
+    .section-head .section-tools button { flex: 1; }
     .sn-date { font-size: 10.5px; letter-spacing: .03em; }
     .sn-card-head .gauge { width: 58px !important; height: 58px !important; }
     .sn-card-head .gauge-label strong { font-size: 13px; }

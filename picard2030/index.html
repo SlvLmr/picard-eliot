@@ -44,7 +44,11 @@
         <section class="section" id="sec-timeline">
             <header class="section-head">
                 <span class="section-num">01</span>
-                <div><h2>Timeline</h2><p id="story-sub">Les grands thèmes dans l'ordre chronologique</p></div>
+                <div><h2>Timeline</h2><p id="story-sub">Les grands thèmes classés par échéance</p></div>
+                <div class="segmented section-tools" role="group" aria-label="Classement de la timeline">
+                    <button data-sort-story="date"><i class="ri-calendar-check-line"></i> Par échéance</button>
+                    <button data-sort-story="theme"><i class="ri-list-ordered"></i> Par thème</button>
+                </div>
             </header>
             <div id="story"></div>
         </section>
@@ -79,6 +83,10 @@
                         </div>
                     </div>
                     <div class="toolbar">
+                        <div class="segmented" role="group" aria-label="Classement du Gantt">
+                            <button data-sort-gantt="theme"><i class="ri-list-ordered"></i> Par thème</button>
+                            <button data-sort-gantt="date"><i class="ri-calendar-check-line"></i> Par échéance</button>
+                        </div>
                         <button class="btn btn-small" id="toggle-all"></button>
                         <select id="filter-owner" aria-label="Filtrer par responsable"></select>
                     </div>

@@ -92,7 +92,7 @@ function summaryPage() {
 
 // ─── Une page par rubrique (timeline verticale) ──
 function rubriquePage(r) {
-    const themes = themesOf(r.id).slice().sort((a, b) => themeRange(a).start - themeRange(b).start);
+    const themes = sortThemes(themesOf(r.id), 'date');
     const nodes = themes.map((t, i) => {
         const tr = themeRange(t), h = themeHealth(t), prog = themeProgress(t);
         const content = `<div class="node-content">

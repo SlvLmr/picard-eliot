@@ -182,6 +182,15 @@ function countdown(date) {
     return n > 0 ? `J-${n}` : `J+${-n}`;
 }
 
+// Tri des thèmes : 'date' = par échéance (date de fin), 'theme' = ordre défini dans l'admin
+function sortThemes(themes, by) {
+    if (by !== 'date') return themes.slice();
+    return themes.slice().sort((a, b) => {
+        const ra = themeRange(a), rb = themeRange(b);
+        return (ra.end - rb.end) || (ra.start - rb.start);
+    });
+}
+
 function themesOf(rubriqueId) { return store.data.themes.filter(t => t.rubrique === rubriqueId); }
 
 // ─── Visuels partagés ────────────────────────────
