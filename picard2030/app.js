@@ -906,7 +906,7 @@ function adminMessagesHtml() {
     const count = k => state.messages.filter(m => m.statut === k).length;
     return `<div class="admin-pane msg-pane">
         <div class="msg-head">
-            <div class="segmented">${[['tous', `Tous (${state.messages.length})`], ...MSG_STATUTS.map(([k, l]) => [k, `${l}s (${count(k)})`])]
+            <div class="segmented">${[['tous', `Tous (${state.messages.length})`], ...MSG_STATUTS.map(([k, l]) => [k, `${{ nouveau: 'Nouveaux', lu: 'Lus', 'traité': 'Traités' }[k]} (${count(k)})`])]
                 .map(([k, l]) => `<button type="button" class="${f === k ? 'active' : ''}" data-msg-filter="${k}">${l}</button>`).join('')}</div>
             <button type="button" class="btn btn-small" data-msg-reload><i class="ri-refresh-line"></i> Actualiser</button>
         </div>
