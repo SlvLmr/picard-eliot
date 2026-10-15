@@ -32,7 +32,7 @@ L'outil s'ouvre toujours sur la **vue d'ensemble**, avec la Timeline par thème 
      - Actions : à leur échéance (⚑).
      - Les échéances d'un même jour sont regroupées (par exemple « 27 échéances fin déc. ») et se déplient au clic.
      - Les **dates estimées** sont en pointillé ; les événements des mois passés sont repliés.
-2. **Indicateurs** : compteurs animés, jauges par rubrique, météo des thèmes et des actions, prochaines échéances et points d'attention.
+2. **Indicateurs** : compteurs animés et jauges d'avancement, global et par rubrique.
 3. **Gantt** : le détail des actions dans le temps (6 mois, une année ou le plan complet). Les thèmes se déplient, on y voit les points d'échéance, les jalons et la ligne « aujourd'hui ».
 
 Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-bulle : dates, avancement réel et attendu, météo, et texte contextuel.

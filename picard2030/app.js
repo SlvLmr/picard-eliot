@@ -580,50 +580,6 @@ function renderStory() {
     }
 }
 
-// ─── 02 · Indicateurs (compléments) ──────────────
-function renderInsights() {
-    const themes = visibleThemes();
-    const actions = themes.flatMap(t => t.actions);
-    const order = ['done', 'ok', 'warn', 'late', 'upcoming'];
-    const stack = (items, healthOf, label) => {
-        const counts = Object.fromEntries(order.map(k => [k, 0]));
-        items.forEach(x => counts[healthOf(x)]++);
-        const total = items.length || 1;
-        return `<div class="meteo-row"><div class="meteo-label"><b data-count="${items.length}">${items.length}</b> ${label}</div>
-            <div class="meteo-bar">${order.filter(k => counts[k]).map(k => `<span class="${HEALTH[k].cls}" style="--w:${100 * counts[k] / total}%" title="${HEALTH[k].label} : ${counts[k]}">${counts[k]}</span>`).join('')}</div></div>`;
-    };
-    const deadlines = upcomingDeadlines(themes).slice(0, 5);
-    const attention = themes.flatMap(t => [
-        ...(['late', 'warn'].includes(themeHealth(t)) ? [{ t, name: t.name, h: themeHealth(t), tip: `t|${t.id}`, sub: 'Thème' }] : []),
-        ...t.actions.map((a, i) => ({ t, a, i })).filter(x => ['late', 'warn'].includes(actionHealth(x.a)))
-            .map(x => ({ t: x.t, name: x.a.name, h: actionHealth(x.a), tip: `a|${x.t.id}|${x.i}`, sub: x.t.name })),
-    ]).sort((a, b) => (a.h === 'late' ? 0 : 1) - (b.h === 'late' ? 0 : 1)).slice(0, 5);
-
-    $('#insights').innerHTML = `
-        <div class="insight" data-reveal>
-            <h3><i class="ri-sun-cloudy-line"></i> Météo</h3>
-            ${stack(themes, themeHealth, 'thèmes')}
-            ${stack(actions, actionHealth, 'actions')}
-            <div class="meteo-legend">${order.map(k => `<span><i class="dot ${HEALTH[k].cls}"></i>${HEALTH[k].label}</span>`).join('')}</div>
-        </div>
-        <div class="insight" data-reveal>
-            <h3><i class="ri-flag-2-line"></i> Prochaines échéances</h3>
-            ${deadlines.length ? `<ul class="ins-list">${deadlines.map(d => {
-                const n = daysBetween(today, d.date);
-                const tip = d.action ? `a|${d.theme.id}|${d.theme.actions.indexOf(d.action)}` : `t|${d.theme.id}`;
-                return `<li data-tip="${esc(tip)}"><span class="cd ${n <= 30 ? 'soon' : ''}">${countdown(d.date)}</span>
-                    <span class="ins-what"><b>${esc(d.name)}</b><small><i class="dot" style="--hc:${d.theme.color}"></i>${esc(d.theme.name)} · ${fmtDate(d.date)}</small></span></li>`;
-            }).join('')}</ul>` : '<p class="muted">Aucune échéance à venir.</p>'}
-        </div>
-        <div class="insight" data-reveal>
-            <h3><i class="ri-alarm-warning-line"></i> Points d'attention</h3>
-            ${attention.length ? `<ul class="ins-list">${attention.map(x => `
-                <li data-tip="${esc(x.tip)}"><span class="dot ${HEALTH[x.h].cls}"></span>
-                    <span class="ins-what"><b>${esc(x.name)}</b><small>${esc(x.sub)} · ${HEALTH[x.h].label}</small></span></li>`).join('')}</ul>`
-                : '<p class="ins-ok"><i class="ri-checkbox-circle-line"></i> Rien à signaler, tout est dans les temps.</p>'}
-        </div>`;
-}
-
 // ─── Info-bulles (survol) ────────────────────────
 function tipHtml(key) {
     const [kind, id, idx] = key.split('|');
@@ -1202,7 +1158,6 @@ function renderAll() {
     renderStory();
     renderKpis();
     renderOverview();
-    renderInsights();
     renderGantt();
     observeReveals();
 }

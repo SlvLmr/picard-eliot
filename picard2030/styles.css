@@ -394,34 +394,6 @@ html { scroll-behavior: smooth; }
     .ag-row[data-reveal], .ag-today[data-reveal] { opacity: 1; transform: none; }
 }
 
-/* ─── 02 · Indicateurs (compléments) ──────── */
-.insights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.insight { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; }
-.insight h3 { font-size: 15px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.insight h3 i { color: var(--pole-current); }
-.meteo-row { margin-bottom: 12px; }
-.meteo-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-.meteo-label b { color: var(--text); font-size: 15px; }
-.meteo-bar { display: flex; height: 26px; border-radius: 8px; overflow: hidden; gap: 2px; background: var(--border); }
-.meteo-bar span {
-    width: 0; display: grid; place-items: center; background: var(--hc); color: #fff; font-size: 12px; font-weight: 700;
-    transition: width .9s cubic-bezier(.2, .8, .2, 1); overflow: hidden;
-}
-.revealed .meteo-bar span { width: var(--w); }
-.meteo-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11px; color: var(--muted); }
-.meteo-legend span { display: inline-flex; align-items: center; gap: 5px; }
-.meteo-legend .dot { width: 8px; height: 8px; box-shadow: none; }
-.ins-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.ins-list li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; margin: 0 -8px; border-radius: 8px; cursor: help; transition: background .15s; }
-.ins-list li:hover { background: var(--surface-2); }
-.ins-what { display: flex; flex-direction: column; min-width: 0; }
-.ins-what b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ins-what small { color: var(--muted); font-size: 11.5px; display: inline-flex; align-items: center; gap: 5px; }
-.ins-what small .dot { width: 7px; height: 7px; box-shadow: none; }
-.cd { flex: none; min-width: 58px; text-align: center; padding: 4px 8px; border-radius: 8px; font-weight: 800; font-size: 12px; background: var(--surface-2); color: var(--pole-current); }
-.cd.soon { background: color-mix(in srgb, var(--late) 13%, transparent); color: var(--late); }
-.ins-ok { margin: 0; color: var(--ok); display: flex; gap: 6px; align-items: center; }
-
 /* ─── Gantt : barres qui se remplissent ───── */
 .g-fill { width: 0; transition: width 1s .2s cubic-bezier(.2, .8, .2, 1); }
 .revealed .g-fill { width: var(--p); }
@@ -451,6 +423,7 @@ html { scroll-behavior: smooth; }
     border-radius: var(--radius); box-shadow: var(--shadow);
     padding: 18px 20px; transition: transform .2s, box-shadow .2s;
 }
+.pole-card { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; }
 .pole-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px color-mix(in srgb, var(--pole) 22%, transparent); }
 .pole-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .pole-card-head i { font-size: 22px; color: var(--pole); }
@@ -814,7 +787,6 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 
 /* ─── Responsive ──────────────────────────── */
 @media (max-width: 1100px) {
-    .insights { grid-template-columns: 1fr; }
     .story-cols { grid-template-columns: 1fr; }
     .kpis { grid-template-columns: repeat(3, 1fr); }
     .kpi-gauge, .kpi-next { grid-column: span 3; }
