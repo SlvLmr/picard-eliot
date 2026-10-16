@@ -144,7 +144,7 @@ function tabCommerciaux() {
                 const ms = list.filter(c => c.equipe === e.code); if (!ms.length) return '';
                 return `<div class="atc-group">${esc(e.nom)}</div>` + ms.map((c, i) => `<button class="atc-item ${c.id === A.fiche ? 'on' : ''} ${c.actif === false ? 'off' : ''}" data-fiche="${c.id}" style="animation-delay:${i * 20}ms">
                     <span class="avatar" style="--c:${c.couleur}">${esc(initials(c))}</span>
-                    <span class="ti-text"><strong>${esc(fullName(c))}</strong><small>${esc(c.fonction || '—')} · ${zonesOf(c.id).length} zones</small></span></button>`).join('');
+                    <span class="ti-text"><strong>${esc(fullName(c))}</strong><small>${esc(typeAtc(c.id))}</small></span></button>`).join('');
             }).join('')}</div>
         </aside>
         <section class="fiche" id="fiche"></section></div>`;
@@ -161,7 +161,7 @@ function tabCommerciaux() {
 function renderFiche(c) {
     const reg = S.base.reglages; const y = S.ref.getFullYear();
     const list = S.base.commerciaux; const i = list.indexOf(c);
-    const zones = zonesOf(c.id);
+    const zones = zonesOf(c.id, 'serruriers'); const aff = affectationsDe(S.base.affectations, c.id);
     const iapZones = zones.reduce((s, z) => s + (S.base.zonesInfo[z]?.iap || 0), 0);
     const potentiel = zones.reduce((s, z) => s + (S.base.zonesInfo[z]?.potentiel || 0), 0);
     const types = [...new Set([...(reg.types_clientele || []), ...(c.clientele || [])])];
@@ -171,7 +171,7 @@ function renderFiche(c) {
     const parMois = serieMois(S.D, ids, y); const maxB = Math.max(1, ...parMois.map(x => x.b));
     $('#fiche').innerHTML = `
         <header class="fiche-head" style="--c:${c.couleur}">
-            <label class="fiche-color" title="Couleur de l'ATC sur la carte"><input type="color" value="${c.couleur}" data-f="couleur"><span class="avatar lg" style="--c:${c.couleur}">${esc(initials(c))}</span><i class="ri-palette-line"></i></label>
+            <span class="avatar lg" style="--c:${c.couleur}" title="Couleur de son secteur">${esc(initials(c))}</span>
             <div class="fiche-id"><h3>${esc(fullName(c))}</h3><p>${esc(c.fonction || '')} · équipe ${esc(equipeDe(c.equipe).nom)}</p></div>
             <label class="switch"><input type="checkbox" data-f="actif" ${c.actif !== false ? 'checked' : ''}> Actif</label>
         </header>
@@ -212,9 +212,9 @@ function renderFiche(c) {
         </div>
 
         <div class="f-block"><h4><i class="ri-map-2-line"></i>Secteur</h4>
-            <p class="f-big"><b>${zones.length}</b> zone${zones.length > 1 ? 's' : ''}</p>
-            <p class="muted f-help">${zones.slice(0, 18).map(z => esc(zoneInfo.get(z)?.nom || z)).join(', ')}${zones.length > 18 ? '…' : ''}</p>
-            <button class="btn" id="f-paint"><i class="ri-brush-line"></i>Modifier ses zones sur la carte</button>
+            <p class="f-big"><b>${aff.length}</b> secteur${aff.length > 1 ? 's' : ''} · ${esc(typeAtc(c.id))}</p>
+            <div class="fm-sects">${aff.map(a => `<span class="sect-chip" style="--g1:${SECTEURS[a.secteur].c[0]};--g2:${SECTEURS[a.secteur].c[1]}"><i></i>${esc(forceDe(a.force).court)} · <b>${esc(SECTEURS[a.secteur].nom)}</b></span>`).join('') || '<span class="muted">Aucun secteur affecté</span>'}</div>
+            <button class="btn" id="f-paint" style="margin-top:10px"><i class="ri-map-pin-user-line"></i>Gérer les secteurs</button>
         </div>
 
         <div class="f-block f-wide"><h4><i class="ri-sticky-note-line"></i>Notes</h4>
@@ -248,12 +248,12 @@ function renderFiche(c) {
         persist(); renderFiche(c);
     };
     $('#new-type').addEventListener('keydown', e => { if (e.key === 'Enter') $('#add-type').click(); });
-    $('#f-paint').onclick = () => { A.paint = c.id; A.tab = 'secteurs'; renderAdmin(); };
+    $('#f-paint').onclick = () => { A.force = forcesDe(c.id)[0] || A.force; A.tab = 'secteurs'; renderAdmin(); };
     $('#f-del').onclick = async () => {
-        if (!confirm(`Supprimer la fiche ${fullName(c)} ? Ses zones seront libérées et ses chiffres importés supprimés.`)) return;
+        if (!confirm(`Supprimer la fiche ${fullName(c)} ? Ses secteurs seront libérés et ses chiffres importés supprimés.`)) return;
         await save(() => S.store.deleteCommercial(c.id));
         S.base.commerciaux = list.filter(x => x.id !== c.id);
-        for (const z in S.base.secteurs) if (S.base.secteurs[z] === c.id) delete S.base.secteurs[z];
+        for (const f in S.base.affectations) for (const sec in S.base.affectations[f]) S.base.affectations[f][sec] = S.base.affectations[f][sec].filter(x => x !== c.id);
         A.fiche = null; tabCommerciaux(); dirty();
     };
     $$('[data-move]', fiche).forEach(b => b.onclick = async () => {
@@ -265,49 +265,42 @@ function renderFiche(c) {
 }
 
 // ═══ 3. Secteurs & potentiel ═════════════════════════════════
-// Pinceau : un ATC (attribution des zones), la gomme, ou l'outil « Potentiel & IAP » (saisie par zone)
+// Une force à la fois : chaque secteur de son découpage reçoit un ou plusieurs ATC. Outil « Potentiel & IAP » : saisie par zone.
 function tabSecteurs() {
-    if (A.paint === undefined) A.paint = S.base.commerciaux[0]?.id ?? null;
-    $('#admin-body').innerHTML = `<p class="a-intro">Choisissez un ATC puis <b>cliquez ou glissez</b> sur la carte pour lui attribuer des zones. L'outil <b>Potentiel & IAP</b> permet de saisir, zone par zone, le potentiel de marché et le nombre d'installateurs agréés. Les zones proposées au départ sont <b>à valider</b>.</p>
+    A.force ||= S.force; A.outil ||= 'secteurs';
+    $('#admin-body').innerHTML = `<p class="a-intro">Les découpages des forces commerciales sont fixés. Pour chaque secteur, <b>affectez un ou plusieurs ATC</b> ; un ATC présent dans plusieurs forces est un ATC <b>mixte</b>. L'outil <b>Potentiel & IAP</b> permet de saisir, zone par zone, le potentiel de marché et le nombre d'installateurs agréés.</p>
+        <div class="a-row" style="margin-bottom:14px"><div class="tabs" id="a-force">${FORCES.map(f => `<button data-af="${f.id}" class="${A.force === f.id ? 'on' : ''}">${esc(f.nom)}</button>`).join('')}</div>
+            <div class="tabs"><button data-outil="secteurs" class="${A.outil === 'secteurs' ? 'on' : ''}">Affectations</button><button data-outil="potentiel" class="${A.outil === 'potentiel' ? 'on' : ''}">Potentiel & IAP</button></div></div>
         <div class="paint">
-            <div><div class="palette" id="palette"></div>
-                <div class="paint-tools">
-                    <button class="btn btn-sm" data-bulk="DOM"><i class="ri-checkbox-multiple-line"></i>Outre-mer</button>
-                </div>
-            </div>
+            <div class="sect-list" id="sect-list"></div>
             <div class="paint-map"><svg id="paint-svg"></svg>
                 <div class="paint-help" id="paint-help"></div>
                 <form class="zone-edit" id="zone-edit" hidden></form></div>
         </div>`;
     const svg = $('#paint-svg'); buildMap(svg, { badges: false });
     paintRefresh();
-    let down = false; const pending = new Map(); let t;
-    const flush = () => { const list = [...pending].map(([zone, commercial_id]) => ({ zone, commercial_id })); pending.clear(); if (list.length) save(() => S.store.setSecteurs(list)).then(dirty); };
-    const apply = el => {
-        const z = el?.closest?.('[data-zone]')?.dataset.zone; if (!z) return;
-        if (A.paint === 'potentiel') return editZone(z);
-        if ((S.base.secteurs[z] || null) === A.paint) return;
-        if (A.paint) S.base.secteurs[z] = A.paint; else delete S.base.secteurs[z];
-        pending.set(z, A.paint); paintRefresh();
-        clearTimeout(t); t = setTimeout(flush, 350);
-    };
-    svg.addEventListener('pointerdown', e => { down = A.paint !== 'potentiel'; apply(e.target); });
-    svg.addEventListener('pointerover', e => { if (down) apply(e.target); });
-    window.addEventListener('pointerup', () => down = false);
+    $$('[data-af]').forEach(b => b.onclick = () => { A.force = b.dataset.af; A.sec = null; tabSecteurs(); });
+    $$('[data-outil]').forEach(b => b.onclick = () => { A.outil = b.dataset.outil; tabSecteurs(); });
+    svg.addEventListener('click', e => {
+        const z = e.target.closest('[data-zone]')?.dataset.zone; if (!z) return;
+        if (A.outil === 'potentiel') return editZone(z);
+        A.sec = zoneSecteurs(A.force)[z] || null; paintRefresh();
+        $(`#sect-list [data-sec="${A.sec}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
     svg.addEventListener('mousemove', e => {
         const z = e.target.closest('[data-zone]')?.dataset.zone; const tip = $('#tip');
         if (!z) { tip.classList.remove('show'); return; }
-        const o = commercial(S.base.secteurs[z]); const info = S.base.zonesInfo[z] || {};
-        tip.innerHTML = `<h4>${esc(zoneInfo.get(z)?.nom || z)}</h4><div class="t-row"><span>ATC</span><b>${o ? esc(fullName(o)) : 'Non attribuée'}</b></div>
+        const sec = zoneSecteurs(A.force)[z]; const ids = sec ? idsSecteur(sec, A.force) : []; const info = S.base.zonesInfo[z] || {};
+        tip.innerHTML = `<h4>${esc(zoneInfo.get(z)?.nom || z)}</h4><div class="t-row"><span>Secteur</span><b>${sec ? esc(SECTEURS[sec].nom) : '—'}</b></div><div class="t-row"><span>ATC</span><b>${ids.map(id => esc(fullName(commercial(id)))).join(', ') || 'Non affecté'}</b></div>
             <div class="t-row"><span>Potentiel</span><b>${euros(info.potentiel || 0)}</b></div><div class="t-row"><span>IAP</span><b>${info.iap ?? 0}</b></div>`; placeTip(e);
     });
     svg.addEventListener('mouseleave', () => $('#tip').classList.remove('show'));
-    $$('[data-bulk]').forEach(b => b.onclick = () => {
-        if (A.paint === 'potentiel') return;
-        const k = b.dataset.bulk;
-        CARTE.zones.filter(z => k === 'DOM' ? z.dom : z.pays === k && !z.dom).forEach(z => { if (A.paint) S.base.secteurs[z.code] = A.paint; else delete S.base.secteurs[z.code]; pending.set(z.code, A.paint); });
-        paintRefresh(); flush();
-    });
+}
+
+async function setAffectation(sec, ids) {
+    (S.base.affectations[A.force] ||= {})[sec] = ids;
+    paintRefresh();
+    await save(() => S.store.setAffectation(A.force, sec, ids)); dirty();
 }
 
 function editZone(z) {
@@ -328,26 +321,26 @@ function editZone(z) {
 }
 
 function paintRefresh() {
-    const counts = {}; for (const c of Object.values(S.base.secteurs)) counts[c] = (counts[c] || 0) + 1;
-    const free = CARTE.zones.length - Object.keys(S.base.secteurs).filter(z => zoneInfo.has(z)).length;
-    $('#palette').innerHTML = EQUIPES.map(e => {
-        const ms = S.base.commerciaux.filter(c => c.equipe === e.code); if (!ms.length) return '';
-        return `<div class="atc-group">${esc(e.nom)}</div>` + ms.map(c => `<button data-paint="${c.id}" class="${A.paint === c.id ? 'on' : ''}"><span class="avatar" style="--c:${c.couleur}">${esc(initials(c))}</span><span class="p-name">${esc(fullName(c))}</span><span class="p-count">${counts[c.id] || 0}</span></button>`).join('');
-    }).join('')
-        + `<div class="atc-group">Outils</div><button data-paint="" class="${A.paint === null ? 'on' : ''}"><span class="avatar" style="--c:#64748b"><i class="ri-eraser-line"></i></span><span class="p-name">Gomme (libérer)</span><span class="p-count">${free} libres</span></button>`
-        + `<button data-paint="potentiel" class="${A.paint === 'potentiel' ? 'on' : ''}"><span class="avatar" style="--c:#3b82f6"><i class="ri-focus-3-line"></i></span><span class="p-name">Potentiel & IAP</span><span class="p-count">par zone</span></button>`;
-    $$('#palette [data-paint]').forEach(b => b.onclick = () => { A.paint = b.dataset.paint === '' ? null : b.dataset.paint; $('#zone-edit').hidden = true; paintRefresh(); });
+    const f = forceDe(A.force); const zs = zoneSecteurs(A.force); const atcs = S.base.commerciaux.filter(c => c.actif !== false);
+    $('#sect-list').innerHTML = f.secteurs.map(sec => { const ids = idsSecteur(sec, A.force); const d = SECTEURS[sec];
+        return `<div class="sect-row ${A.sec === sec ? 'on' : ''}" data-sec="${sec}">
+            <div class="sr-head"><span class="sect-dot" style="--g1:${d.c[0]};--g2:${d.c[1]}"></span><b>${esc(d.nom)}</b><small>${d.zones.length} zone${d.zones.length > 1 ? 's' : ''}</small></div>
+            <div class="sr-atc">${ids.map(id => { const c = commercial(id); return `<span class="chip on">${esc(fullName(c))}<button data-rm="${sec}|${id}" title="Retirer"><i class="ri-close-line"></i></button></span>`; }).join('')}
+                <select data-add="${sec}"><option value="">${ids.length ? '+ Ajouter' : 'Affecter un ATC…'}</option>${atcs.filter(c => !ids.includes(c.id)).map(c => `<option value="${c.id}">${esc(fullName(c))}</option>`).join('')}</select></div></div>`; }).join('');
+    $$('#sect-list [data-sec]').forEach(r => r.onclick = e => { if (e.target.closest('select, button')) return; A.sec = r.dataset.sec; paintRefresh(); });
+    $$('#sect-list [data-add]').forEach(sel => sel.onchange = () => { if (sel.value) setAffectation(sel.dataset.add, [...idsSecteur(sel.dataset.add, A.force), sel.value]); });
+    $$('#sect-list [data-rm]').forEach(b => b.onclick = () => { const [sec, id] = b.dataset.rm.split('|'); setAffectation(sec, idsSecteur(sec, A.force).filter(x => x !== id)); });
     const svg = $('#paint-svg');
     const maxPot = Math.max(1, ...Object.values(S.base.zonesInfo).map(z => z.potentiel || 0));
     for (const p of svg.querySelectorAll('path.z')) {
         const z = p.dataset.zone;
-        if (A.paint === 'potentiel') { const v = S.base.zonesInfo[z]?.potentiel || 0; p.style.fill = v ? seqColor(Math.sqrt(v / maxPot)) : 'var(--zone-empty)'; }
-        else { const c = commercial(S.base.secteurs[z]); p.style.fill = c ? c.couleur : 'var(--zone-empty)'; }
+        if (A.outil === 'potentiel') { const v = S.base.zonesInfo[z]?.potentiel || 0; p.style.fill = v ? seqColor(Math.sqrt(v / maxPot)) : 'var(--zone-empty)'; p.style.opacity = ''; }
+        else { p.style.fill = zs[z] ? `url(#paint-svg-sg-${zs[z]})` : 'var(--zone-empty)'; p.style.opacity = A.sec && zs[z] !== A.sec ? .35 : (zs[z] && !idsSecteur(zs[z], A.force).length ? .45 : 1); }
     }
-    paintBorders(svg, z => S.base.secteurs[z], null);
-    const sel = A.paint === 'potentiel' ? null : commercial(A.paint);
-    $('#paint-help').innerHTML = A.paint === 'potentiel' ? '<span class="pill"><i class="ri-focus-3-line"></i>Cliquez une zone pour saisir son potentiel et ses IAP</span>'
-        : `<span class="pill"><i class="ri-brush-line"></i>Pinceau : ${sel ? esc(fullName(sel)) : 'gomme'}</span><span class="pill">${free} zone${free > 1 ? 's' : ''} sans ATC</span>`;
+    paintBorders(svg, z => zs[z], A.sec ? z => zs[z] === A.sec : null);
+    const libres = f.secteurs.filter(sec => !idsSecteur(sec, A.force).length).length;
+    $('#paint-help').innerHTML = A.outil === 'potentiel' ? '<span class="pill"><i class="ri-focus-3-line"></i>Cliquez une zone pour saisir son potentiel et ses IAP</span>'
+        : `<span class="pill"><i class="ri-cursor-line"></i>Cliquez un secteur pour le sélectionner</span><span class="pill">${libres} secteur${libres > 1 ? 's' : ''} sans ATC</span>`;
 }
 
 // ═══ 4. Budgets (lecture du fichier Répartition) ═════════════

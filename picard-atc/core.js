@@ -55,16 +55,41 @@ function nuance(hex, i) {
     return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
-// Zones proposées par défaut (à valider dans l'admin, onglet Secteurs), dans l'ordre des ATC du fichier
-const ZONES_DEFAUT = {
-    IDF: [['75', '92', '93', '94'], ['77', '91'], ['78', '95']],
-    NORD: [['59', '62'], ['BE', 'LU'], ['80', '02', '60', '08', '51'], ['54', '55', '57', '67', '68', '88', '10', '52']],
-    OUEST: [['29', '22', '56', '35'], ['44', '85', '49', '53', '72', '79', '86', '17', '16'], ['14', '50', '61', '27', '76', '28', '45', '41', '37', '36', '18']],
-    RA: [['69', '01', '42', '38', '71', '21', '39', '25', '70', '90', '58', '89', '03'], ['63', '15', '43', '07', '26', '19', '23', '87'],
-        ['73', '74', 'CH']],
-    PACA: [['30', '34', '11', '66', '48', '12', '81', '31', '09', '65', '32', '82', '46', '47', '40', '64', '33', '24'], ['06', '83', '2A', '2B'], ['13', '84', '04', '05']],
-    DIR: [['971', '972', '973', '974', '976', '975', '987', '988']],
+// ─── Forces commerciales et secteurs ───────────────────────
+// Chaque force a son propre découpage en secteurs ; un ATC peut tenir des secteurs dans plusieurs forces (ATC « mixte »).
+// Couleurs : palette douce, un dégradé par secteur (c = [clair, soutenu]).
+const SECTEURS = {
+    benelux:    { nom: 'Benelux', c: ['#d9cdfb', '#a48ff0'], zones: ['BE', 'LU'] },
+    nord:       { nom: 'Nord', c: ['#bfe8f2', '#78c4dc'], zones: ['59', '62', '80', '76', '60', '02', '08', '51'] },
+    idfo:       { nom: 'Île-de-France Ouest', c: ['#fbdcbc', '#f0ac74'], zones: ['95', '78', '92', '94'] },
+    idfe:       { nom: 'Île-de-France Est', c: ['#f6e7b4', '#e2c26c'], zones: ['75', '93', '77', '91'] },
+    idf:        { nom: 'Île-de-France', c: ['#fbdcbc', '#f0ac74'], zones: ['95', '78', '92', '94', '75', '93', '77', '91'] },
+    ouest:      { nom: 'Normandie · Val de Loire', c: ['#c4ead8', '#7fcaa8'], zones: ['50', '14', '61', '27', '28', '53', '72', '41', '45', '49', '37', '36', '86'] },
+    atlantique: { nom: 'Bretagne · Atlantique', c: ['#fbd2c3', '#ec9b80'], zones: ['29', '22', '56', '35', '44', '85', '79', '17', '16', '87', '24', '19'] },
+    grandouest: { nom: 'Grand Ouest', c: ['#c4ead8', '#7fcaa8'], zones: ['50', '14', '61', '27', '28', '53', '72', '41', '45', '49', '37', '36', '86', '29', '22', '56', '35', '44', '85', '79', '17', '16', '87', '24', '19'] },
+    est:        { nom: 'Grand Est · Bourgogne', c: ['#d6e8c2', '#9cc479'], zones: ['55', '57', '54', '67', '88', '52', '68', '70', '90', '10', '89', '21', '25'] },
+    centre:     { nom: 'Centre · Auvergne', c: ['#c9d4fb', '#8c9ef0'], zones: ['18', '58', '71', '39', '03', '23', '63', '42', '43'] },
+    ra:         { nom: 'Rhône-Alpes · Suisse', c: ['#f8c9d6', '#e68aa6'], zones: ['01', '74', '69', '73', '38', 'CH'] },
+    so:         { nom: 'Sud-Ouest', c: ['#ecd3f3', '#c897dc'], zones: ['33', '47', '46', '40', '32', '82', '12', '81', '64', '65', '31', '09', '15', '48'] },
+    med:        { nom: 'Languedoc · Vallée du Rhône · Corse', c: ['#dfd2ee', '#ad94d3'], zones: ['07', '26', '30', '84', '34', '11', '66', '2A', '2B'] },
+    paca:       { nom: 'Provence · Côte d\'Azur', c: ['#c3dcf3', '#7ea9dc'], zones: ['05', '04', '06', '13', '83'] },
+    dom:        { nom: 'Outre-mer', c: ['#d5d9df', '#a5adb8'], zones: ['971', '972', '973', '974', '976', '975', '987', '988'] },
 };
+const FORCES = [
+    { id: 'serruriers', nom: 'Serruriers · IAP', court: 'Serruriers', secteurs: ['benelux', 'nord', 'idfo', 'idfe', 'ouest', 'atlantique', 'est', 'centre', 'ra', 'so', 'med', 'paca', 'dom'] },
+    { id: 'menuisiers', nom: 'Fenêtriers · Menuisiers', court: 'Menuisiers', secteurs: ['benelux', 'nord', 'idfo', 'idfe', 'grandouest', 'est', 'centre', 'ra', 'so', 'med', 'paca', 'dom'] },
+    { id: 'marches', nom: 'Marchés pro', court: 'Marchés pro', secteurs: ['benelux', 'nord', 'idf', 'ouest', 'atlantique', 'est', 'centre', 'ra', 'so', 'med', 'paca', 'dom'] },
+];
+const forceDe = id => FORCES.find(f => f.id === id) || FORCES[0];
+// Zone → secteur, pour une force
+function zoneSecteurs(force) { const m = {}; for (const s of forceDe(force).secteurs) for (const z of SECTEURS[s].zones) m[z] = s; return m; }
+// Affectations d'un ATC : [{ force, secteur }]
+function affectationsDe(aff, id) {
+    const out = [];
+    for (const f of FORCES) for (const s of f.secteurs) if ((aff?.[f.id]?.[s] || []).includes(id)) out.push({ force: f.id, secteur: s });
+    return out;
+}
+
 
 // Belgique et Suisse se traitent en pays entier : les anciennes zones (provinces « BE-… », cantons « CH-… »)
 // sont regroupées en « BE » et « CH » (secteur : ATC majoritaire ; potentiel et IAP : additionnés)

@@ -630,3 +630,26 @@ b.down-t { color: var(--late-text); font-weight: 500; }
 .pill-all { padding-left: 6px; }
 .pill-all.on { border-color: var(--gold); color: var(--gold); background: rgba(241, 197, 135, .07); }
 .pill-av i { font-size: 14px; color: var(--muted); }
+
+/* ─── Forces & secteurs ─── */
+.map-top { justify-content: flex-start; }
+.map-top .map-legend { margin-left: auto; }
+.tabs-force button.on { background: rgba(241, 197, 135, .12); color: var(--gold); }
+.sect-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; background: linear-gradient(135deg, var(--g1), var(--g2)); flex: none; }
+.sect-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; border-radius: 999px; background: #121216; border: 1px solid var(--line); font-size: 11.5px; color: var(--text-2); }
+.sect-chip i { width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(135deg, var(--g1), var(--g2)); }
+.sect-chip b { font-weight: 500; color: var(--text); }
+.fm-sects { display: flex; flex-wrap: wrap; gap: 6px; }
+.cell-sects { font-size: 12px; color: var(--text-2); line-height: 1.8; white-space: nowrap; }
+#map .badge.free .badge-dot { stroke-dasharray: 3 3; opacity: .7; }
+.sect-list { display: flex; flex-direction: column; gap: 6px; max-height: 620px; overflow: auto; padding-right: 4px; }
+.sect-row { padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: #0d0d10; cursor: pointer; transition: border-color .2s, background .2s; }
+.sect-row:hover { border-color: var(--line-strong); }
+.sect-row.on { border-color: var(--gold); background: rgba(241, 197, 135, .05); }
+.sr-head { display: flex; align-items: center; gap: 2px; font-size: 13px; }
+.sr-head b { font-weight: 500; flex: 1; }
+.sr-head small { color: var(--muted); font-size: 11px; }
+.sr-atc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.sr-atc .chip { padding: 3px 6px 3px 10px; font-size: 12px; }
+.sr-atc select { padding: 4px 8px !important; font-size: 12px; border-radius: 999px !important; max-width: 170px; }
+.paint { grid-template-columns: 320px 1fr; }

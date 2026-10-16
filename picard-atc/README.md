@@ -28,7 +28,7 @@ Tant que Supabase n'est pas branché, les fichiers importés restent **uniquemen
 - **Indicateurs** : facturé, atterrissage, prises de commande (société) ou quantités (équipe, ATC), **IAP** (installateurs agréés Picard : installés, objectif, recrutés dans l'année), taux de marge.
 - **Gammes** : réalisé, part du chiffre, % du budget avec repère « attendu à date », évolution vs 2025.
 - **Jauges** mois / trimestre / année, **trajectoire** (jour par jour pour la société sur le mois, cumul de l'année sinon), **mois par mois**.
-- **Carte** : zones des ATC, rythme, évolution ou **potentiel**. L'encart **Potentiel** montre le potentiel de marché, les IAP et la couverture du secteur, ou d'une zone cliquée. Double-clic sur une zone : ouvre son ATC.
+- **Carte** : une **force commerciale** à la fois (Serruriers · IAP, Fenêtriers · Menuisiers, Marchés pro), avec ses secteurs en dégradés doux ; modes budget, évolution ou **potentiel**. L'encart **Potentiel** montre le potentiel de marché, les IAP et la couverture du secteur, ou d'une zone cliquée. Double-clic sur une zone : ouvre son ATC.
 - **Carnet de commandes** : reste à livrer, par gamme, par site (Feuquières, Broglie), échéancier, évolution.
 - **Classement** des ATC, ou détail par gamme pour un ATC ; **clients** et **clientèle**.
 
@@ -43,9 +43,9 @@ Les blocs marqués **« exemple »** (clients, clientèle, marge, potentiel et I
 
 ## Administration
 
-Réservée aux deux administrateurs (comme Picard 2030). Onglets : **Import des fichiers**, **Fiches ATC** (équipe, fonction, contacts, clientèle, IAP, budget par gamme), **Secteurs & potentiel** (attribuer les zones en peignant la carte ; saisir potentiel et IAP par zone), **Budgets** (lecture du fichier), **Réglages**.
+Réservée aux deux administrateurs (comme Picard 2030). Onglets : **Import des fichiers**, **Fiches ATC** (équipe, fonction, contacts, clientèle, IAP, budget par gamme), **Secteurs & potentiel** (pour chaque force, affecter un ou plusieurs ATC à chaque secteur ; saisir potentiel et IAP par zone), **Budgets** (lecture du fichier), **Réglages**.
 
-Les zones des ATC sont **proposées par défaut, à valider** dans l'onglet Secteurs.
+Les découpages des trois forces sont fixés dans `core.js` (`FORCES`, `SECTEURS`) ; la Belgique, la Suisse et le Luxembourg y sont chacun une zone. Un ATC présent chez les Serruriers et les Menuisiers est un ATC **mixte**. Les ATC importés depuis le fichier sont à affecter dans l'onglet Secteurs.
 
 ## Supabase (projet « COMMERCE »)
 
@@ -63,7 +63,7 @@ Par défaut, le tableau de bord est **privé** (connexion obligatoire), car il c
 | `index.html`, `styles.css`, `app.js` | Tableau de bord |
 | `admin.js` | Administration |
 | `parsers.js` | Lecture des 3 fichiers Picard |
-| `core.js` | Calculs (périodes, budgets, atterrissage) et référentiels (gammes, équipes, zones par défaut) |
+| `core.js` | Calculs (périodes, budgets, atterrissage) et référentiels (gammes, équipes, forces commerciales et secteurs) |
 | `cloud.js` / `demo.js` | Données Supabase / démonstration fictive et import local |
 | `data/carte.js`, `data/carte-build.mjs` | Carte pré-calculée et son script de génération |
 | `sql/schema.sql` | Schéma de la base |
