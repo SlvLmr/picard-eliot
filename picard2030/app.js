@@ -1484,7 +1484,7 @@ function bind() {
     $('#btn-theme').onclick = () => {
         const dark = document.documentElement.dataset.theme !== 'dark';
         if (dark) document.documentElement.dataset.theme = 'dark'; else delete document.documentElement.dataset.theme;
-        try { localStorage.setItem('picard2030_theme', dark ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+        try { localStorage.setItem('picard2030_theme_v2', dark ? 'dark' : 'light'); } catch (e) { /* ignore */ }
         updateThemeButton();
     };
     updateThemeButton();
