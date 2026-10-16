@@ -56,6 +56,7 @@ const Ks = (who = S.who, p = S.period) => Kc(who, p, S.gamme);
 // ─── Chargement ─────────────────────────────────────────────
 async function loadAll() {
     S.base = await S.store.loadAll();
+    const f = fusionnerZones(S.base.secteurs, S.base.zonesInfo); S.base.secteurs = f.secteurs; S.base.zonesInfo = f.zonesInfo;
     S.D = { idx: buildIndex(S.base.atcMois) };
     S.ref = S.base.etat?.derniere_date ? parseIso(S.base.etat.derniere_date) : new Date();
     if (S.sel && !isEquipe(S.sel) && !commercial(S.sel)) S.sel = null;

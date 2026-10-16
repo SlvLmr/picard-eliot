@@ -58,13 +58,26 @@ function nuance(hex, i) {
 // Zones proposées par défaut (à valider dans l'admin, onglet Secteurs), dans l'ordre des ATC du fichier
 const ZONES_DEFAUT = {
     IDF: [['75', '92', '93', '94'], ['77', '91'], ['78', '95']],
-    NORD: [['59', '62'], ['BE-BRU', 'BE-WBR', 'BE-VBR', 'BE-VAN', 'BE-VLI', 'BE-WLG', 'BE-WNA', 'BE-WHT', 'BE-WLX', 'BE-VWV', 'BE-VOV', 'LU'], ['80', '02', '60', '08', '51'], ['54', '55', '57', '67', '68', '88', '10', '52']],
+    NORD: [['59', '62'], ['BE', 'LU'], ['80', '02', '60', '08', '51'], ['54', '55', '57', '67', '68', '88', '10', '52']],
     OUEST: [['29', '22', '56', '35'], ['44', '85', '49', '53', '72', '79', '86', '17', '16'], ['14', '50', '61', '27', '76', '28', '45', '41', '37', '36', '18']],
     RA: [['69', '01', '42', '38', '71', '21', '39', '25', '70', '90', '58', '89', '03'], ['63', '15', '43', '07', '26', '19', '23', '87'],
-        ['73', '74', 'CH-GE', 'CH-VD', 'CH-VS', 'CH-NE', 'CH-FR', 'CH-JU', 'CH-BE', 'CH-BS', 'CH-BL', 'CH-SO', 'CH-AG', 'CH-LU', 'CH-ZG', 'CH-ZH', 'CH-SZ', 'CH-UR', 'CH-OW', 'CH-NW', 'CH-GL', 'CH-SH', 'CH-TG', 'CH-SG', 'CH-AR', 'CH-AI', 'CH-GR', 'CH-TI']],
+        ['73', '74', 'CH']],
     PACA: [['30', '34', '11', '66', '48', '12', '81', '31', '09', '65', '32', '82', '46', '47', '40', '64', '33', '24'], ['06', '83', '2A', '2B'], ['13', '84', '04', '05']],
     DIR: [['971', '972', '973', '974', '976', '975', '987', '988']],
 };
+
+// Belgique et Suisse se traitent en pays entier : les anciennes zones (provinces « BE-… », cantons « CH-… »)
+// sont regroupées en « BE » et « CH » (secteur : ATC majoritaire ; potentiel et IAP : additionnés)
+const zonePays = z => /^(BE|CH)-/.test(z) ? z.slice(0, 2) : z;
+function fusionnerZones(secteurs = {}, zonesInfo = {}) {
+    const anciens = [...Object.keys(secteurs), ...Object.keys(zonesInfo)].some(z => zonePays(z) !== z);
+    if (!anciens) return { secteurs, zonesInfo, change: false };
+    const votes = {}, sect = {}, info = {};
+    for (const [z, c] of Object.entries(secteurs)) { const n = zonePays(z); if (n === z) sect[z] = c; else { const v = votes[n] || (votes[n] = {}); v[c] = (v[c] || 0) + 1; } }
+    for (const [n, v] of Object.entries(votes)) if (!(n in sect)) sect[n] = Object.entries(v).sort((a, b) => b[1] - a[1])[0][0];
+    for (const [z, x] of Object.entries(zonesInfo)) { const n = zonePays(z); const o = info[n] || (info[n] = { potentiel: 0, iap: 0 }); o.potentiel += +x.potentiel || 0; o.iap += +x.iap || 0; }
+    return { secteurs: sect, zonesInfo: info, change: true };
+}
 
 // ─── Index des données ──────────────────────────────────────
 // atcMois : [{ c, a, m, g, r, b, q, n1 }] (r = null pour un mois pas encore commencé)

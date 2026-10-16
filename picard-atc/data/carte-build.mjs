@@ -7,8 +7,8 @@ import { presimplify, simplify, quantile } from 'topojson-simplify';
 const adm1 = JSON.parse(fs.readFileSync('adm1.geojson'));
 const world = JSON.parse(fs.readFileSync('countries.json'));
 
-const NOMS_BE = { 'BE-VWV':'Flandre-Occidentale','BE-WHT':'Hainaut','BE-WNA':'Namur','BE-WLX':'Luxembourg (BE)','BE-WLG':'Liège','BE-VOV':'Flandre-Orientale','BE-VAN':'Anvers','BE-VLI':'Limbourg','BE-BRU':'Bruxelles-Capitale','BE-VBR':'Brabant flamand','BE-WBR':'Brabant wallon' };
-const NOMS_CH = { 'CH-VS':'Valais','CH-TI':'Tessin','CH-GR':'Grisons','CH-SH':'Schaffhouse','CH-TG':'Thurgovie','CH-ZH':'Zurich','CH-AG':'Argovie','CH-BS':'Bâle-Ville','CH-BL':'Bâle-Campagne','CH-SG':'Saint-Gall','CH-SO':'Soleure','CH-JU':'Jura (CH)','CH-GE':'Genève','CH-VD':'Vaud','CH-NE':'Neuchâtel','CH-BE':'Berne','CH-LU':'Lucerne','CH-ZG':'Zoug','CH-UR':'Uri','CH-SZ':'Schwytz','CH-GL':'Glaris','CH-NW':'Nidwald','CH-FR':'Fribourg','CH-OW':'Obwald','CH-AR':'Appenzell Rh.-Ext.','CH-AI':'Appenzell Rh.-Int.' };
+// const NOMS_BE = { 'BE-VWV':'Flandre-Occidentale','BE-WHT':'Hainaut','BE-WNA':'Namur','BE-WLX':'Luxembourg (BE)','BE-WLG':'Liège','BE-VOV':'Flandre-Orientale','BE-VAN':'Anvers','BE-VLI':'Limbourg','BE-BRU':'Bruxelles-Capitale','BE-VBR':'Brabant flamand','BE-WBR':'Brabant wallon' };
+// const NOMS_CH = { 'CH-VS':'Valais','CH-TI':'Tessin','CH-GR':'Grisons','CH-SH':'Schaffhouse','CH-TG':'Thurgovie','CH-ZH':'Zurich','CH-AG':'Argovie','CH-BS':'Bâle-Ville','CH-BL':'Bâle-Campagne','CH-SG':'Saint-Gall','CH-SO':'Soleure','CH-JU':'Jura (CH)','CH-GE':'Genève','CH-VD':'Vaud','CH-NE':'Neuchâtel','CH-BE':'Berne','CH-LU':'Lucerne','CH-ZG':'Zoug','CH-UR':'Uri','CH-SZ':'Schwytz','CH-GL':'Glaris','CH-NW':'Nidwald','CH-FR':'Fribourg','CH-OW':'Obwald','CH-AR':'Appenzell Rh.-Ext.','CH-AI':'Appenzell Rh.-Int.' };
 const DOM = { 'FR-GP':['971','Guadeloupe'], 'FR-MQ':['972','Martinique'], 'FR-GF':['973','Guyane'], 'FR-RE':['974','La Réunion'], 'FR-YT':['976','Mayotte'] };
 const FIX = { 'FR-77':'Seine-et-Marne', 'FR-68':'Haut-Rhin' };
 
@@ -18,9 +18,10 @@ for (const f of adm1.features) {
   if (p.adm0_a3 === 'FRA') {
     if (DOM[iso]) feats[DOM[iso][0]] = { ...f, properties: { code: DOM[iso][0], nom: DOM[iso][1], pays: 'FR', dom: true } };
     else { const c = iso.slice(3); feats[c] = { ...f, properties: { code: c, nom: FIX[iso] || p.name, pays: 'FR' } }; }
-  } else if (p.adm0_a3 === 'BEL') feats[iso] = { ...f, properties: { code: iso, nom: NOMS_BE[iso], pays: 'BE' } };
-  else if (p.adm0_a3 === 'CHE') feats[iso] = { ...f, properties: { code: iso, nom: NOMS_CH[iso], pays: 'CH' } };
-  else if (p.adm0_a3 === 'LUX') feats['LU-' + iso] = { ...f, properties: { code: 'LU', pays: 'LU' } };
+  } // Belgique, Suisse et Luxembourg : une seule zone par pays (provinces et cantons fusionnés plus bas)
+  else if (p.adm0_a3 === 'BEL') feats['BE~' + iso] = { ...f, properties: { pays: 'BE' } };
+  else if (p.adm0_a3 === 'CHE') feats['CH~' + iso] = { ...f, properties: { pays: 'CH' } };
+  else if (p.adm0_a3 === 'LUX') feats['LU~' + iso] = { ...f, properties: { pays: 'LU' } };
 }
 const COM = { '666': ['975', 'Saint-Pierre-et-Miquelon'], '258': ['987', 'Polynésie française'], '540': ['988', 'Nouvelle-Calédonie'] };
 for (const g of feature(world, world.objects.countries).features) {
@@ -39,9 +40,11 @@ function simpl(keys, q) { const o = {}; keys.forEach(k => o[k] = feats[k]); cons
 const simp = simpl(Object.keys(feats).filter(k => !isDom(k)), 0.12);
 const simpDom = simpl(Object.keys(feats).filter(isDom), 0.6);
 const out = {};
-for (const k of Object.keys(feats)) if (!k.startsWith('LU-')) out[k] = rewind(feature(isDom(k) ? simpDom : simp, (isDom(k) ? simpDom : simp).objects[k]));
-const lu = merge(simp, Object.keys(feats).filter(k => k.startsWith('LU-')).map(k => simp.objects[k]));
-out['LU'] = rewind({ type: 'Feature', properties: { code: 'LU', nom: 'Luxembourg', pays: 'LU' }, geometry: lu });
+for (const k of Object.keys(feats)) if (!k.includes('~')) out[k] = rewind(feature(isDom(k) ? simpDom : simp, (isDom(k) ? simpDom : simp).objects[k]));
+for (const [code, nom] of [['BE', 'Belgique'], ['CH', 'Suisse'], ['LU', 'Luxembourg']]) {
+  const geom = merge(simp, Object.keys(feats).filter(k => k.startsWith(code + '~')).map(k => simp.objects[k]));
+  out[code] = rewind({ type: 'Feature', properties: { code, nom, pays: code }, geometry: geom });
+}
 
 const W = 1000, MAIN_H = 900;
 const main = Object.values(out).filter(f => !f.properties.dom);

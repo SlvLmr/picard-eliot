@@ -272,9 +272,6 @@ function tabSecteurs() {
         <div class="paint">
             <div><div class="palette" id="palette"></div>
                 <div class="paint-tools">
-                    <button class="btn btn-sm" data-bulk="BE"><i class="ri-checkbox-multiple-line"></i>Belgique</button>
-                    <button class="btn btn-sm" data-bulk="CH"><i class="ri-checkbox-multiple-line"></i>Suisse</button>
-                    <button class="btn btn-sm" data-bulk="LU"><i class="ri-checkbox-multiple-line"></i>Luxembourg</button>
                     <button class="btn btn-sm" data-bulk="DOM"><i class="ri-checkbox-multiple-line"></i>Outre-mer</button>
                 </div>
             </div>
