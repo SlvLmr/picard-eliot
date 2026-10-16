@@ -54,12 +54,15 @@
 
         <!-- Sélecteurs : périmètre à gauche, période à droite -->
         <div class="filters">
+            <div class="scope">
+            <button class="pill pill-all" id="btn-all" data-who="" title="Revenir aux chiffres globaux"><span class="avatar xs all"><i class="ri-building-2-line"></i></span>Tous les ATC</button>
             <div class="dd" id="dd-who">
                 <button class="pill" data-dd="who"><span class="pill-av" id="who-av"></span><span id="who-label">Tous les ATC</span><i class="ri-arrow-down-s-line"></i></button>
                 <div class="menu menu-who" id="menu-who">
                     <div class="menu-search"><i class="ri-search-line"></i><input id="search" type="search" placeholder="Rechercher un ATC" aria-label="Rechercher un ATC"></div>
                     <div class="menu-list" id="who-list"></div>
                 </div>
+            </div>
             </div>
             <div class="dd" id="dd-period">
                 <button class="pill" data-dd="period"><span id="period-label">Mois</span><i class="ri-arrow-down-s-line"></i></button>
@@ -73,13 +76,17 @@
 
         <!-- ═══ Synthèse ═══ -->
         <section class="view" data-view="synthese">
+            <div class="crumb" id="crumb" hidden></div>
             <div class="row-hero">
                 <article class="card hero">
                     <div class="hero-head">
-                        <div>
-                            <div class="hero-date" id="hero-date"></div>
-                            <div class="hero-val" id="hero-val">—</div>
-                            <div class="hero-delta" id="hero-delta"></div>
+                        <div class="hero-figs">
+                            <div>
+                                <div class="hero-date" id="hero-date"></div>
+                                <div class="hero-val" id="hero-val">—</div>
+                                <div class="hero-delta" id="hero-delta"></div>
+                            </div>
+                            <div class="hero-enr" id="hero-enr"></div>
                         </div>
                         <div class="dd">
                             <button class="pill pill-sm" data-dd="gamme"><span id="gamme-label">Toutes les gammes</span><i class="ri-arrow-down-s-line"></i></button>
@@ -105,17 +112,19 @@
                 </article>
             </div>
 
+            <section class="gtiles" id="gtiles" aria-label="Gammes"></section>
+
             <h2 class="sec-title">Indicateurs</h2>
             <section class="kpis" id="kpis"></section>
 
-            <div class="row-2">
-                <section>
-                    <div class="sec-head"><h2 class="sec-title">Répartition par gamme</h2></div>
-                    <article class="card list" id="gammes"></article>
-                </section>
+            <div class="row-2" id="row-2">
                 <section>
                     <div class="sec-head"><h2 class="sec-title" id="rank-title">Commerciaux</h2><a class="link" href="#commerciaux" id="rank-link">Tout voir<i class="ri-arrow-right-s-line"></i></a></div>
                     <article class="card list" id="rank"></article>
+                </section>
+                <section id="sec-carnet">
+                    <div class="sec-head"><h2 class="sec-title">Carnet de commandes <small id="mini-carnet-sub"></small></h2><a class="link" href="#carnet">Voir le carnet<i class="ri-arrow-right-s-line"></i></a></div>
+                    <article class="card" id="mini-carnet"></article>
                 </section>
             </div>
 
