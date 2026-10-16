@@ -201,6 +201,11 @@ code { font-size: .88em; background: var(--surface-3); padding: 1px 6px; border-
 .kpi:hover { border-color: var(--line-strong); }
 .kpi-top { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-2); }
 .kpi-val { font-size: 22px; font-weight: 600; letter-spacing: -.015em; margin: 6px 0 4px; white-space: nowrap; }
+.kpi-line { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.kpi-aside { display: flex; flex-direction: column; align-items: flex-end; margin-bottom: 6px; line-height: 1.15; text-align: right; }
+.kpi-aside b { font-size: 15px; font-weight: 600; color: var(--gold); }
+.kpi-aside span { font-size: 11px; color: var(--muted); }
+.kpis.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .kpi-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .kpi-row b.up { color: var(--ok-text); font-weight: 500; }
 .delta { display: inline-flex; align-items: center; gap: 1px; font-weight: 500; font-size: 12px; white-space: nowrap; }
@@ -351,7 +356,7 @@ small.ok { color: var(--ok-text); } small.warn { color: var(--warn-text); } smal
 .toast i { color: var(--gold); font-size: 17px; }
 
 /* ─── Responsive ─── */
-@media (max-width: 1280px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1280px) { .kpis, .kpis.n3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpis.n3 > :last-child { grid-column: 1 / -1; } }
 @media (max-width: 1100px) { .row-hero, .row-2 { grid-template-columns: 1fr; } .map-wrap { min-height: 480px; } }
 @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; }

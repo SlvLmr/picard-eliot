@@ -404,6 +404,14 @@ function iapDe(who = S.who) {
     return { nb, parStatut, reel: !!liste, objectif: cs.reduce((s, c) => s + (+c.iap_objectif || 0), 0), nouveaux: cs.reduce((s, c) => s + (+c.iap_nouveaux || 0), 0) };
 }
 const statutsHtml = ps => ps ? ['elite', 'premium', 'officiel'].map(s => `<span class="iap-st ${s}">${ps[s]} ${STATUT_IAP_NOM[s]}</span>`).join('') : '';
+// Leads (fichier à venir) : lignes { atc, statut } ; statut reçu / traité / validé (un lead validé est aussi traité et reçu)
+function leadsDe() {
+    const L = S.base.etats?.leads?.lignes; if (!L) return null;
+    const ratt = rattacheurEtats(S.base.commerciaux); const ids = S.who ? idsFor() : null;
+    const mine = ids ? L.filter(l => ids.has(ratt(l.atc))) : L;
+    const rang = { recu: 0, traite: 1, valide: 2 };
+    return { recus: mine.length, traites: mine.filter(l => rang[l.statut] >= 1).length, valides: mine.filter(l => rang[l.statut] >= 2).length };
+}
 function renderKpis(animate) {
     const p = pinfo(); const k = Ks(); const iap = iapDe();
     const cards = [
@@ -414,17 +422,22 @@ function renderKpis(animate) {
         const e = enregistre(p); const ratio = k.realise ? e.enr / k.realise : null;
         cards.push({ label: 'Enregistré / facturé', val: ratio, fmt: v => nf2.format(v),
             row: ratio == null ? '<span>—</span>' : `<span>${ratio >= 1 ? '<b class="up">le carnet se remplit</b>' : '<b class="down-t">le carnet se vide</b>'} · ${euros(e.enr - k.realise, { sign: true })}</span>` });
-    } else {
-        cards.push({ label: 'Quantités', val: k.qte, fmt: v => nf0.format(v) + ' u.', row: `<span>unités facturées · ${p.label}</span>` });
     }
+    // IAP : nombre + part des installateurs Premium ou Elite (montée en gamme du réseau)
+    const haut = iap.reel && iap.nb ? (iap.parStatut.premium + iap.parStatut.elite) / iap.nb * 100 : null;
     cards.push({ label: `IAP${!iap.reel && S.base.etat?.zonesExemple ? exemple : ''}`, val: iap.nb, fmt: v => nf0.format(v),
+        aside: haut != null ? `<b>${pct(haut)}</b><span>Premium ou Elite</span>` : iap.objectif ? `<b>${pct(iap.nb / iap.objectif * 100)}</b><span>de l'objectif</span>` : '',
         row: iap.reel ? `<span class="iap-sts">${statutsHtml(iap.parStatut)}</span>` : `<span>objectif ${nf0.format(iap.objectif)} · <b class="up">+${iap.nouveaux}</b> en ${p.y}</span>` });
-    const rnd = seedFrom(String(S.who) + S.period); const marge = 31 + rnd() * 7, mObj = 34;
-    cards.push({ label: `Taux de marge${exemple}`, val: marge, fmt: v => pct(v, { dec: 1 }),
-        row: `${delta((rnd() - 0.5) * 3, pts)}<span>objectif ${pct(mObj, { dec: 1 })}</span>` });
+    // Leads : fichier à venir (reçus → traités → validés)
+    const ld = leadsDe();
+    cards.push({ label: 'Leads', val: ld ? ld.recus : null, fmt: v => nf0.format(v),
+        aside: ld && ld.recus ? `<b>${pct(ld.valides / ld.recus * 100)}</b><span>validés</span>` : '',
+        row: ld ? `<span class="iap-sts"><span class="iap-st">${nf0.format(ld.recus)} reçus</span><span class="iap-st premium">${nf0.format(ld.traites)} traités</span><span class="iap-st elite">${nf0.format(ld.valides)} validés</span></span>`
+            : '<span>reçus · traités · validés — <i>fichier à importer</i></span>' });
+    $('#kpis').classList.toggle('n3', cards.length === 3);
     $('#kpis').innerHTML = cards.map((c, i) => `<article class="card kpi" style="animation-delay:${i * 40}ms">
         <div class="kpi-top">${c.label}</div>
-        <div class="kpi-val" data-val="${c.val ?? ''}" data-i="${i}">${c.val == null ? '—' : c.fmt(c.val)}</div>
+        <div class="kpi-line"><div class="kpi-val" data-val="${c.val ?? ''}" data-i="${i}">${c.val == null ? '—' : c.fmt(c.val)}</div>${c.aside ? `<div class="kpi-aside">${c.aside}</div>` : ''}</div>
         <div class="kpi-row">${c.row}</div></article>`).join('');
     if (animate && !S.mask) $$('#kpis .kpi-val').forEach(el => { const v = parseFloat(el.dataset.val); if (!isNaN(v)) countUp(el, v, cards[+el.dataset.i].fmt); });
 }
