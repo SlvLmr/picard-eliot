@@ -38,11 +38,17 @@ L'outil s'ouvre toujours sur la **vue d'ensemble**, avec la Timeline par thème 
 
 Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-bulle : dates, avancement réel et attendu, météo, et texte contextuel.
 
-L'outil s'affiche en **mode clair** par défaut. Le bouton 🌙 / ☀ de l'en-tête bascule en mode sombre, et le choix est mémorisé dans le navigateur.
+**Charte** : fond noir, cartes sombres arrondies à filet fin, police Inter, un seul accent doré (bouton Admin, rubrique active, courbes, repère « aujourd'hui »). Les couleurs de statut (rouge, orange, vert) sont conservées. Le bouton ☀ de l'en-tête passe en mode clair, et le choix est mémorisé dans le navigateur.
+
+Dans la barre des rubriques, le **bloc brun** affiche la date des données et ouvre l'admin pour les mettre à jour. Une rubrique cochée **Exemple** (admin, onglet *Rubriques*) porte une étiquette violette, et un bandeau violet rappelle que ses données sont des exemples.
 
 En haut de page, la **boîte à idées** (« Soumettez-nous vos idées, remarques ») ouvre un petit formulaire : type (idée, remarque, question), sujet et message. Le message est enregistré directement dans la base Supabase, sans passer par la messagerie. Il n'est lisible que par les administrateurs, dans l'onglet **Messages** de l'admin.
 
-Le bouton **Rapport PDF** produit une version simplifiée A4 au style infographie, à diffuser en interne.
+Le bouton **Rapport PDF** produit un rapport A4 dans la même charte, à diffuser en interne :
+- page 1 : avancement global, écart avec le prévu à date, courbe de trajectoire prévue et point réalisé, une carte par rubrique, météo des thèmes, prochaines échéances et points d'attention ;
+- une page par rubrique : une ligne par thème avec 5 étapes horizontales (fait, en cours, en retard, à venir), plus la courbe de la rubrique quand la place le permet.
+
+Le sélecteur **Fond noir / Fond clair (impression)** choisit la variante.
 
 ### Météo
 

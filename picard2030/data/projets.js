@@ -40,7 +40,8 @@ window.PICARD2030_DATA = {
       "id": "production",
       "name": "Production",
       "color": "#2563eb",
-      "icon": "ri-tools-line"
+      "icon": "ri-tools-line",
+      "example": true
     }
   ],
   "themes": [
