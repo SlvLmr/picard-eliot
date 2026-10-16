@@ -134,9 +134,8 @@ function renderAtcCard() {
     const per = { mois: 'du mois', trimestre: 'du trimestre', annee: "de l'année" }[S.period];
     box.innerHTML = `<article class="atc-card" style="--g1:${g1};--g2:${g2}">
         ${ph ? `<div class="ac-photo" style="background-image:url('${ph}')"></div>` : `<div class="ac-photo ac-ini">${esc(initials(c))}</div>`}
-        <span class="ac-flag"></span>
-        <div class="ac-score"><b class="${st.key}">${k.atteinte == null ? '—' : Math.round(k.atteinte)}</b><span>%<br>du budget<br>${per}</span></div>
         <div class="ac-main">
+            <div class="ac-score"><b class="${st.key}">${k.atteinte == null ? '—' : Math.round(k.atteinte)}</b><span>%<br>du budget<br>${per}</span></div>
             <div class="ac-id"><span class="ac-badge">${esc(initials(c))}</span>
                 <div><h2>${esc(c.prenom)} <b>${esc(String(c.nom).toUpperCase())}</b></h2>
                 <div class="ac-meta"><i class="ac-dot"></i>${esc(secteurs)}${pays}</div>

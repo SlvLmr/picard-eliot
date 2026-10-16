@@ -721,3 +721,35 @@ b.down-t { color: var(--late-text); font-weight: 500; }
 .iap-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .iap-dot.elite { background: var(--gold); } .iap-dot.premium { background: #c6b8ff; } .iap-dot.officiel { background: #8b929d; }
 #map .badge-dot.badge-ph { stroke-width: 2; }
+/* Carte ATC : photo à largeur maîtrisée (pas d'agrandissement sur écran large), sans damier */
+.ac-flag { display: none; }
+.atc-card { min-height: 220px; }
+.ac-photo { width: clamp(240px, 30%, 360px); background-size: cover; background-position: center 15%;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.6) 28%, #000 55%); mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.6) 28%, #000 55%); }
+.ac-main { max-width: calc(100% - clamp(240px, 30%, 360px) + 60px); }
+@media (max-width: 760px) {
+    .atc-card { padding: 18px 16px 16px; min-height: 0; }
+    .ac-photo { width: 62%; opacity: .5; -webkit-mask-image: linear-gradient(to right, transparent, #000 60%); mask-image: linear-gradient(to right, transparent, #000 60%); }
+    .ac-main { max-width: 100%; gap: 16px; }
+    .ac-score { top: 16px; right: 16px; }
+    .ac-score b { font-size: 40px; }
+    .ac-id { padding-right: 96px; }
+    .ac-id h2 { font-size: 20px; }
+    .ac-badge { width: 40px; height: 40px; font-size: 13px; }
+    .ac-stats { gap: 8px 16px; }
+}
+.ac-score { right: calc(clamp(240px, 30%, 360px) - 30px); text-align: right; }
+@media (max-width: 760px) {
+    .ac-score { position: static; order: -1; margin: -2px 0 0; }
+    .ac-score b { font-size: 34px; }
+    .ac-main { display: grid; }
+    .ac-id { padding-right: 0; }
+    .ac-photo { width: 55%; opacity: .35; }
+}
+.ac-main { position: static; }
+@media (min-width: 761px) { .ac-main .ac-score { position: absolute; top: 26px; } }
+/* Mobile : le menu « Choisir un ATC » s'ancre au bord gauche ; jamais de défilement horizontal */
+html, body { overflow-x: clip; }
+.scope { position: relative; }
+@media (max-width: 620px) { #dd-who { position: static; } .menu-who { left: 0; width: calc(100vw - 32px); } }
+@media (max-width: 760px) { .ac-score, .ac-score span { text-align: left; } }
