@@ -148,7 +148,8 @@ function renderAtcCard() {
 function go(view, { push = true } = {}) {
     if (!VIEWS[view]) view = 'synthese';
     const changed = view !== S.view; S.view = view;
-    $$('#nav [data-view]').forEach(a => a.classList.toggle('on', a.dataset.view === view));
+    $$('#nav [data-view], #tabbar [data-view]').forEach(a => a.classList.toggle('on', a.dataset.view === view));
+    $('#tab-plus')?.classList.toggle('on', ['carnet', 'clients'].includes(view));
     $('#side').classList.remove('open');
     if (push && location.hash !== '#' + view) history.replaceState(null, '', urlFor());
     renderAll({ animate: changed });
@@ -542,15 +543,15 @@ function renderTable() {
     const p = pinfo();
     $('#atc-sub').textContent = `· ${p.label}${S.gamme ? ' · ' + gammeNom(S.gamme) : ''} · ${rows.length} ATC`;
     const tot = rows.reduce((s, x) => ({ r: s.r + x.k.realise, b: s.b + x.k.budget, n1: s.n1 + x.k.n1, pr: s.pr + x.ka.projection }), { r: 0, b: 0, n1: 0, pr: 0 });
-    $('#atc-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th>Équipe</th><th class="num">Facturé</th><th class="num">Budget</th><th style="width:22%">Budget réalisé</th><th class="num">vs ${p.y - 1}</th><th class="num">Atterrissage ${p.y}</th><th>Secteurs</th><th class="num">IAP</th></tr></thead><tbody>
+    $('#atc-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th class="m-hide">Équipe</th><th class="num">Facturé</th><th class="num m-hide">Budget</th><th style="width:22%">Budget réalisé</th><th class="num m-hide">vs ${p.y - 1}</th><th class="num m-hide">Atterrissage ${p.y}</th><th class="m-hide">Secteurs</th><th class="num m-hide">IAP</th></tr></thead><tbody>
         ${rows.map(({ c, k, ka }, i) => { const st = statut(k.atteinte, reg); return `<tr data-who="${c.id}" data-go="commerciaux" class="${S.who === c.id ? 'on' : ''}" style="animation-delay:${i * 18}ms">
             <td><span class="cell-who">${avatarWho(c.id, 'sm')}<span><b>${esc(fullName(c))}</b><small>${esc(typeAtc(c.id))}</small></span></span></td>
-            <td class="muted">${esc(equipeDe(c.equipe).nom)}</td>
-            <td class="num">${euros(k.realise)}</td><td class="num muted">${euros(k.budget)}</td>
-            <td><span class="cell-bar">${barHtml(k)}<b class="${st.key}">${pct(k.atteinte)}</b></span></td>
-            <td class="num">${delta(k.evol)}</td><td class="num">${euros(ka.projection)}</td>
-            <td class="cell-sects">${[...new Set(affectationsDe(S.base.affectations, c.id).map(a => a.secteur))].map(sec => `<span class="sect-dot" style="--g1:${SECTEURS[sec].c[0]};--g2:${SECTEURS[sec].c[1]}" title="${esc(SECTEURS[sec].nom)}"></span>${esc(SECTEURS[sec].nom)}`).join('<br>') || '<span class="muted">—</span>'}</td><td class="num muted">${iapDe(c.id).nb}</td></tr>`; }).join('')}
-        </tbody><tfoot><tr><td colspan="2">Total</td><td class="num">${euros(tot.r)}</td><td class="num">${euros(tot.b)}</td><td>${pct(tot.b ? tot.r / tot.b * 100 : null)}</td><td class="num">${delta(tot.n1 ? (tot.r / tot.n1 - 1) * 100 : null)}</td><td class="num">${euros(tot.pr)}</td><td></td><td></td></tr></tfoot></table>`;
+            <td class="muted m-hide">${esc(equipeDe(c.equipe).nom)}</td>
+            <td class="num">${euros(k.realise)}</td><td class="num muted m-hide">${euros(k.budget)}</td>
+            <td><span class="cell-bar">${barHtml(k)}<b class="${st.key}">${pct(k.atteinte)}</b><span class="m-only">${delta(k.evol)}</span></span></td>
+            <td class="num m-hide">${delta(k.evol)}</td><td class="num m-hide">${euros(ka.projection)}</td>
+            <td class="cell-sects m-hide">${[...new Set(affectationsDe(S.base.affectations, c.id).map(a => a.secteur))].map(sec => `<span class="sect-dot" style="--g1:${SECTEURS[sec].c[0]};--g2:${SECTEURS[sec].c[1]}" title="${esc(SECTEURS[sec].nom)}"></span>${esc(SECTEURS[sec].nom)}`).join('<br>') || '<span class="muted">—</span>'}</td><td class="num muted m-hide">${iapDe(c.id).nb}</td></tr>`; }).join('')}
+        </tbody><tfoot><tr><td>Total</td><td class="m-hide"></td><td class="num">${euros(tot.r)}</td><td class="num m-hide">${euros(tot.b)}</td><td>${pct(tot.b ? tot.r / tot.b * 100 : null)}</td><td class="num m-hide">${delta(tot.n1 ? (tot.r / tot.n1 - 1) * 100 : null)}</td><td class="num m-hide">${euros(tot.pr)}</td><td class="m-hide"></td><td class="m-hide"></td></tr></tfoot></table>`;
     growBars($('#atc-table'));
 }
 
@@ -620,9 +621,9 @@ function renderCommandes() {
     for (const l of E.livraisons) { const x = ligne(l.id); x.livA += l.q; if (l.m === mRef) x.livM += l.q; }
     const rows = [...par].filter(([id]) => id).sort((a, b) => b[1].retard - a[1].retard || b[1].carnet - a[1].carnet);
     const n = v => v ? nf0.format(v) : '<span class="muted">—</span>';
-    $('#cmd-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th class="num">Carnet</th><th class="num">En retard</th><th class="num">Sans délai</th><th class="num">Non validées</th><th class="num">Bloquées</th><th class="num">Livrées ${MOIS[mRef - 1]}</th><th class="num">Livrées ${E.annee || ''}</th></tr></thead><tbody>
+    $('#cmd-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th class="num">Carnet</th><th class="num">En retard</th><th class="num m-hide">Sans délai</th><th class="num">Non validées</th><th class="num m-hide">Bloquées</th><th class="num m-hide">Livrées ${MOIS[mRef - 1]}</th><th class="num m-hide">Livrées ${E.annee || ''}</th></tr></thead><tbody>
         ${rows.map(([id, x]) => { const c = commercial(id); return `<tr data-who="${id}" class="${S.who === id ? 'on' : ''}"><td><span class="cell-who">${avatarWho(id, 'sm')}<span><b>${esc(fullName(c))}</b><small>${esc(typeAtc(id))}</small></span></span></td>
-            <td class="num">${n(x.carnet)}</td><td class="num">${x.retard ? `<b class="late">${x.retard}</b>` : n(0)}</td><td class="num">${n(x.sans)}</td><td class="num">${x.attente ? `<b class="warn">${x.attente}</b>` : n(0)}</td><td class="num">${x.bloque ? `<b class="late">${x.bloque}</b>` : n(0)}</td><td class="num">${n(x.livM)}</td><td class="num">${n(x.livA)}</td></tr>`; }).join('')}
+            <td class="num">${n(x.carnet)}</td><td class="num">${x.retard ? `<b class="late">${x.retard}</b>` : n(0)}</td><td class="num m-hide">${n(x.sans)}</td><td class="num">${x.attente ? `<b class="warn">${x.attente}</b>` : n(0)}</td><td class="num m-hide">${x.bloque ? `<b class="late">${x.bloque}</b>` : n(0)}</td><td class="num m-hide">${n(x.livM)}</td><td class="num m-hide">${n(x.livA)}</td></tr>`; }).join('')}
         </tbody></table>${!S.who && E.inconnus.length ? `<p class="muted small" style="padding:10px 12px">Non rattachés : ${E.inconnus.map(esc).join(', ')} — à renseigner dans la fiche ATC (champ « Nom dans les états PDF »).</p>` : ''}`;
 
     // Livraisons par mois et par gamme
@@ -667,7 +668,7 @@ function renderCommandes() {
     $('#cmd-list-sub').textContent = `· ${list.length} ligne${list.length > 1 ? 's' : ''}`;
     const MAX = S.cmdTout ? 1000 : 25;
     $('#cmd-list').innerHTML = list.length ? `<table class="tbl tbl-atc tbl-cmd"><thead><tr>${cols.map((c, i) => `<th class="${i >= cols.length - 1 ? 'num' : ''}">${c}</th>`).join('')}</tr></thead><tbody>
-        ${list.slice(0, MAX).map(r => `<tr class="static">${r.map((v, i) => `<td class="${i >= r.length - 1 ? 'num' : ''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table>${list.length > 25 ? `<div class="list-more"><button class="pill pill-sm" id="cmd-tout">${S.cmdTout ? 'Réduire' : `Tout afficher (${list.length})`}</button></div>` : ''}`
+        ${list.slice(0, MAX).map(r => `<tr class="static">${r.map((v, i) => `<td class="${i >= r.length - 1 ? 'num' : ''}" data-l="${esc(cols[i])}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table>${list.length > 25 ? `<div class="list-more"><button class="pill pill-sm" id="cmd-tout">${S.cmdTout ? 'Réduire' : `Tout afficher (${list.length})`}</button></div>` : ''}`
         : '<div class="empty"><i class="ri-checkbox-circle-line"></i>Rien à traiter ici</div>';
     $('#cmd-tout')?.addEventListener('click', () => { S.cmdTout = !S.cmdTout; renderCommandes(); });
 }
@@ -1095,6 +1096,7 @@ async function boot() {
     $('#btn-import').addEventListener('click', () => { A.tab = 'import'; $('#btn-admin').click(); });
     $('#promo').addEventListener('click', () => { A.tab = 'import'; $('#btn-admin').click(); });
     $('#btn-menu').addEventListener('click', () => $('#side').classList.add('open'));
+    $('#tab-plus').addEventListener('click', () => $('#side').classList.add('open'));
     $('#side-scrim').addEventListener('click', () => $('#side').classList.remove('open'));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenus(); });
     let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => Object.values(S.charts).forEach(c => c.resize()), 120); });

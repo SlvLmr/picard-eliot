@@ -45,11 +45,12 @@
         <!-- Barre du haut -->
         <header class="topbar">
             <button class="ico burger" id="btn-menu" aria-label="Menu"><i class="ri-menu-2-line"></i></button>
+            <img class="top-logo" src="logo-picard.png" alt="Picard Serrures" width="320" height="74">
             <span class="top-title" id="top-title"></span>
             <div class="top-actions">
                 <button class="ico" id="btn-mask" title="Masquer les montants" aria-label="Masquer les montants"><i class="ri-eye-line"></i></button>
                 <span class="pill-demo" id="pill-demo" hidden></span>
-                <button class="cta" id="btn-import"><i class="ri-add-line"></i>Importer les fichiers</button>
+                <button class="cta" id="btn-import" title="Importer les fichiers"><i class="ri-add-line"></i><span>Importer les fichiers</span></button>
             </div>
         </header>
 
@@ -203,6 +204,15 @@
         <footer class="foot">Chiffres facturés. Couleurs : % du budget réalisé (rouge ≤ 60 %, orange 61–85 %, jaune 86–90 %, vert au-delà). Atterrissage : mois en cours = facturé + livrable du carnet (société) ou rythme actuel (ATC), mois suivants = budget × rythme. Les blocs marqués « exemple » ne sont pas encore alimentés par les fichiers.</footer>
     </main>
 </div>
+
+<!-- Mobile : barre d'onglets en bas -->
+<nav class="tabbar" id="tabbar" aria-label="Rubriques">
+    <a href="#synthese" data-view="synthese"><i class="ri-layout-grid-fill"></i><span>Synthèse</span></a>
+    <a href="#commerciaux" data-view="commerciaux"><i class="ri-team-line"></i><span>ATC</span></a>
+    <a href="#secteurs" data-view="secteurs"><i class="ri-map-2-line"></i><span>Secteurs</span></a>
+    <a href="#commandes" data-view="commandes"><i class="ri-file-list-3-line"></i><span>Commandes</span></a>
+    <button id="tab-plus"><i class="ri-more-2-fill"></i><span>Plus</span></button>
+</nav>
 
 <div class="tip" id="tip" role="tooltip"></div>
 <div class="toast" id="toast" role="status"></div>
