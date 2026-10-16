@@ -205,7 +205,7 @@ function rattacher(state, personnes, remplacerDemo) {
             c = { id: 'atc-' + Math.random().toString(36).slice(2, 9), code: p.code, prenom: p.prenom, nom: p.nom, equipe: p.equipe, couleur: nuance(equipeDe(p.equipe).couleur, k),
                 fonction: p.equipe === 'DIR' ? 'Direction' : p.equipe === 'DOM' ? 'Zone DOM-TOM' : 'ATC', actif: true, ordre: state.commerciaux.length, clientele: [], iap_objectif: 0, iap_nouveaux: 0 };
             state.commerciaux.push(c); // secteurs : à affecter dans l'admin (onglet Secteurs)
-        }
+        } else { c.equipe = p.equipe; c.code = p.code; } // le fichier fait foi pour l'équipe et le libellé
         ids[p.code] = c.id;
     }
     return ids;

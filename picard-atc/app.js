@@ -748,7 +748,7 @@ function bindMap(svg) {
     svg.addEventListener('mousemove', e => {
         if (MAP.moving) return;
         const bd = e.target.closest('.badge');
-        if (bd && !bd.dataset.who) { tip.innerHTML = `<h4>${esc(SECTEURS[bd.dataset.sec].nom)}</h4><div class="t-row"><span>${esc(forceDe(S.force).nom)}</span><b>Aucun ATC affecté</b></div>`; return placeTip(e); }
+        if (bd && !bd.dataset.who) { tip.innerHTML = `<h4>${esc(SECTEURS[bd.dataset.sec].nom)}</h4><div class="t-row"><span>${esc(forceDe(S.force).nom)}</span><b>Poste à pourvoir</b></div>`; return placeTip(e); }
         if (bd && idsSecteur(bd.dataset.sec).length > 1 && !S.who) {
             tip.innerHTML = `<h4>${esc(SECTEURS[bd.dataset.sec].nom)}</h4>` + idsSecteur(bd.dataset.sec).map(id => { const c = commercial(id); const k = Kc(id, S.period, S.gamme);
                 return `<div class="t-row"><span><i class="dot" style="background:${c.couleur}"></i> ${esc(fullName(c))}</span><b>${pct(k.atteinte)}</b></div>`; }).join('');

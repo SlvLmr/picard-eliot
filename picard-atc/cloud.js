@@ -100,6 +100,8 @@ function createCloudStore(url, key) {
                         c = ok(await sb.from('commerciaux').insert({ code: p.code, prenom: p.prenom, nom: p.nom, equipe: p.equipe, couleur: nuance(equipeDe(p.equipe).couleur, k),
                             fonction: p.equipe === 'DIR' ? 'Direction' : p.equipe === 'DOM' ? 'Zone DOM-TOM' : 'ATC', ordre: existants.length }).select().single());
                         existants.push(c); // secteurs : à affecter dans l'admin (onglet Secteurs)
+                    } else if (c.equipe !== p.equipe || c.code !== p.code) { // le fichier fait foi pour l'équipe et le libellé
+                        ok(await sb.from('commerciaux').update({ equipe: p.equipe, code: p.code }).eq('id', c.id)); c.equipe = p.equipe; c.code = p.code;
                     }
                     ids[p.code] = c.id;
                 }

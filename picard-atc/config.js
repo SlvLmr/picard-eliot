@@ -5,6 +5,6 @@
    règles de la base (RLS), voir sql/schema.sql.
    ============================================================ */
 window.COMMERCE_CONFIG = {
-    supabaseUrl: '',
-    supabaseKey: ''
+    supabaseUrl: 'https://kbseizduzsvzebtmsfnj.supabase.co',
+    supabaseKey: 'sb_publishable_E7ZgWWHKqTCQKfu5RNmFpg_Wf0wPLw-'
 };
