@@ -33,13 +33,13 @@ window.PICARD2030_DATA = {
     {
       "id": "commerce",
       "name": "Commerce",
-      "color": "#ea580c",
+      "color": "#e8b08a",
       "icon": "ri-store-2-line"
     },
     {
       "id": "production",
       "name": "Production",
-      "color": "#2563eb",
+      "color": "#9fbbe6",
       "icon": "ri-tools-line",
       "example": true
     }
@@ -50,7 +50,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Plan de recrutement",
       "owner": "",
-      "color": "#f59e0b",
+      "color": "#e6c891",
       "icon": "ri-user-heart-line",
       "note": "Ouverture de 3 nouveaux postes : IDF Est (fenêtriers), Centre-Ouest (serruriers), Ouest (serruriers). Secteur Nord en arbitrage pour fin 2027.",
       "actions": [
@@ -109,7 +109,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Organisation générale",
       "owner": "",
-      "color": "#ea580c",
+      "color": "#e8b08a",
       "icon": "ri-settings-5-line",
       "note": "Nouveaux secteurs, outils de suivi, rémunération et animation de la force commerciale.",
       "actions": [
@@ -176,7 +176,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Refonte du programme IAP",
       "owner": "",
-      "color": "#db2777",
+      "color": "#e7aab9",
       "icon": "ri-hand-coin-line",
       "note": "Refonte complète du programme IAP pour Picard 2030. Échéance : fin 2026.",
       "actions": [
@@ -275,7 +275,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Marketing produits",
       "owner": "",
-      "color": "#7c3aed",
+      "color": "#b9abe6",
       "icon": "ri-lightbulb-line",
       "note": "Serrures (CP : Laurent Guillard), portes palières (cabinet externe, avec Eliot), Hall & Tech (chef produit : Christophe Kuti).",
       "actions": [
@@ -326,7 +326,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Marketing produits · Reflet / Confort",
       "owner": "",
-      "color": "#a78bfa",
+      "color": "#d5cbf0",
       "icon": "ri-lightbulb-line",
       "note": "Thème rattaché à Marketing produits. Dates non précisées dans les notes : fin 2026 par défaut.",
       "actions": [
@@ -369,7 +369,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Marketing opérationnel",
       "owner": "",
-      "color": "#0891b2",
+      "color": "#93cfdd",
       "icon": "ri-line-chart-line",
       "note": "Livrable : janvier 2027.",
       "actions": [
@@ -396,7 +396,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Communication",
       "owner": "",
-      "color": "#2563eb",
+      "color": "#9fbbe6",
       "icon": "ri-megaphone-line",
       "note": "Livrable : janvier 2027. Inclut la newsletter bimensuelle Picard 2030.",
       "actions": [
@@ -455,7 +455,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Service client",
       "owner": "",
-      "color": "#0d9488",
+      "color": "#92cfc3",
       "icon": "ri-team-line",
       "note": "Livrable : janvier 2027.",
       "actions": [
@@ -490,7 +490,7 @@ window.PICARD2030_DATA = {
       "rubrique": "commerce",
       "name": "Eliot",
       "owner": "",
-      "color": "#16a34a",
+      "color": "#acd5a6",
       "icon": "ri-global-line",
       "note": "Repositionnement d'Eliot : raison d'être, gamme, modèle, règles commerciales, puis développement national 2027-2028.",
       "actions": [
@@ -565,7 +565,7 @@ window.PICARD2030_DATA = {
       "rubrique": "production",
       "name": "Modernisation de l'usine",
       "owner": "Direction industrielle",
-      "color": "#2563eb",
+      "color": "#9fbbe6",
       "icon": "ri-building-4-line",
       "start": "2026-01-05",
       "end": "2027-12-31",
@@ -606,7 +606,7 @@ window.PICARD2030_DATA = {
       "rubrique": "production",
       "name": "Système d'information (ERP)",
       "owner": "DSI",
-      "color": "#7c3aed",
+      "color": "#b9abe6",
       "icon": "ri-database-2-line",
       "start": "2026-02-01",
       "end": "2027-02-28",
@@ -647,7 +647,7 @@ window.PICARD2030_DATA = {
       "rubrique": "production",
       "name": "Qualité & environnement",
       "owner": "Qualité / RSE",
-      "color": "#16a34a",
+      "color": "#acd5a6",
       "icon": "ri-leaf-line",
       "start": "2027-01-01",
       "end": "2028-11-30",
