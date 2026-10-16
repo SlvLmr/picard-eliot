@@ -10,7 +10,7 @@ const initials = c => horsAtc(c) && !c.prenom ? c.equipe : ((c.prenom?.[0] || ''
 const fullName = c => `${c.prenom} ${c.nom}`.trim();
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
-const VIEWS = { synthese: 'Synthèse', commerciaux: 'Commerciaux', secteurs: 'Secteurs', carnet: 'Carnet de commandes', commandes: 'Commandes & délais', clients: 'Clients' };
+const VIEWS = { synthese: 'Synthèse', commerciaux: 'Commerciaux', secteurs: 'Secteurs', carnet: 'Carnet de commandes', commandes: 'Commandes & délais', clients: 'Clients', leads: 'Lead Management' };
 const S = {
     store: null, base: null, D: null, ref: new Date(),
     view: 'synthese', period: 'mois', force: 'serruriers', sel: null, gamme: null, zone: null, mapMode: 'secteurs', clientsMode: 'clients', cmdMode: 'retard', sort: 'atteinte', mask: false,
@@ -96,6 +96,7 @@ function renderAll({ animate = true } = {}) {
     if (v === 'carnet') renderCarnet();
     if (v === 'commandes') renderCommandes();
     if (v === 'clients') renderClients();
+    if (v === 'leads') renderLeads();
 }
 
 // Rubrique Commerciaux avec un ATC ou une équipe choisi : sa synthèse s'affiche (au-dessus du tableau pour une équipe)
@@ -149,7 +150,7 @@ function go(view, { push = true } = {}) {
     if (!VIEWS[view]) view = 'synthese';
     const changed = view !== S.view; S.view = view;
     $$('#nav [data-view], #tabbar [data-view]').forEach(a => a.classList.toggle('on', a.dataset.view === view));
-    $('#tab-plus')?.classList.toggle('on', ['carnet', 'clients'].includes(view));
+    $('#tab-plus')?.classList.toggle('on', ['carnet', 'clients', 'leads'].includes(view));
     $('#side').classList.remove('open');
     if (push && location.hash !== '#' + view) history.replaceState(null, '', urlFor());
     renderAll({ animate: changed });
@@ -404,14 +405,6 @@ function iapDe(who = S.who) {
     return { nb, parStatut, reel: !!liste, objectif: cs.reduce((s, c) => s + (+c.iap_objectif || 0), 0), nouveaux: cs.reduce((s, c) => s + (+c.iap_nouveaux || 0), 0) };
 }
 const statutsHtml = ps => ps ? ['elite', 'premium', 'officiel'].map(s => `<span class="iap-st ${s}">${ps[s]} ${STATUT_IAP_NOM[s]}</span>`).join('') : '';
-// Leads (fichier à venir) : lignes { atc, statut } ; statut reçu / traité / validé (un lead validé est aussi traité et reçu)
-function leadsDe() {
-    const L = S.base.etats?.leads?.lignes; if (!L) return null;
-    const ratt = rattacheurEtats(S.base.commerciaux); const ids = S.who ? idsFor() : null;
-    const mine = ids ? L.filter(l => ids.has(ratt(l.atc))) : L;
-    const rang = { recu: 0, traite: 1, valide: 2 };
-    return { recus: mine.length, traites: mine.filter(l => rang[l.statut] >= 1).length, valides: mine.filter(l => rang[l.statut] >= 2).length };
-}
 function renderKpis(animate) {
     const p = pinfo(); const k = Ks(); const iap = iapDe();
     const cards = [
@@ -428,12 +421,11 @@ function renderKpis(animate) {
     cards.push({ label: `IAP${!iap.reel && S.base.etat?.zonesExemple ? exemple : ''}`, val: iap.nb, fmt: v => nf0.format(v),
         aside: haut != null ? `<b>${pct(haut)}</b><span>Premium ou Elite</span>` : iap.objectif ? `<b>${pct(iap.nb / iap.objectif * 100)}</b><span>de l'objectif</span>` : '',
         row: iap.reel ? `<span class="iap-sts">${statutsHtml(iap.parStatut)}</span>` : `<span>objectif ${nf0.format(iap.objectif)} · <b class="up">+${iap.nouveaux}</b> en ${p.y}</span>` });
-    // Leads : fichier à venir (reçus → traités → validés)
+    // Leads : reçus → traités → validés (rubrique Lead Management)
     const ld = leadsDe();
-    cards.push({ label: 'Leads', val: ld ? ld.recus : null, fmt: v => nf0.format(v),
-        aside: ld && ld.recus ? `<b>${pct(ld.valides / ld.recus * 100)}</b><span>validés</span>` : '',
-        row: ld ? `<span class="iap-sts"><span class="iap-st">${nf0.format(ld.recus)} reçus</span><span class="iap-st premium">${nf0.format(ld.traites)} traités</span><span class="iap-st elite">${nf0.format(ld.valides)} validés</span></span>`
-            : '<span>reçus · traités · validés — <i>fichier à importer</i></span>' });
+    cards.push({ label: `Leads${ld?.exemple ? exemple : ''}`, val: ld ? ld.recus : null, fmt: v => nf0.format(v),
+        aside: ld && ld.recus ? `<b>${pct(ld.transfo)}</b><span>validés</span>` : '',
+        row: ld ? `<span class="iap-sts"><span class="iap-st">${nf0.format(ld.traites)} traités</span><span class="iap-st elite">${nf0.format(ld.valides)} validés</span>${ld.alerte ? `<a class="iap-st late-st" href="#leads">${ld.alerte} en attente</a>` : ''}</span>` : '<span>—</span>' });
     $('#kpis').classList.toggle('n3', cards.length === 3);
     $('#kpis').innerHTML = cards.map((c, i) => `<article class="card kpi" style="animation-delay:${i * 40}ms">
         <div class="kpi-top">${c.label}</div>

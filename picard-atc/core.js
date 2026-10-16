@@ -32,7 +32,7 @@ const GAMMES = [
     { k: 'diamant', nom: 'Portes blindées', sub: 'Diamant', icon: 'ri-shield-keyhole-line' },
     { k: 'technica', nom: 'Portes techniques', sub: 'Technica', icon: 'ri-door-lock-box-line' },
     { k: 'hall', nom: 'Portes de Hall', sub: 'Hall', icon: 'ri-building-4-line' },
-    { k: 'eliot', nom: 'Eliot', sub: 'compris dans Serrures', icon: 'ri-key-2-line' },
+    { k: 'eliot', nom: 'Eliot', sub: 'compris dans Serrures', icon: 'ri-shield-check-line' },
 ];
 const CA_GAMMES = ['serrures', 'diamant', 'hall', 'technica'];
 const gammeNom = k => GAMMES.find(g => g.k === k)?.nom || k;

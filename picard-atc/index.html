@@ -25,6 +25,7 @@
             <a href="#carnet" data-view="carnet"><i class="ri-truck-line"></i>Carnet de commandes</a>
             <a href="#commandes" data-view="commandes"><i class="ri-file-list-3-line"></i>Commandes &amp; délais</a>
             <a href="#clients" data-view="clients"><i class="ri-store-2-line"></i>Clients<span class="badge-new">Exemple</span></a>
+            <a href="#leads" data-view="leads"><i class="ri-radar-line"></i>Lead Management</a>
         </nav>
 
         <button class="promo" id="promo" title="Importer les fichiers du jour">
@@ -201,6 +202,37 @@
             <article class="card list" id="clients"></article>
         </section>
 
+        <!-- ═══ Lead Management ═══ -->
+        <section class="view" data-view="leads" hidden>
+            <div class="sec-head"><h2 class="sec-title">Lead Management <small id="leads-sub"></small></h2></div>
+            <div id="leads-banner"></div>
+            <section class="kpis" id="leads-kpis"></section>
+            <article class="card funnel" id="leads-funnel"></article>
+            <div class="row-hero">
+                <article class="card map-card">
+                    <div class="map-top">
+                        <div class="tabs" id="lead-map-mode"><button data-lmap="volume"><i class="ri-fire-line"></i>Volume</button><button data-lmap="tendance"><i class="ri-temp-hot-line"></i>Tendance</button><button data-lmap="transfo"><i class="ri-checkbox-circle-line"></i>Transformation</button><button data-lmap="attente"><i class="ri-time-line"></i>En attente</button></div>
+                        <div class="map-legend" id="lead-legend"></div>
+                    </div>
+                    <div class="map-wrap lead-wrap">
+                        <svg id="lead-map" role="img" aria-label="Carte des leads par zone"></svg>
+                        <div class="lead-idf"><span>Île-de-France</span><svg id="lead-idf" role="img" aria-label="Zoom Île-de-France"></svg></div>
+                    </div>
+                </article>
+                <article class="card perf potentiel" id="lead-side" aria-live="polite"></article>
+            </div>
+            <div class="row-2">
+                <article class="card perf"><h3 class="perf-title">Évolution des leads <span id="lead-trend-sub"></span></h3><div class="chart" id="chart-leads" style="height:260px"></div><div class="legend" id="lead-trend-legend"></div></article>
+                <article class="card perf"><div class="fn-head"><h3 class="perf-title">Origine des leads</h3>
+                    <div class="tabs tabs-sm" id="lead-orig-mode"><button data-lorig="sources">Sources</button><button data-lorig="cibles">Demandeurs</button><button data-lorig="produits">Produits</button></div></div>
+                    <div class="list-in" id="lead-orig"></div></article>
+            </div>
+            <div class="sec-head"><h2 class="sec-title">Par ATC <small>· prise en charge et transformation</small></h2></div>
+            <article class="card table-card"><div id="lead-atc"></div></article>
+            <div class="sec-head"><h2 class="sec-title">À traiter <small id="lead-todo-sub"></small></h2><div class="tabs" id="lead-todo-mode"></div></div>
+            <article class="card table-card" id="lead-todo"></article>
+        </section>
+
         <footer class="foot">Chiffres facturés. Couleurs : % du budget réalisé (rouge ≤ 60 %, orange 61–85 %, jaune 86–90 %, vert au-delà). Atterrissage : mois en cours = facturé + livrable du carnet (société) ou rythme actuel (ATC), mois suivants = budget × rythme. Les blocs marqués « exemple » ne sont pas encore alimentés par les fichiers.</footer>
     </main>
 </div>
@@ -259,6 +291,7 @@
 <script src="parsers.js"></script>
 <script src="etats.js"></script>
 <script src="app.js"></script>
+<script src="leads.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
