@@ -6,11 +6,11 @@
     <title>Picard2030</title>
     <link rel="icon" type="image/svg+xml" href="logo/favicon.svg">
     <!-- Charte noire à accent doré par défaut ; le mode clair reste disponible (bouton soleil) -->
-    <script>document.documentElement.dataset.theme = 'dark'; try { if (localStorage.getItem('picard2030_theme') === 'light') delete document.documentElement.dataset.theme; } catch (e) {}</script>
+    <script>document.documentElement.dataset.theme = 'dark'; try { if (localStorage.getItem('picard2030_theme_v2') === 'light') delete document.documentElement.dataset.theme; } catch (e) {}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20261016">
 </head>
 <body>
     <header class="topbar">
@@ -196,9 +196,9 @@
     <div class="tip" id="tip" role="tooltip"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-    <script src="data/projets.js"></script>
-    <script src="core.js"></script>
-    <script src="cloud.js"></script>
-    <script src="app.js"></script>
+    <script src="data/projets.js?v=20261016"></script>
+    <script src="core.js?v=20261016"></script>
+    <script src="cloud.js?v=20261016"></script>
+    <script src="app.js?v=20261016"></script>
 </body>
 </html>
