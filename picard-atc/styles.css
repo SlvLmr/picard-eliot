@@ -890,3 +890,9 @@ html, body { overflow-x: clip; }
 .pt-grid .pt-wide .iap-sts { margin-top: 4px; }
 .pt-atc .avatar { width: 24px; height: 24px; font-size: 9px; }
 .pt-big .muted.small { font-size: 18px; font-weight: 500; color: var(--muted); }
+.pt-big small b { font-weight: 600; }
+.pt-big small b.ok { color: var(--ok-text); } .pt-big small b.warn { color: var(--warn-text); } .pt-big small b.orange { color: var(--orange-text); } .pt-big small b.late { color: var(--late-text); }
+.pt-sep { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.pt-sep h5 { margin: 0 0 2px; font-size: 13px; font-weight: 600; display: flex; align-items: center; }
+.pt-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-2); }
+.pt-row b { color: var(--text); font-weight: 600; }
