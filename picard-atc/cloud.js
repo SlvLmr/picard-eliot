@@ -24,7 +24,7 @@ function createCloudStore(url, key) {
         mode: 'cloud',
         async init() {
             const ch = sb.channel('picard-atc-live');
-            for (const t of ['imports', 'commerciaux', 'secteurs', 'zones_info', 'reglages']) ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, notify);
+            for (const t of ['imports', 'commerciaux', 'affectations', 'zones_info', 'reglages']) ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, notify);
             ch.subscribe();
             return true;
         },
@@ -50,14 +50,14 @@ function createCloudStore(url, key) {
         async loadAll() {
             const [reg, com, sec, zi, am, jo, sm, pf, imp] = await Promise.all([
                 sb.from('reglages').select('*').eq('id', 1).maybeSingle().then(ok),
-                all('commerciaux', 'ordre'), all('secteurs'), all('zones_info'), all('atc_mois'), all('jours', 'date'), all('societe_mois'), all('portefeuille', 'date'),
+                all('commerciaux', 'ordre'), all('affectations'), all('zones_info'), all('atc_mois'), all('jours', 'date'), all('societe_mois'), all('portefeuille', 'date'),
                 sb.from('imports').select('created_at').order('created_at', { ascending: false }).limit(1).then(ok),
             ]);
-            const secteurs = {}; for (const s of sec) if (s.commercial_id) secteurs[s.zone] = s.commercial_id;
+            const affectations = {}; for (const a of sec) ((affectations[a.force] ||= {})[a.secteur] ||= []).push(a.commercial_id);
             const zonesInfo = {}; for (const z of zi) zonesInfo[z.zone] = { potentiel: +z.potentiel, iap: z.iap };
             const jours = jo.map(j => ({ d: j.date, enr: +j.enregistre, fact: +j.facture }));
             return {
-                reglages: reg || {}, commerciaux: com, secteurs, zonesInfo,
+                reglages: reg || {}, commerciaux: com, affectations, zonesInfo,
                 atcMois: am.map(x => ({ c: x.commercial_id, a: x.annee, m: x.mois, g: x.gamme, r: x.realise == null ? null : +x.realise, b: +x.budget, q: x.qte == null ? null : +x.qte, n1: +x.realise_n1 })),
                 jours,
                 societeMois: sm.map(x => ({ a: x.annee, m: x.mois, b_enr: +x.budget_enr, b_fact: +x.budget_fact, jours_ouvres: x.jours_ouvres, n1_enr: +x.n1_enr, n1_fact: +x.n1_fact })),
@@ -76,10 +76,9 @@ function createCloudStore(url, key) {
             return ok(await sb.from('commerciaux').insert(row).select().single());
         },
         async deleteCommercial(id) { ok(await sb.from('commerciaux').delete().eq('id', id)); },
-        async setSecteurs(list) {
-            const up = list.filter(s => s.commercial_id), del = list.filter(s => !s.commercial_id).map(s => s.zone);
-            if (up.length) ok(await sb.from('secteurs').upsert(up));
-            if (del.length) ok(await sb.from('secteurs').delete().in('zone', del));
+        async setAffectation(force, secteur, ids) {
+            ok(await sb.from('affectations').delete().eq('force', force).eq('secteur', secteur));
+            if (ids.length) ok(await sb.from('affectations').insert(ids.map((commercial_id, ordre) => ({ force, secteur, commercial_id, ordre }))));
         },
         async setZoneInfo(zone, info) { ok(await sb.from('zones_info').upsert({ zone, potentiel: info.potentiel ?? 0, iap: info.iap ?? 0 })); },
         async listImports() { return ok(await sb.from('imports').select('*').order('created_at', { ascending: false }).limit(40)) || []; },
@@ -93,8 +92,6 @@ function createCloudStore(url, key) {
                 await upsertChunks('portefeuille', data.jours.map(({ d, ...rest }) => ({ date: d, data: rest })));
             } else if (kind === 'repartition') {
                 const existants = await all('commerciaux');
-                const secteurs = await all('secteurs');
-                const prises = new Set(secteurs.map(s => s.zone));
                 const ids = {}; const parEquipe = {};
                 for (const p of data.personnes) {
                     const k = parEquipe[p.equipe] = (parEquipe[p.equipe] ?? -1) + 1;
@@ -102,9 +99,7 @@ function createCloudStore(url, key) {
                     if (!c) {
                         c = ok(await sb.from('commerciaux').insert({ code: p.code, prenom: p.prenom, nom: p.nom, equipe: p.equipe, couleur: nuance(equipeDe(p.equipe).couleur, k),
                             fonction: p.equipe === 'DIR' ? 'Direction' : 'ATC', ordre: existants.length }).select().single());
-                        existants.push(c);
-                        const zones = (ZONES_DEFAUT[p.equipe]?.[k] || []).filter(z => !prises.has(z));
-                        if (zones.length) { ok(await sb.from('secteurs').upsert(zones.map(zone => ({ zone, commercial_id: c.id })))); zones.forEach(z => prises.add(z)); }
+                        existants.push(c); // secteurs : à affecter dans l'admin (onglet Secteurs)
                     }
                     ids[p.code] = c.id;
                 }

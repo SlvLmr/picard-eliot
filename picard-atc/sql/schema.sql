@@ -20,7 +20,7 @@ create table public.reglages (
   seuil_jaune numeric not null default 85,   -- jaune au-delà (jusqu'au seuil vert)
   seuil_orange numeric not null default 60,  -- orange au-delà (jusqu'au seuil jaune), rouge en dessous
   types_clientele text[] not null default array['Serruriers', 'Menuisiers', 'Installateurs', 'Négoces & distributeurs', 'Entreprises du bâtiment', 'Grands comptes', 'Collectivités', 'Syndics & bailleurs'],
-  fonctions text[] not null default array['ATC', 'Spécialiste Diamant', 'Spécialiste Hall', 'Chef de secteur', 'Direction'],
+  fonctions text[] not null default array['ATC dédié', 'ATC mixte', 'Chef de secteur', 'Direction'],
   updated_at timestamptz not null default now()
 );
 insert into public.reglages default values;
@@ -51,10 +51,14 @@ create table public.commerciaux (
   created_at timestamptz not null default now()
 );
 
--- Zone de la carte → ATC
-create table public.secteurs (
-  zone text primary key,
-  commercial_id uuid references public.commerciaux on delete set null
+-- Forces commerciales : secteur d'une force → ATC (plusieurs ATC possibles ; un ATC « mixte » est présent dans plusieurs forces)
+-- Les découpages (secteur → départements / pays) sont définis dans core.js (FORCES, SECTEURS).
+create table public.affectations (
+  force text not null,              -- serruriers, menuisiers, marches
+  secteur text not null,            -- benelux, nord, idfo, idfe, idf, ouest, atlantique, grandouest, est, centre, ra, so, med, paca, dom
+  commercial_id uuid not null references public.commerciaux on delete cascade,
+  ordre int not null default 0,
+  primary key (force, secteur, commercial_id)
 );
 
 -- Potentiel de marché et IAP installés, par zone
@@ -115,7 +119,7 @@ create policy admin_maj on public.reglages for update using (public.is_admin()) 
 do $$
 declare t text;
 begin
-  foreach t in array array['commerciaux', 'secteurs', 'zones_info', 'atc_mois', 'jours', 'societe_mois', 'portefeuille', 'imports'] loop
+  foreach t in array array['commerciaux', 'affectations', 'zones_info', 'atc_mois', 'jours', 'societe_mois', 'portefeuille', 'imports'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('create policy lecture on public.%I for select using (public.peut_lire())', t);
     execute format('create policy admin_ajout on public.%I for insert with check (public.is_admin())', t);
@@ -137,4 +141,4 @@ create trigger inscriptions_reservees before insert on auth.users
   for each row execute function public.inscriptions_reservees();
 
 -- ─── Temps réel : chaque import rafraîchit les écrans ouverts ──
-alter publication supabase_realtime add table public.imports, public.commerciaux, public.secteurs, public.zones_info, public.reglages;
+alter publication supabase_realtime add table public.imports, public.commerciaux, public.affectations, public.zones_info, public.reglages;

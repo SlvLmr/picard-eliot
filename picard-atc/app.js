@@ -13,14 +13,14 @@ const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).
 const VIEWS = { synthese: 'Synthèse', commerciaux: 'Commerciaux', secteurs: 'Secteurs', carnet: 'Carnet de commandes', clients: 'Clients' };
 const S = {
     store: null, base: null, D: null, ref: new Date(),
-    view: 'synthese', period: 'mois', sel: null, gamme: null, zone: null, mapMode: 'secteurs', clientsMode: 'clients', sort: 'atteinte', mask: false,
+    view: 'synthese', period: 'mois', force: 'serruriers', sel: null, gamme: null, zone: null, mapMode: 'secteurs', clientsMode: 'clients', sort: 'atteinte', mask: false,
     charts: {}, session: { isAdmin: false },
 };
-try { const p = JSON.parse(localStorage.getItem('picard_atc_vue') || '{}'); for (const k of ['period', 'mapMode', 'clientsMode', 'sort', 'mask']) if (p[k] != null) S[k] = p[k]; } catch (e) {}
+try { const p = JSON.parse(localStorage.getItem('picard_atc_vue') || '{}'); for (const k of ['period', 'force', 'mapMode', 'clientsMode', 'sort', 'mask']) if (p[k] != null) S[k] = p[k]; } catch (e) {}
 // La Synthèse et le Carnet sont toujours une vue d'ensemble société ; ailleurs, le périmètre choisi (S.sel) s'applique
 const GLOBAL_VIEWS = new Set(['synthese', 'carnet']);
 Object.defineProperty(S, 'who', { get() { return GLOBAL_VIEWS.has(S.view) ? null : S.sel; }, set(v) { S.sel = v || null; } });
-const remember = () => { try { localStorage.setItem('picard_atc_vue', JSON.stringify({ period: S.period, mapMode: S.mapMode, clientsMode: S.clientsMode, sort: S.sort, mask: S.mask })); } catch (e) {} };
+const remember = () => { try { localStorage.setItem('picard_atc_vue', JSON.stringify({ period: S.period, force: S.force, mapMode: S.mapMode, clientsMode: S.clientsMode, sort: S.sort, mask: S.mask })); } catch (e) {} };
 
 // Montants masqués (œil en haut à droite) : utile en rendez-vous
 const eurosBrut = euros;
@@ -33,8 +33,23 @@ const membres = code => actifs().filter(c => c.equipe === code);
 const atcs = () => actifs().filter(c => c.equipe !== 'DIR');
 const isEquipe = w => typeof w === 'string' && w.startsWith('eq:');
 const idsFor = (who = S.who) => new Set(!who ? actifs().map(c => c.id) : isEquipe(who) ? membres(who.slice(3)).map(c => c.id) : [who]);
-const zonesOf = id => Object.entries(S.base.secteurs).filter(([, c]) => c === id).map(([z]) => z);
-const zonesFor = (who = S.who) => { const ids = idsFor(who); return Object.entries(S.base.secteurs).filter(([, c]) => ids.has(c)).map(([z]) => z); };
+// Secteurs : la carte montre une force à la fois (S.force) ; S.base.secteurs = zone → 1er ATC du secteur dans cette force
+const affDe = (force = S.force) => S.base.affectations?.[force] || {};
+const idsSecteur = (sec, force = S.force) => (affDe(force)[sec] || []).filter(id => commercial(id));
+function zonesFor(who = S.who, force = S.force) {
+    const ids = idsFor(who); const out = [];
+    for (const sec of forceDe(force).secteurs) if (idsSecteur(sec, force).some(id => ids.has(id))) out.push(...SECTEURS[sec].zones);
+    return out;
+}
+const zonesOf = (id, force) => zonesFor(id, force);
+const forcesDe = id => [...new Set(affectationsDe(S.base.affectations, id).map(a => a.force))];
+// Mixte = présent à la fois chez les Serruriers et les Menuisiers ; sinon on nomme sa ou ses forces
+const typeAtc = id => { const f = forcesDe(id); if (f.includes('serruriers') && f.includes('menuisiers')) return 'ATC mixte';
+    return f.length ? 'ATC ' + f.map(x => forceDe(x).court).join(' + ') : 'Sans secteur'; };
+function deriveForce() {
+    S.zoneSect = zoneSecteurs(S.force); S.base.secteurs = {};
+    for (const [z, sec] of Object.entries(S.zoneSect)) { const id = idsSecteur(sec)[0]; if (id) S.base.secteurs[z] = id; }
+}
 const zoneInfo = new Map(CARTE.zones.map(z => [z.code, z]));
 const pinfo = (p = S.period) => periodInfo(p, S.ref);
 const gammesSel = () => S.gamme ? [S.gamme] : undefined;
@@ -56,7 +71,12 @@ const Ks = (who = S.who, p = S.period) => Kc(who, p, S.gamme);
 // ─── Chargement ─────────────────────────────────────────────
 async function loadAll() {
     S.base = await S.store.loadAll();
-    const f = fusionnerZones(S.base.secteurs, S.base.zonesInfo); S.base.secteurs = f.secteurs; S.base.zonesInfo = f.zonesInfo;
+    S.base.zonesInfo = fusionnerZones({}, S.base.zonesInfo).zonesInfo;
+    S.base.affectations ||= {};
+    if (!FORCES.some(f => f.id === S.force)) S.force = FORCES[0].id;
+    // Couleur d'un ATC = dégradé de son (premier) secteur
+    for (const c of S.base.commerciaux) { const a = affectationsDe(S.base.affectations, c.id)[0]; if (a) c.couleur = SECTEURS[a.secteur].c[1]; }
+    deriveForce();
     S.D = { idx: buildIndex(S.base.atcMois) };
     S.ref = S.base.etat?.derniere_date ? parseIso(S.base.etat.derniere_date) : new Date();
     if (S.sel && !isEquipe(S.sel) && !commercial(S.sel)) S.sel = null;
@@ -100,6 +120,7 @@ function urlFor() { const u = new URL(location); u.hash = S.view; if (S.sel) u.s
 
 function select(who) {
     S.who = who || null; S.zone = null;
+    if (S.sel && !isEquipe(S.sel)) { const f = forcesDe(S.sel); if (f.length && !f.includes(S.force)) { S.force = f[0]; deriveForce(); } }
     closeMenus();
     if (S.sel && GLOBAL_VIEWS.has(S.view)) return go('commerciaux'); // depuis une vue société, un ATC choisi ouvre sa fiche
     history.replaceState(null, '', urlFor());
@@ -140,7 +161,7 @@ function renderWhoList() {
         if (!ms.length) continue;
         html += `<div class="ml-group">${esc(e.nom)}</div>`;
         if (e.code !== 'DIR' && !q) html += row('eq:' + e.code, 'Équipe ' + e.nom, `${ms.length} ATC`);
-        html += ms.map(c => row(c.id, fullName(c), esc(c.fonction || 'ATC'))).join('');
+        html += ms.map(c => row(c.id, fullName(c), esc(typeAtc(c.id)))).join('');
     }
     $('#who-list').innerHTML = html || '<div class="empty">Aucun résultat</div>';
 }
@@ -318,7 +339,7 @@ function enregistre(p) { // prises de commande société sur la période
     return { enr, bADate: b, n1, has: jours.length > 0 };
 }
 function iapDe(who = S.who) {
-    const zones = zonesFor(who); const ids = idsFor(who);
+    const zones = zonesFor(who, 'serruriers'); const ids = idsFor(who);
     const nb = zones.reduce((s, z) => s + (S.base.zonesInfo[z]?.iap || 0), 0);
     const cs = [...ids].map(commercial).filter(Boolean);
     return { nb, objectif: cs.reduce((s, c) => s + (+c.iap_objectif || 0), 0), nouveaux: cs.reduce((s, c) => s + (+c.iap_nouveaux || 0), 0) };
@@ -406,10 +427,12 @@ function renderRank() {
     $('#rank-title').textContent = solo ? 'Fiche' : isEquipe(S.who) ? 'Commerciaux de l\'équipe' : 'Meilleurs commerciaux';
     $('#rank-link').hidden = solo;
     if (solo) {
-        const c = commercial(S.who); const zones = zonesOf(c.id); const iap = iapDe();
+        const c = commercial(S.who); const zones = [...new Set(FORCES.flatMap(f => zonesOf(c.id, f.id)))]; const iap = iapDe();
+        const aff = affectationsDe(S.base.affectations, c.id);
         const zi = S.base.zonesInfo; const pot = zones.reduce((s, z) => s + (zi[z]?.potentiel || 0), 0);
         $('#rank').innerHTML = `<div class="fiche-mini">
-            <div class="fm-id">${avatarWho(c.id, 'lg')}<div><b>${esc(fullName(c))}</b><small>${esc(c.fonction || 'ATC')} · Équipe ${esc(equipeDe(c.equipe).nom)}</small></div></div>
+            <div class="fm-id">${avatarWho(c.id, 'lg')}<div><b>${esc(fullName(c))}</b><small>${esc(typeAtc(c.id))} · Équipe ${esc(equipeDe(c.equipe).nom)}</small></div></div>
+            <div class="fm-sects">${aff.map(a => `<span class="sect-chip" style="--g1:${SECTEURS[a.secteur].c[0]};--g2:${SECTEURS[a.secteur].c[1]}"><i></i>${esc(forceDe(a.force).court)} · <b>${esc(SECTEURS[a.secteur].nom)}</b></span>`).join('') || '<span class="muted">Aucun secteur affecté</span>'}</div>
             <div class="fm-grid"><span><em>Zones</em><b>${zones.length}</b></span><span><em>IAP</em><b>${iap.nb}</b></span><span><em>Potentiel${exemple}</em><b>${euros(pot)}</b></span></div>
             ${(c.clientele || []).length ? `<div class="tags">${c.clientele.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
             <div class="fm-contact">${c.email ? `<a href="mailto:${esc(c.email)}"><i class="ri-mail-line"></i>${esc(c.email)}</a>` : ''}${c.telephone ? `<a href="tel:${esc(c.telephone.replace(/\s/g, ''))}"><i class="ri-phone-line"></i>${esc(c.telephone)}</a>` : ''}</div>
@@ -458,14 +481,14 @@ function renderTable() {
     const p = pinfo();
     $('#atc-sub').textContent = `· ${p.label}${S.gamme ? ' · ' + gammeNom(S.gamme) : ''} · ${rows.length} ATC`;
     const tot = rows.reduce((s, x) => ({ r: s.r + x.k.realise, b: s.b + x.k.budget, n1: s.n1 + x.k.n1, pr: s.pr + x.ka.projection }), { r: 0, b: 0, n1: 0, pr: 0 });
-    $('#atc-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th>Équipe</th><th class="num">Facturé</th><th class="num">Budget</th><th style="width:22%">Budget réalisé</th><th class="num">vs ${p.y - 1}</th><th class="num">Atterrissage ${p.y}</th><th class="num">Zones</th><th class="num">IAP</th></tr></thead><tbody>
+    $('#atc-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th>Équipe</th><th class="num">Facturé</th><th class="num">Budget</th><th style="width:22%">Budget réalisé</th><th class="num">vs ${p.y - 1}</th><th class="num">Atterrissage ${p.y}</th><th>Secteurs</th><th class="num">IAP</th></tr></thead><tbody>
         ${rows.map(({ c, k, ka }, i) => { const st = statut(k.atteinte, reg); return `<tr data-who="${c.id}" data-go="commerciaux" class="${S.who === c.id ? 'on' : ''}" style="animation-delay:${i * 18}ms">
-            <td><span class="cell-who">${avatarWho(c.id, 'sm')}<span><b>${esc(fullName(c))}</b><small>${esc(c.fonction || 'ATC')}</small></span></span></td>
+            <td><span class="cell-who">${avatarWho(c.id, 'sm')}<span><b>${esc(fullName(c))}</b><small>${esc(typeAtc(c.id))}</small></span></span></td>
             <td class="muted">${esc(equipeDe(c.equipe).nom)}</td>
             <td class="num">${euros(k.realise)}</td><td class="num muted">${euros(k.budget)}</td>
             <td><span class="cell-bar">${barHtml(k)}<b class="${st.key}">${pct(k.atteinte)}</b></span></td>
             <td class="num">${delta(k.evol)}</td><td class="num">${euros(ka.projection)}</td>
-            <td class="num muted">${zonesOf(c.id).length}</td><td class="num muted">${iapDe(c.id).nb}</td></tr>`; }).join('')}
+            <td class="cell-sects">${[...new Set(affectationsDe(S.base.affectations, c.id).map(a => a.secteur))].map(sec => `<span class="sect-dot" style="--g1:${SECTEURS[sec].c[0]};--g2:${SECTEURS[sec].c[1]}" title="${esc(SECTEURS[sec].nom)}"></span>${esc(SECTEURS[sec].nom)}`).join('<br>') || '<span class="muted">—</span>'}</td><td class="num muted">${iapDe(c.id).nb}</td></tr>`; }).join('')}
         </tbody><tfoot><tr><td colspan="2">Total</td><td class="num">${euros(tot.r)}</td><td class="num">${euros(tot.b)}</td><td>${pct(tot.b ? tot.r / tot.b * 100 : null)}</td><td class="num">${delta(tot.n1 ? (tot.r / tot.n1 - 1) * 100 : null)}</td><td class="num">${euros(tot.pr)}</td><td></td><td></td></tr></tfoot></table>`;
     growBars($('#atc-table'));
 }
@@ -550,6 +573,12 @@ function buildMap(svg, { badges = true } = {}) {
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     svg.innerHTML = '';
     svg.style.setProperty('--s', 1);
+    const defs = el('defs', {}, svg);
+    for (const [id, sec] of Object.entries(SECTEURS)) {
+        const b = zoneBox(sec.zones.filter(z => zoneInfo.get(z)?.inset === undefined)) || zoneBox(sec.zones) || [0, 0, CARTE.w, CARTE.h];
+        const g = el('linearGradient', { id: svg.id + '-sg-' + id, gradientUnits: 'userSpaceOnUse', x1: b[0], y1: b[1], x2: b[2], y2: b[3] }, defs);
+        el('stop', { offset: '0', 'stop-color': sec.c[0] }, g); el('stop', { offset: '1', 'stop-color': sec.c[1] }, g);
+    }
     el('path', { d: CARTE.fond, class: 'fond' }, svg);
     const gIn = el('g', { class: 'insets' }, svg);
     for (const i of CARTE.insets) {
@@ -593,44 +622,43 @@ const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 function zoneFill(code, maxPot) {
     const owner = S.base.secteurs[code]; const c = owner && commercial(owner);
     if (S.mapMode === 'potentiel') { const v = S.base.zonesInfo[code]?.potentiel || 0; return v ? seqColor(Math.sqrt(v / maxPot)) : 'var(--zone-empty)'; }
+    if (S.mapMode === 'secteurs') return S.zoneSect[code] ? `url(#map-sg-${S.zoneSect[code]})` : 'var(--zone-empty)';
     if (!c) return 'var(--zone-empty)';
-    if (S.mapMode === 'secteurs') return c.couleur;
     const k = Kc(c.id, S.period, S.gamme);
     if (S.mapMode === 'atteinte') { const st = statut(k.atteinte, S.base.reglages); return st.key === 'none' ? 'var(--zone-empty)' : `color-mix(in srgb, var(--${st.key}) 78%, var(--surface-solid))`; }
     return k.evol == null ? 'var(--zone-empty)' : divColor(k.evol / 25);
 }
 
+// Centre de chaque secteur de la force affichée (pondéré par la surface), pour poser la pastille de ses ATC
 function sectorCenters() {
-    const acc = new Map();
-    for (const z of CARTE.zones) {
-        const o = S.base.secteurs[z.code]; if (!o || z.inset !== undefined) continue;
-        const e = acc.get(o) || acc.set(o, { x: 0, y: 0, a: 0 }).get(o);
-        e.x += z.c[0] * z.a; e.y += z.c[1] * z.a; e.a += z.a;
+    const out = [];
+    for (const sec of forceDe(S.force).secteurs) {
+        let x = 0, y = 0, a = 0; const zs = SECTEURS[sec].zones.map(z => zoneInfo.get(z)).filter(Boolean);
+        const metro = zs.filter(z => z.inset === undefined);
+        for (const z of metro) { x += z.c[0] * z.a; y += z.c[1] * z.a; a += z.a; }
+        if (!a && zs[0]) { x = zs[0].c[0]; y = zs[0].c[1] - 30; a = 1; }
+        if (a) out.push({ sec, ids: idsSecteur(sec), x: x / a, y: y / a });
     }
-    for (const z of CARTE.zones) {
-        const o = S.base.secteurs[z.code]; if (!o || acc.has(o) || z.inset === undefined) continue;
-        acc.set(o, { x: z.c[0], y: z.c[1] - 30, a: 1 });
-    }
-    return [...acc].map(([id, e]) => ({ id, x: e.x / e.a, y: e.y / e.a }));
+    return out;
 }
 
 function renderBadges(svg) {
     const g = $('g.badges', svg); if (!g) return;
     g.innerHTML = '';
     if (S.mapMode !== 'secteurs') return;
-    const ids = idsFor();
-    for (const { id, x, y } of sectorCenters()) {
-        const c = commercial(id); if (!c || (S.who && !ids.has(id))) continue;
-        const solo = S.who === id;
-        const b = el('g', { class: 'badge' + (solo ? ' on' : ''), 'data-who': id }, g);
+    const sel = idsFor();
+    for (const { sec, ids, x, y } of sectorCenters()) {
+        if (S.who && !ids.some(id => sel.has(id))) continue;
+        const c = commercial(ids.find(id => sel.has(id)) || ids[0]); const solo = !!c && S.who === c.id;
+        const b = el('g', { class: 'badge' + (solo ? ' on' : '') + (c ? '' : ' free'), ...(c ? { 'data-who': c.id } : {}), 'data-sec': sec }, g);
         b.style.transform = `translate(${x}px, ${y}px) scale(var(--s))`;
         if (solo) {
             const w = 20 + fullName(c).length * 6.3;
             el('rect', { x: -14, y: -14, width: w + 16, height: 28, class: 'badge-pill' }, b);
             el('text', { x: 18, y: 4, class: 'badge-name' }, b).textContent = fullName(c);
         }
-        el('circle', { r: 11, fill: c.couleur, class: 'badge-dot' }, b);
-        el('text', { y: 3.3, class: 'badge-txt' }, b).textContent = initials(c).slice(0, 3);
+        el('circle', { r: 11, fill: SECTEURS[sec].c[1], class: 'badge-dot' }, b);
+        el('text', { y: 3.3, class: 'badge-txt' }, b).textContent = !c ? '?' : ids.length > 1 && !S.who ? ids.length + '' : initials(c).slice(0, 3);
     }
 }
 
@@ -658,7 +686,9 @@ function renderMap() {
     }
     svg.classList.toggle('has-sel', !!mine);
     svg.dataset.mode = S.mapMode;
-    paintBorders(svg, z => S.base.secteurs[z], mine ? z => mine.has(z) : null);
+    if (!$('#force-tabs').children.length) $('#force-tabs').innerHTML = FORCES.map(f => `<button data-force="${f.id}">${esc(f.nom)}</button>`).join('');
+    paintBorders(svg, z => S.zoneSect[z], mine ? z => mine.has(z) : null);
+    $$('#force-tabs button').forEach(b => b.classList.toggle('on', b.dataset.force === S.force));
     renderBadges(svg); renderZoneLabels(svg, mine);
     $$('#map-mode button').forEach(b => b.classList.toggle('on', b.dataset.map === S.mapMode));
     renderMapLegend(maxPot);
@@ -715,6 +745,12 @@ function bindMap(svg) {
     svg.addEventListener('mousemove', e => {
         if (MAP.moving) return;
         const bd = e.target.closest('.badge');
+        if (bd && !bd.dataset.who) { tip.innerHTML = `<h4>${esc(SECTEURS[bd.dataset.sec].nom)}</h4><div class="t-row"><span>${esc(forceDe(S.force).nom)}</span><b>Aucun ATC affecté</b></div>`; return placeTip(e); }
+        if (bd && idsSecteur(bd.dataset.sec).length > 1 && !S.who) {
+            tip.innerHTML = `<h4>${esc(SECTEURS[bd.dataset.sec].nom)}</h4>` + idsSecteur(bd.dataset.sec).map(id => { const c = commercial(id); const k = Kc(id, S.period, S.gamme);
+                return `<div class="t-row"><span><i class="dot" style="background:${c.couleur}"></i> ${esc(fullName(c))}</span><b>${pct(k.atteinte)}</b></div>`; }).join('');
+            return placeTip(e);
+        }
         if (bd) {
             const c = commercial(bd.dataset.who); const k = Kc(c.id, S.period, S.gamme); const st = statut(k.atteinte, S.base.reglages);
             tip.innerHTML = `<h4><i class="dot" style="background:${c.couleur}"></i>${esc(fullName(c))}</h4>
@@ -728,7 +764,8 @@ function bindMap(svg) {
         const code = t.dataset.zone; const zi = zoneInfo.get(code); const owner = commercial(S.base.secteurs[code]); const info = S.base.zonesInfo[code] || {};
         const k = owner ? Kc(owner.id, S.period, S.gamme) : null;
         tip.innerHTML = `<h4>${esc(zi?.nom || code)} <small class="muted">${/^\d/.test(code) ? code : ''}</small></h4>
-            <div class="t-row"><span>ATC</span><b>${owner ? `<i class="dot" style="background:${owner.couleur}"></i> ${esc(fullName(owner))}` : 'Non attribuée'}</b></div>
+            <div class="t-row"><span>Secteur</span><b>${S.zoneSect[code] ? esc(SECTEURS[S.zoneSect[code]].nom) : '—'}</b></div>
+            <div class="t-row"><span>ATC</span><b>${S.zoneSect[code] && idsSecteur(S.zoneSect[code]).length ? idsSecteur(S.zoneSect[code]).map(id => esc(fullName(commercial(id)))).join(', ') : 'Non affecté'}</b></div>
             ${k ? `<div class="t-row"><span>Budget ATC atteint</span><b>${pct(k.atteinte)}</b></div>` : ''}
             <div class="t-row"><span>Potentiel (exemple)</span><b>${euros(info.potentiel || 0)}</b></div>
             <div class="t-row"><span>IAP</span><b>${info.iap ?? 0}</b></div>`;
@@ -884,6 +921,7 @@ async function boot() {
         const w = e.target.closest('[data-who]');
         if (w) { const goView = w.dataset.go; select(w.dataset.who); if (goView && goView !== S.view) go(goView); return; }
     });
+    $('#force-tabs').addEventListener('click', e => { const b = e.target.closest('[data-force]'); if (!b) return; S.force = b.dataset.force; remember(); deriveForce(); renderAll({ animate: false }); });
     $('#map-mode').addEventListener('click', e => { const b = e.target.closest('[data-map]'); if (b) { S.mapMode = b.dataset.map; remember(); renderMap(); } });
     $('#clients-mode').addEventListener('click', e => { const b = e.target.closest('[data-cmode]'); if (b) { S.clientsMode = b.dataset.cmode; remember(); renderClients(); } });
     $('#search').addEventListener('input', renderWhoList);
