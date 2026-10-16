@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Picard2030</title>
     <link rel="icon" type="image/svg+xml" href="logo/favicon.svg">
-    <script>try { if (localStorage.getItem('picard2030_theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}</script>
+    <!-- Charte noire à accent doré par défaut ; le mode clair reste disponible (bouton soleil) -->
+    <script>document.documentElement.dataset.theme = 'dark'; try { if (localStorage.getItem('picard2030_theme') === 'light') delete document.documentElement.dataset.theme; } catch (e) {}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -45,12 +48,19 @@
 
         <div class="tabs-row">
             <nav class="pole-tabs" id="pole-tabs"></nav>
+            <button class="data-block" id="data-block" title="Mettre à jour les données (admin)">
+                <i class="ri-refresh-line"></i>
+                <span><b id="data-date">Données à jour</b><small>Mettre à jour les données</small></span>
+                <i class="ri-arrow-right-s-line"></i>
+            </button>
             <nav class="jump-nav" aria-label="Sections">
                 <a href="#sec-timeline"><i class="ri-git-commit-line"></i><span>Timeline</span></a>
                 <a href="#sec-indicateurs"><i class="ri-dashboard-3-line"></i><span>Indicateurs</span></a>
                 <a href="#sec-gantt"><i class="ri-bar-chart-horizontal-line"></i><span>Gantt</span></a>
             </nav>
         </div>
+
+        <div class="demo-banner" id="demo-banner" hidden><i class="ri-flask-line"></i><span id="demo-text"></span></div>
 
         <section class="section" id="sec-timeline">
             <header class="section-head">

@@ -63,13 +63,25 @@ function dateSpan(start, end) {
 
 // ─── Onglets & rubriques ─────────────────────────
 function renderTabs() {
-    const tabs = [{ id: 'all', name: "Vue d'ensemble", icon: 'ri-apps-2-line', color: 'var(--accent)' }, ...data().rubriques];
+    const tabs = [{ id: 'all', name: "Vue d'ensemble", icon: 'ri-apps-2-line', color: 'var(--hl)' }, ...data().rubriques];
     $('#pole-tabs').innerHTML = tabs.map(t => {
         const n = t.id === 'all' ? data().themes.length : themesOf(t.id).length;
         return `<button class="pole-tab ${state.rubrique === t.id ? 'active' : ''}" data-rubrique="${esc(t.id)}" style="--pole:${t.color}">
-            <i class="${esc(t.icon)}"></i>${esc(t.name)}<span class="count">${n}</span></button>`;
+            <i class="${esc(t.icon)}"></i>${esc(t.name)}<span class="count">${n}</span>${t.example ? exampleTag() : ''}</button>`;
     }).join('');
-    document.documentElement.style.setProperty('--pole-current', state.rubrique === 'all' ? 'var(--accent)' : rubriqueOf(state.rubrique).color);
+    document.documentElement.style.setProperty('--pole-current', state.rubrique === 'all' ? 'var(--hl)' : rubriqueOf(state.rubrique).color);
+    renderDemo();
+}
+
+// Étiquette violette des rubriques dont les données sont encore des exemples
+function exampleTag() { return '<span class="tag-example">Exemple</span>'; }
+
+function renderDemo() {
+    const ex = data().rubriques.filter(r => r.example && (state.rubrique === 'all' || state.rubrique === r.id));
+    $('#demo-banner').hidden = !ex.length;
+    $('#demo-text').textContent = ex.length
+        ? `Données d'exemple pour ${ex.map(r => r.name).join(' et ')} : elles seront remplacées par les vraies actions.`
+        : '';
 }
 
 function renderOverview() {
@@ -83,7 +95,7 @@ function renderOverview() {
         const nActions = themes.reduce((s, t) => s + t.actions.length, 0);
         const next = upcomingDeadlines(themes)[0];
         return `<button class="pole-card" data-rubrique="${esc(r.id)}" style="--pole:${r.color}" data-reveal>
-            <div class="pole-card-head"><i class="${esc(r.icon)}"></i><h3>${esc(r.name)}</h3></div>
+            <div class="pole-card-head"><i class="${esc(r.icon)}"></i><h3>${esc(r.name)}</h3>${r.example ? exampleTag() : ''}</div>
             <div class="pole-card-body">
                 ${gauge(weightedProgress(themes), r.color, 120, 12, 'avancement')}
                 <ul class="pole-stats">
@@ -590,7 +602,7 @@ function renderStory() {
             return `<div class="story-col" style="--pole:${r.color}">
                 <header class="story-col-head" data-rubrique="${esc(r.id)}" data-reveal>
                     ${gauge(weightedProgress(themes), r.color, 64, 7)}
-                    <div><h3><i class="${esc(r.icon)}"></i> ${esc(r.name)}</h3><p>${themes.length} thèmes · ${themes.reduce((n, t) => n + t.actions.length, 0)} actions</p></div>
+                    <div><h3><i class="${esc(r.icon)}"></i> ${esc(r.name)}${r.example ? exampleTag() : ''}</h3><p>${themes.length} thèmes · ${themes.reduce((n, t) => n + t.actions.length, 0)} actions</p></div>
                     <i class="ri-arrow-right-up-line story-col-go" title="Ouvrir la rubrique"></i>
                 </header>
                 ${storyTimeline(themes, 'compact')}
@@ -926,13 +938,14 @@ function adminMessagesHtml() {
 function adminRubriquesHtml() {
     return `<form class="admin-pane" data-form="rubriques" autocomplete="off" onsubmit="return false">
         <p class="help">Les rubriques sont les grandes parties de l'outil (onglets, timeline, rapport). Une rubrique qui contient des thèmes ne peut pas être supprimée : déplacez d'abord ses thèmes.</p>
-        <div class="rows-head row-pole"><span>Nom</span><span>Couleur</span><span>Icône</span><span>Thèmes</span><span></span></div>
+        <div class="rows-head row-pole"><span>Nom</span><span>Couleur</span><span>Icône</span><span>Exemple</span><span>Thèmes</span><span></span></div>
         <div class="rows">${data().rubriques.map((r, i) => {
             const n = themesOf(r.id).length;
             return `<div class="row row-pole" data-rubrique-id="${esc(r.id)}">
                 <input name="r-name" value="${esc(r.name)}" placeholder="Nom de la rubrique">
                 <input type="color" name="r-color" value="${esc(r.color)}">
                 <span class="icon-pick"><i class="${esc(r.icon)}"></i><select name="r-icon">${iconOptions(r.icon)}</select></span>
+                <label class="r-example" title="Données d'exemple (étiquette violette)"><input type="checkbox" name="r-example" ${r.example ? 'checked' : ''}></label>
                 <span class="muted">${n}</span>
                 <span class="inline-actions">
                     <button type="button" class="btn btn-icon" data-rubrique-move="${i}" title="Monter" ${i === 0 ? 'disabled' : ''}><i class="ri-arrow-up-line"></i></button>
@@ -951,6 +964,7 @@ function readRubriquesForm(form) {
         r.name = row.querySelector('[name="r-name"]').value.trim();
         r.color = row.querySelector('[name="r-color"]').value;
         r.icon = row.querySelector('[name="r-icon"]').value;
+        r.example = row.querySelector('[name="r-example"]').checked;
         row.querySelector('.icon-pick i').className = r.icon;
     });
 }
@@ -1369,6 +1383,8 @@ function applySettings() {
     document.title = s.title;
     $('#app-title').textContent = s.title;
     $('#today-label').textContent = [s.subtitle, fmtDate(today)].filter(Boolean).join(' · ');
+    const upd = data().meta.updatedAt;
+    $('#data-date').textContent = upd ? `Données au ${fmtDate(upd)}` : 'Données à jour';
     $('#zoom-plan').textContent = `${s.planStart} → ${s.planEnd}`;
     document.documentElement.style.setProperty('--accent', s.accent);
 }
@@ -1461,6 +1477,7 @@ function bind() {
     $('#login').addEventListener('click', e => { if (e.target === $('#login') || e.target.closest('[data-login-close]')) closeLogin(); });
     $('#btn-logout').onclick = doLogout;
     $('#btn-idea').onclick = openIdea;
+    $('#data-block').onclick = requestAdmin;
     $('#idea-form').addEventListener('submit', sendIdea);
     $('#idea').addEventListener('click', e => { if (e.target === $('#idea') || e.target.closest('[data-idea-close]')) closeIdea(); });
     $('#brand-home').onclick = e => { e.preventDefault(); goHome(); };
