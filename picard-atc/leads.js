@@ -55,7 +55,7 @@ function leadsExemple() {
             const sec = secs[cible[2]][zone]; const id = sec ? idsSecteur(sec, cible[2])[0] || null : null;
             const v = id ? (vitesse[id] ??= .5 + r() * 1.6) : 1;
             let statut = 'recu', delai = null, montant = null;
-            const pTraite = age >= 7 ? .94 : age >= 2 ? .72 / v : .3 / v;
+            const pTraite = age >= 30 ? .998 : age >= 7 ? .94 : age >= 2 ? .72 / v : .3 / v;
             if (id && r() < (age >= 1 ? .97 : .7)) statut = 'attribue';
             if (statut === 'attribue' && r() < pTraite) {
                 statut = 'traite'; delai = Math.max(1, Math.round((3 + r() * r() * 60) * v));
@@ -125,12 +125,12 @@ function renderLeadKpis(s, s1) {
     const p = pinfo();
     const ev = s1.recus ? (s.recus / s1.recus - 1) * 100 : null;
     const cards = [
-        { l: 'Leads reçus', v: nf0.format(s.recus), r: `${delta(ev)}<span>vs ${p.y - 1} à date</span>` },
-        { l: 'Délai de prise en charge', v: fmtDelai(s.delai), k: delaiCls(s.delai), r: `<span>moyenne du 1er contact · objectif ≤ ${LEAD_SEUIL_H} h</span>` },
-        { l: 'Taux de transformation', v: pct(s.transfo, { dec: 1 }), r: `<span><b class="up">${nf0.format(s.valides)} validés</b> · ${nf0.format(s.traites - s.valides - s.perdus)} encore en cours</span>` },
-        { l: 'En attente', v: nf0.format(s.enAttente), k: s.alerte ? 'late' : '', r: s.alerte ? `<span><b class="down-t">${nf0.format(s.alerte)} depuis plus de ${LEAD_SEUIL_H} h</b> · <button class="lnk" data-ltodo="alerte" data-scroll="lead-todo">voir</button></span>` : '<span>aucun lead en souffrance</span>' },
+        { l: 'Leads reçus', i: 'ri-inbox-archive-line', c: '#60a5fa', v: nf0.format(s.recus), r: `${delta(ev)}<span>vs ${p.y - 1} à date</span>` },
+        { l: 'Délai de prise en charge', i: 'ri-timer-flash-line', c: '#f1c587', v: fmtDelai(s.delai), k: delaiCls(s.delai), r: `<span>moyenne du 1er contact · objectif ≤ ${LEAD_SEUIL_H} h</span>` },
+        { l: 'Taux de transformation', i: 'ri-checkbox-circle-line', c: '#34d399', v: pct(s.transfo, { dec: 1 }), r: `<span><b class="up">${nf0.format(s.valides)} validés</b> · ${nf0.format(s.traites - s.valides - s.perdus)} encore en cours</span>` },
+        { l: 'En attente', i: 'ri-hourglass-2-line', c: '#f87171', v: nf0.format(s.enAttente), k: s.alerte ? 'late' : '', r: s.alerte ? `<span><b class="down-t">${nf0.format(s.alerte)} depuis plus de ${LEAD_SEUIL_H} h</b> · <button class="lnk" data-ltodo="alerte" data-scroll="lead-todo">voir</button></span>` : '<span>aucun lead en souffrance</span>' },
     ];
-    $('#leads-kpis').innerHTML = cards.map((c, i) => `<article class="card kpi ${c.k ? 'kpi-' + c.k : ''}" style="animation-delay:${i * 40}ms"><div class="kpi-top">${c.l}</div><div class="kpi-val">${c.v}</div><div class="kpi-row">${c.r}</div></article>`).join('');
+    $('#leads-kpis').innerHTML = cards.map((c, i) => `<article class="card kpi ${c.k ? 'kpi-' + c.k : ''}" style="animation-delay:${i * 40}ms"><div class="kpi-top"><span class="kpi-ico" style="--c:${c.c}"><i class="${c.i}"></i></span>${c.l}</div><div class="kpi-val">${c.v}</div><div class="kpi-row">${c.r}</div></article>`).join('');
 }
 
 // Entonnoir : bande continue dont l'épaisseur suit le volume de chaque étape
