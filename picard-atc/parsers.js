@@ -21,10 +21,26 @@ function detectKind(wb) {
     if (names.includes('budget 2026') || names.some(n => /^budget \d{4}$/.test(n)) || firstCells(0).includes('mensuel')) return 'repartition';
     if (names.includes('01') || firstCells(0).includes('valorisation du portefeuille') || firstCells(0).includes('reste a livrer')) return 'portefeuille';
     if (names.includes('janvier') && /enregistre|tableau de bord commer/.test(firstCells(0))) return 'quotidien';
+    if (/commercial/.test(firstCells(0)) && /statut/.test(firstCells(0))) return 'etat_iap';
     return null;
 }
+
+// Liste des installateurs agréés Picard : Commercial · N° · Nom · Statut (Officiel < Premium < Elite)
+const STATUTS_IAP = ['officiel', 'premium', 'elite'];
+function parseIap(wb) {
+    const A = grid(wb.Sheets[wb.SheetNames[0]]);
+    const h = A.findIndex(r => (r || []).some(v => norm(v) === 'commercial'));
+    const col = t => A[h].findIndex(v => t.test(norm(v)));
+    const cC = col(/^commercial/), cN = col(/^n/), cNom = col(/^nom/), cS = col(/^statut/);
+    const lignes = [];
+    for (const r of A.slice(h + 1)) {
+        const atc = String(r?.[cC] ?? '').trim(); if (!atc) continue;
+        const s = norm(r[cS]); lignes.push({ atc, num: String(r[cN] ?? '').trim(), nom: String(r[cNom] ?? '').trim(), statut: STATUTS_IAP.includes(s) ? s : 'officiel' });
+    }
+    return { date: iso(new Date()), lignes };
+}
 const KIND_LABEL = { quotidien: 'Tableau commercial quotidien', portefeuille: 'Valorisation du portefeuille', repartition: 'Répartition budget ATC',
-    etat_attente: 'Commandes non lancées / non validées (PDF)', etat_carnet: 'Carnet par activité (PDF)', etat_livraisons: 'Livraisons par ATC (PDF)' };
+    etat_attente: 'Commandes non lancées / non validées (PDF)', etat_carnet: 'Carnet par activité (PDF)', etat_livraisons: 'Livraisons par ATC (PDF)', etat_iap: 'Installateurs agréés Picard (IAP)' };
 
 function findCell(A, test, from = 0) {
     for (let r = from; r < A.length; r++) for (let c = 0; c < (A[r] || []).length; c++) if (typeof A[r][c] === 'string' && test(norm(A[r][c]))) return [r, c];

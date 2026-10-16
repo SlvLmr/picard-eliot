@@ -49,6 +49,7 @@ function tabImport() {
             <div><i class="ri-calendar-check-line"></i><b>Tableau commercial quotidien</b><span>Enregistré et facturé société, jour par jour, budgets et 2025</span></div>
             <div><i class="ri-team-line"></i><b>Répartition budget ATC</b><span>Réalisé, budget, quantités et 2025 par ATC et par gamme</span></div>
             <div><i class="ri-truck-line"></i><b>Valorisation du portefeuille</b><span>Carnet de commandes : reste à livrer et échéancier</span></div>
+            <div><i class="ri-medal-line"></i><b>Liste des IAP</b><span>Installateurs agréés par ATC et statut (Officiel, Premium, Elite)</span></div>
             <div><i class="ri-file-pdf-2-line"></i><b>États PDF quotidiens</b><span>Commandes non validées, carnet par activité, livraisons par ATC</span></div>
         </div>
         <label class="drop" id="drop">
@@ -83,7 +84,7 @@ async function readFiles(files) {
             const wb = readWorkbook(await file.arrayBuffer());
             const kind = detectKind(wb);
             if (!kind) { A.files.push({ name: file.name, error: 'Fichier non reconnu' }); continue; }
-            const data = kind === 'quotidien' ? parseQuotidien(wb) : kind === 'portefeuille' ? parsePortefeuille(wb) : parseRepartition(wb);
+            const data = kind === 'quotidien' ? parseQuotidien(wb) : kind === 'portefeuille' ? parsePortefeuille(wb) : kind === 'etat_iap' ? parseIap(wb) : parseRepartition(wb);
             A.files = A.files.filter(f => f.kind !== kind);
             A.files.push({ name: file.name, kind, data });
         } catch (e) { A.files.push({ name: file.name, error: 'Lecture impossible : ' + e.message }); }
@@ -96,7 +97,8 @@ function resume(f) {
     if (f.kind.startsWith('etat_')) {
         const ratt = rattacheurEtats(S.base.commerciaux); const noms = [...new Set(d.lignes.map(l => l.atc).filter(Boolean))];
         const inconnus = noms.filter(n => !ratt(n));
-        const items = f.kind === 'etat_livraisons' ? [['Année', d.annee], ['Portes livrées', nf0.format(d.lignes.reduce((s, l) => s + l.q, 0))], ['Mois', Object.keys(d.totaux).length]]
+        const items = f.kind === 'etat_iap' ? [['IAP', d.lignes.length], ...['elite', 'premium', 'officiel'].map(s => [STATUT_IAP_NOM[s], d.lignes.filter(l => l.statut === s).length])]
+            : f.kind === 'etat_livraisons' ? [['Année', d.annee], ['Portes livrées', nf0.format(d.lignes.reduce((s, l) => s + l.q, 0))], ['Mois', Object.keys(d.totaux).length]]
             : f.kind === 'etat_carnet' ? [['État du', dateLongue(parseIso(d.date))], ['Portes en carnet', nf0.format(d.lignes.reduce((s, l) => s + l.qte, 0))], ['En retard', d.lignes.filter(l => l.dfab && l.dclient && l.dfab > l.dclient).length], ['Bloquées', d.lignes.filter(l => l.bloque).length]]
             : [['Lignes', d.lignes.length], ['Non validées', d.lignes.filter(l => !l.validee).length], ['Bloquées', d.lignes.filter(l => l.bloque).length]];
         items.push(['ATC reconnus', `${noms.length - inconnus.length} / ${noms.length}`]);
@@ -133,7 +135,7 @@ function renderPreview() {
 async function importer() {
     const btn = $('#pv-go'); btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i>Import…';
     // L'ordre compte : la répartition crée les fiches ATC avant le reste
-    const ordre = { repartition: 0, quotidien: 1, portefeuille: 2, etat_attente: 3, etat_carnet: 4, etat_livraisons: 5 };
+    const ordre = { repartition: 0, quotidien: 1, portefeuille: 2, etat_attente: 3, etat_carnet: 4, etat_livraisons: 5, etat_iap: 6 };
     try {
         for (const f of A.files.filter(f => !f.error).sort((a, b) => ordre[a.kind] - ordre[b.kind])) {
             await save(() => S.store.importer(f.kind, f.data, { fichier: f.name, lignes: resume(f).lignes }));
@@ -188,8 +190,9 @@ function renderFiche(c) {
     const parMois = serieMois(S.D, ids, y); const maxB = Math.max(1, ...parMois.map(x => x.b));
     $('#fiche').innerHTML = `
         <header class="fiche-head" style="--c:${c.couleur}">
-            <span class="avatar lg" style="--c:${c.couleur}" title="Couleur de son secteur">${esc(initials(c))}</span>
+            <label class="ph-drop" id="ph-drop" title="Glissez une photo ou cliquez pour en choisir une">${avatarWho(c.id, 'lg')}<i class="ri-camera-line"></i><input type="file" accept="image/*" id="f-photo"></label>
             <div class="fiche-id"><h3>${esc(fullName(c))}</h3><p>${esc(c.fonction || '')} · équipe ${esc(equipeDe(c.equipe).nom)}</p></div>
+            ${S.base.photos?.[c.id] ? '<button class="btn btn-ghost btn-sm" id="f-photo-del"><i class="ri-image-line"></i>Retirer la photo</button>' : ''}
             <label class="switch"><input type="checkbox" data-f="actif" ${c.actif !== false ? 'checked' : ''}> Actif</label>
         </header>
 
@@ -267,6 +270,18 @@ function renderFiche(c) {
         persist(); renderFiche(c);
     };
     $('#new-type').addEventListener('keydown', e => { if (e.key === 'Enter') $('#add-type').click(); });
+    const posePhoto = async file => {
+        if (!file || !/^image\//.test(file.type)) return;
+        const image = await photoCarree(file);
+        (S.base.photos ||= {})[c.id] = image;
+        await save(() => S.store.setPhoto(c.id, image)); renderFiche(c); dirty();
+    };
+    $('#f-photo').onchange = e => posePhoto(e.target.files[0]);
+    const pd = $('#ph-drop');
+    ['dragenter', 'dragover'].forEach(ev => pd.addEventListener(ev, e => { e.preventDefault(); pd.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(ev => pd.addEventListener(ev, e => { e.preventDefault(); pd.classList.remove('over'); }));
+    pd.addEventListener('drop', e => posePhoto(e.dataTransfer.files[0]));
+    $('#f-photo-del')?.addEventListener('click', async () => { delete S.base.photos[c.id]; await save(() => S.store.setPhoto(c.id, null)); renderFiche(c); dirty(); });
     $('#f-paint').onclick = () => { A.force = forcesDe(c.id)[0] || A.force; A.tab = 'secteurs'; renderAdmin(); };
     $('#f-del').onclick = async () => {
         if (!confirm(`Supprimer la fiche ${fullName(c)} ? Ses secteurs seront libérés et ses chiffres importés supprimés.`)) return;
@@ -281,6 +296,15 @@ function renderFiche(c) {
         await save(() => Promise.all([list[i], list[j]].map(x => S.store.saveCommercial(x))));
         tabCommerciaux(); dirty();
     });
+}
+
+// Photo recadrée en carré (centrée, cadrage un peu haut pour garder le visage), 480 px, JPEG ~30 Ko
+async function photoCarree(file) {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = URL.createObjectURL(file); });
+    const s = Math.min(img.width, img.height), N = 480, cv = document.createElement('canvas'); cv.width = cv.height = N;
+    const x = (img.width - s) / 2, y = Math.max(0, (img.height - s) * 0.25);
+    cv.getContext('2d').drawImage(img, x, y, s, s, 0, 0, N, N);
+    return cv.toDataURL('image/jpeg', 0.82);
 }
 
 // ═══ 3. Secteurs & potentiel ═════════════════════════════════

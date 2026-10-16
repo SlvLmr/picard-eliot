@@ -669,3 +669,55 @@ b.down-t { color: var(--late-text); font-weight: 500; }
 .gt-att { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); margin-top: -2px; }
 .gt-att i { width: 1.5px; height: 9px; background: #fff; opacity: .6; }
 .gt-att b { color: var(--text-2); font-weight: 500; }
+
+/* ─── Photos ─── */
+.avatar.ph { background-size: cover; background-position: center 20%; color: transparent; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--c) 70%, transparent); }
+.ph-drop { position: relative; cursor: pointer; display: inline-grid; border-radius: 50%; }
+.ph-drop input { display: none; }
+.ph-drop > i { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--gold); color: var(--gold-ink); }
+.ph-drop.over { outline: 2px dashed var(--gold); outline-offset: 3px; }
+
+/* ─── Carte ATC (style « pilote ») ─── */
+.atc-card { position: relative; overflow: hidden; min-height: 210px; border-radius: 16px; padding: 22px 24px 18px; isolation: isolate;
+    background: radial-gradient(120% 140% at 85% 0%, color-mix(in srgb, var(--g2) 26%, transparent), transparent 60%), linear-gradient(120deg, #0d0d11, #101016);
+    border: 1px solid color-mix(in srgb, var(--g2) 55%, transparent); box-shadow: 0 0 0 1px rgba(255, 255, 255, .02), 0 0 40px color-mix(in srgb, var(--g2) 14%, transparent); animation: fadeUp .45s both; }
+.ac-photo { position: absolute; z-index: -1; right: 0; top: 0; bottom: 0; width: 46%; background-size: cover; background-position: center 18%;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 45%); mask-image: linear-gradient(to right, transparent 0%, #000 45%); filter: saturate(.95); }
+.ac-photo.ac-ini { display: grid; place-items: center; font-size: 110px; font-weight: 700; letter-spacing: -.04em; color: color-mix(in srgb, var(--g2) 35%, transparent); }
+.ac-flag { position: absolute; top: 0; right: 0; width: 110px; height: 18px; opacity: .5;
+    background: repeating-conic-gradient(rgba(255, 255, 255, .55) 0 25%, transparent 0 50%) 0 0 / 9px 9px;
+    -webkit-mask-image: linear-gradient(to left, #000, transparent); mask-image: linear-gradient(to left, #000, transparent); }
+.ac-score { position: absolute; top: 26px; right: 26px; display: flex; align-items: flex-start; gap: 6px; text-shadow: 0 2px 18px rgba(0, 0, 0, .6); }
+.ac-score b { font-size: 64px; font-weight: 700; line-height: .9; letter-spacing: -.03em; color: #fff; }
+.ac-score b.ok { color: var(--ok-text); } .ac-score b.warn { color: var(--warn-text); } .ac-score b.orange { color: var(--orange-text); } .ac-score b.late { color: var(--late-text); }
+.ac-score span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; line-height: 1.25; color: rgba(255, 255, 255, .85); padding-top: 4px; }
+.ac-main { position: relative; display: flex; flex-direction: column; gap: 22px; max-width: 64%; }
+.ac-id { display: flex; align-items: center; gap: 14px; }
+.ac-badge { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: 15px; color: #10121a; background: linear-gradient(135deg, var(--g1), var(--g2)); box-shadow: 0 6px 18px color-mix(in srgb, var(--g2) 35%, transparent); }
+.ac-id h2 { font-size: 26px; font-weight: 500; letter-spacing: -.01em; line-height: 1.1; }
+.ac-id h2 b { font-weight: 700; }
+.ac-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: rgba(255, 255, 255, .9); }
+.ac-dot { width: 9px; height: 9px; border-radius: 50%; background: linear-gradient(135deg, var(--g1), var(--g2)); box-shadow: 0 0 10px var(--g2); }
+.ac-pays { padding: 1px 6px; border-radius: 5px; font-size: 10px; background: rgba(255, 255, 255, .1); }
+.ac-type { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.ac-stats { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.ac-stats span { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-2); }
+.ac-stats i { font-size: 15px; color: var(--g2); }
+.ac-stats b { font-size: 14px; font-weight: 600; color: var(--text); }
+.ac-stats b small { font-size: 11px; color: var(--muted); font-weight: 500; }
+.ac-stats small { color: var(--muted); }
+@media (max-width: 760px) { .ac-main { max-width: 100%; } .ac-photo { width: 60%; opacity: .55; } .ac-score b { font-size: 46px; } }
+
+/* ─── IAP : statuts ─── */
+.iap-sts { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.iap-st { padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid transparent; }
+.iap-st.elite { color: var(--gold); background: rgba(241, 197, 135, .12); border-color: rgba(241, 197, 135, .3); }
+.iap-st.premium { color: #c6b8ff; background: rgba(198, 184, 255, .10); border-color: rgba(198, 184, 255, .25); }
+.iap-st.officiel { color: #aab2bd; background: rgba(170, 178, 189, .08); border-color: rgba(170, 178, 189, .2); }
+.iap-liste { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow: auto; padding-right: 4px; }
+.il-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.il-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 4px 2px; border-bottom: 1px solid var(--line); }
+.il-row small { margin-left: auto; color: var(--muted); font-size: 11px; }
+.iap-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.iap-dot.elite { background: var(--gold); } .iap-dot.premium { background: #c6b8ff; } .iap-dot.officiel { background: #8b929d; }
+#map .badge-dot.badge-ph { stroke-width: 2; }

@@ -149,7 +149,7 @@ function createDemoStore() {
         async loadAll() {
             const d = donnees();
             const last = d.jours.reduce((m, j) => j.d > m ? j.d : m, '');
-            return { reglages: { ...state.reglages }, commerciaux: state.commerciaux.map(c => ({ ...c })), affectations: JSON.parse(JSON.stringify(state.affectations || {})), etats: state.etats || {}, zonesInfo: { ...state.zonesInfo },
+            return { reglages: { ...state.reglages }, commerciaux: state.commerciaux.map(c => ({ ...c })), affectations: JSON.parse(JSON.stringify(state.affectations || {})), etats: state.etats || {}, photos: { ...(state.photos || {}) }, zonesInfo: { ...state.zonesInfo },
                 ...d, etat: { derniere_date: last || null, dernier_import: state.imports[0]?.created_at || null, source: state.donnees ? 'fichiers' : 'demo', zonesExemple: !state.zonesSaisies } };
         },
         // ─── Admin ───
@@ -164,6 +164,7 @@ function createDemoStore() {
             for (const f in state.affectations) for (const s in state.affectations[f]) state.affectations[f][s] = state.affectations[f][s].filter(x => x !== id);
             save();
         },
+        async setPhoto(id, image) { state.photos ||= {}; if (image) state.photos[id] = image; else delete state.photos[id]; save(); },
         async setAffectation(force, secteur, ids) { (state.affectations[force] ||= {})[secteur] = [...ids]; save(); },
         async setZoneInfo(zone, info) {
             // Première saisie réelle : on efface les valeurs d'exemple pour ne garder que les vraies
@@ -201,7 +202,7 @@ function rattacher(state, personnes, remplacerDemo) {
     if (remplacerDemo && state.commerciaux.every(c => String(c.id).startsWith('demo-'))) { state.commerciaux = []; state.affectations = {}; }
     const ids = {}; const parEquipe = {};
     for (const p of personnes) {
-        let c = state.commerciaux.find(x => x.code === p.code || norm(x.prenom + ' ' + x.nom) === norm(p.prenom + ' ' + p.nom));
+        let c = state.commerciaux.find(x => x.code === p.code) || state.commerciaux.find(x => x.actif !== false && norm(x.prenom + ' ' + x.nom) === norm(p.prenom + ' ' + p.nom));
         const k = parEquipe[p.equipe] = (parEquipe[p.equipe] ?? -1) + 1;
         if (!c) {
             c = { id: 'atc-' + Math.random().toString(36).slice(2, 9), code: p.code, prenom: p.prenom, nom: p.nom, equipe: p.equipe, couleur: nuance(equipeDe(p.equipe).couleur, k),

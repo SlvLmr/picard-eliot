@@ -90,7 +90,7 @@ function renderAll({ animate = true } = {}) {
     S.kCache = new Map();
     applyViews(); renderChrome(); renderLive();
     const v = S.view; const solo = S.sel && !isEquipe(S.sel);
-    if (v === 'synthese' || (v === 'commerciaux' && S.sel)) { renderCrumb(); renderHero(animate); renderGTiles(); renderPerf(); renderKpis(animate); renderRank(); renderMiniCarnet(); renderMonths(); }
+    if (v === 'synthese' || (v === 'commerciaux' && S.sel)) { renderCrumb(); renderAtcCard(); renderHero(animate); renderGTiles(); renderPerf(); renderKpis(animate); renderRank(); renderMiniCarnet(); renderMonths(); }
     if (v === 'commerciaux' && !solo) renderTable();
     if (v === 'secteurs') renderMap();
     if (v === 'carnet') renderCarnet();
@@ -107,6 +107,42 @@ function applyViews() {
 function renderCrumb() {
     const c = $('#crumb'); c.hidden = !(S.view === 'commerciaux' && S.sel);
     if (!c.hidden) c.innerHTML = `<button class="lnk-back" data-who=""><i class="ri-arrow-left-line"></i>Commerciaux</button><span>/</span>${avatarWho(S.sel, 'xs')}<b>${esc(nomWho())}</b>`;
+}
+
+// Carte « pilote » d'un ATC : photo fondue dans le dégradé de son secteur, score, stats
+function renderAtcCard() {
+    const box = $('#atc-card'); const solo = S.view === 'commerciaux' && S.sel && !isEquipe(S.sel);
+    box.hidden = !solo; if (!solo) return;
+    const c = commercial(S.sel); const p = pinfo(); const k = Ks(); const st = statut(k.atteinte, S.base.reglages);
+    const aff = affectationsDe(S.base.affectations, c.id); const [g1, g2] = (aff[0] ? SECTEURS[aff[0].secteur] : SECTEURS.dom).c;
+    const secteurs = [...new Set(aff.map(a => SECTEURS[a.secteur].nom))].join(' · ') || 'Sans secteur';
+    const forces = [...new Set(aff.map(a => forceDe(a.force).court))].join(' · ');
+    const zones = new Set(aff.flatMap(a => SECTEURS[a.secteur].zones));
+    const pays = ['BE', 'LU', 'CH'].filter(z => zones.has(z)).map(z => `<span class="ac-pays">${z}</span>`).join('');
+    const classes = atcs().map(x => ({ id: x.id, a: Kc(x.id, S.period, S.gamme).atteinte ?? -1 })).sort((a, b) => b.a - a.a);
+    const rang = classes.findIndex(x => x.id === c.id) + 1;
+    const E = etatsSel(); const carnet = E.carnet.reduce((s, l) => s + l.qte, 0), retard = E.carnet.filter(enRetard).length, livres = E.livraisons.reduce((s, l) => s + l.q, 0);
+    const ph = photoUrl(c.id);
+    const stats = [
+        ['ri-money-euro-circle-line', euros(k.realise), 'facturé'],
+        ['ri-line-chart-line', k.evol == null ? '—' : pct(k.evol, { sign: true }), `vs ${p.y - 1}`],
+        ['ri-trophy-line', rang ? `${rang}<small>/${classes.length}</small>` : '—', 'classement'],
+        ['ri-community-line', nf0.format(iapDe().nb), 'IAP'],
+        ...(S.base.etats?.carnet ? [['ri-inbox-archive-line', nf0.format(carnet), 'portes en carnet'], ['ri-alarm-warning-line', nf0.format(retard), 'en retard']] : []),
+        ...(S.base.etats?.livraisons ? [['ri-truck-line', nf0.format(livres), `livrées ${E.annee || ''}`]] : []),
+    ];
+    const per = { mois: 'du mois', trimestre: 'du trimestre', annee: "de l'année" }[S.period];
+    box.innerHTML = `<article class="atc-card" style="--g1:${g1};--g2:${g2}">
+        ${ph ? `<div class="ac-photo" style="background-image:url('${ph}')"></div>` : `<div class="ac-photo ac-ini">${esc(initials(c))}</div>`}
+        <span class="ac-flag"></span>
+        <div class="ac-score"><b class="${st.key}">${k.atteinte == null ? '—' : Math.round(k.atteinte)}</b><span>%<br>du budget<br>${per}</span></div>
+        <div class="ac-main">
+            <div class="ac-id"><span class="ac-badge">${esc(initials(c))}</span>
+                <div><h2>${esc(c.prenom)} <b>${esc(String(c.nom).toUpperCase())}</b></h2>
+                <div class="ac-meta"><i class="ac-dot"></i>${esc(secteurs)}${pays}</div>
+                <div class="ac-type">${esc(typeAtc(c.id))}${typeAtc(c.id) === 'ATC mixte' && forces ? ' · ' + esc(forces) : ''} · Équipe ${esc(equipeDe(c.equipe).nom)}</div></div></div>
+            <div class="ac-stats">${stats.map(([i, v, l]) => `<span><i class="${i}"></i><b>${v}</b><small>${l}</small></span>`).join('')}</div>
+        </div></article>`;
 }
 
 // ─── Navigation ─────────────────────────────────────────────
@@ -135,10 +171,19 @@ function select(who) {
 }
 
 // ─── Barre du haut & sélecteurs ─────────────────────────────
+// Photos : data URL en base → URL de blob (mise en cache), pour ne pas répéter l'image dans chaque liste
+const PHOTOS = new Map();
+function photoUrl(id) {
+    const d = S.base?.photos?.[id]; if (!d) return null; const k = id + ':' + d.length;
+    if (!PHOTOS.has(k)) { try { const [h, b] = d.split(','); const bin = atob(b); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        PHOTOS.set(k, URL.createObjectURL(new Blob([u8], { type: h.slice(5, h.indexOf(';')) }))); } catch (e) { PHOTOS.set(k, d); } }
+    return PHOTOS.get(k);
+}
 function avatarWho(who, cls = '') {
     if (!who) return `<span class="avatar ${cls} all"><i class="ri-building-2-line"></i></span>`;
     if (isEquipe(who)) { const e = equipeDe(who.slice(3)); return `<span class="avatar ${cls}" style="--c:${e.couleur}">${e.code === 'RA' ? 'RA' : e.code.slice(0, 2)}</span>`; }
-    const c = commercial(who); return `<span class="avatar ${cls}" style="--c:${c.couleur}">${esc(initials(c))}</span>`;
+    const c = commercial(who); const ph = photoUrl(who);
+    return ph ? `<span class="avatar ${cls} ph" style="--c:${c.couleur};background-image:url('${ph}')" title="${esc(fullName(c))}"></span>` : `<span class="avatar ${cls}" style="--c:${c.couleur}">${esc(initials(c))}</span>`;
 }
 function renderChrome() {
     $('#top-title').textContent = VIEWS[S.view];
@@ -344,12 +389,21 @@ function enregistre(p) { // prises de commande société sur la période
     for (const m of p.months) { const x = sm(m); const f = m < p.m ? 1 : m === p.m ? p.frac : 0; b += (x.b_enr || 0) * f; n1 += (x.n1_enr || 0) * f; }
     return { enr, bADate: b, n1, has: jours.length > 0 };
 }
-function iapDe(who = S.who) {
-    const zones = zonesFor(who, 'serruriers'); const ids = idsFor(who);
-    const nb = zones.reduce((s, z) => s + (S.base.zonesInfo[z]?.iap || 0), 0);
-    const cs = [...ids].map(commercial).filter(Boolean);
-    return { nb, objectif: cs.reduce((s, c) => s + (+c.iap_objectif || 0), 0), nouveaux: cs.reduce((s, c) => s + (+c.iap_nouveaux || 0), 0) };
+// IAP : la liste importée (par ATC et statut) fait foi ; à défaut, la somme des IAP saisis par zone
+const STATUT_IAP_NOM = { elite: 'Elite', premium: 'Premium', officiel: 'Officiel' };
+function iapListe(who = S.who) {
+    const L = S.base.etats?.iap?.lignes; if (!L) return null;
+    const ratt = rattacheurEtats(S.base.commerciaux); const ids = idsFor(who);
+    return L.filter(l => { const id = ratt(l.atc); return !who ? true : id && ids.has(id); });
 }
+function iapDe(who = S.who) {
+    const ids = idsFor(who); const cs = [...ids].map(commercial).filter(Boolean);
+    const liste = iapListe(who);
+    const nb = liste ? liste.length : zonesFor(who, 'serruriers').reduce((s, z) => s + (S.base.zonesInfo[z]?.iap || 0), 0);
+    const parStatut = liste ? Object.fromEntries(['elite', 'premium', 'officiel'].map(s => [s, liste.filter(l => l.statut === s).length])) : null;
+    return { nb, parStatut, reel: !!liste, objectif: cs.reduce((s, c) => s + (+c.iap_objectif || 0), 0), nouveaux: cs.reduce((s, c) => s + (+c.iap_nouveaux || 0), 0) };
+}
+const statutsHtml = ps => ps ? ['elite', 'premium', 'officiel'].map(s => `<span class="iap-st ${s}">${ps[s]} ${STATUT_IAP_NOM[s]}</span>`).join('') : '';
 function renderKpis(animate) {
     const p = pinfo(); const k = Ks(); const iap = iapDe();
     const cards = [
@@ -363,8 +417,8 @@ function renderKpis(animate) {
     } else {
         cards.push({ label: 'Quantités', val: k.qte, fmt: v => nf0.format(v) + ' u.', row: `<span>unités facturées · ${p.label}</span>` });
     }
-    cards.push({ label: `IAP${S.base.etat?.zonesExemple ? exemple : ''}`, val: iap.nb, fmt: v => nf0.format(v),
-        row: `<span>objectif ${nf0.format(iap.objectif)} · <b class="up">+${iap.nouveaux}</b> en ${p.y}</span>` });
+    cards.push({ label: `IAP${!iap.reel && S.base.etat?.zonesExemple ? exemple : ''}`, val: iap.nb, fmt: v => nf0.format(v),
+        row: iap.reel ? `<span class="iap-sts">${statutsHtml(iap.parStatut)}</span>` : `<span>objectif ${nf0.format(iap.objectif)} · <b class="up">+${iap.nouveaux}</b> en ${p.y}</span>` });
     const rnd = seedFrom(String(S.who) + S.period); const marge = 31 + rnd() * 7, mObj = 34;
     cards.push({ label: `Taux de marge${exemple}`, val: marge, fmt: v => pct(v, { dec: 1 }),
         row: `${delta((rnd() - 0.5) * 3, pts)}<span>objectif ${pct(mObj, { dec: 1 })}</span>` });
@@ -441,6 +495,7 @@ function renderRank() {
             <div class="fm-id">${avatarWho(c.id, 'lg')}<div><b>${esc(fullName(c))}</b><small>${esc(typeAtc(c.id))} · Équipe ${esc(equipeDe(c.equipe).nom)}</small></div></div>
             <div class="fm-sects">${aff.map(a => `<span class="sect-chip" style="--g1:${SECTEURS[a.secteur].c[0]};--g2:${SECTEURS[a.secteur].c[1]}"><i></i>${esc(forceDe(a.force).court)} · <b>${esc(SECTEURS[a.secteur].nom)}</b></span>`).join('') || '<span class="muted">Aucun secteur affecté</span>'}</div>
             <div class="fm-grid"><span><em>Zones</em><b>${zones.length}</b></span><span><em>IAP</em><b>${iap.nb}</b></span><span><em>Potentiel${exemple}</em><b>${euros(pot)}</b></span></div>
+            ${iapListe() ? `<div class="iap-liste"><div class="il-h">Installateurs agréés <span class="iap-sts">${statutsHtml(iapDe().parStatut)}</span></div>${iapListe().sort((a, b) => STATUTS_IAP.indexOf(b.statut) - STATUTS_IAP.indexOf(a.statut) || a.nom.localeCompare(b.nom)).map(l => `<span class="il-row"><i class="iap-dot ${l.statut}"></i>${esc(l.nom)}<small>${esc(STATUT_IAP_NOM[l.statut])}</small></span>`).join('') || '<span class="muted">Aucun IAP</span>'}</div>` : ''}
             ${(c.clientele || []).length ? `<div class="tags">${c.clientele.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
             <div class="fm-contact">${c.email ? `<a href="mailto:${esc(c.email)}"><i class="ri-mail-line"></i>${esc(c.email)}</a>` : ''}${c.telephone ? `<a href="tel:${esc(c.telephone.replace(/\s/g, ''))}"><i class="ri-phone-line"></i>${esc(c.telephone)}</a>` : ''}</div>
             <a class="link" href="#secteurs">Voir sur la carte<i class="ri-arrow-right-s-line"></i></a></div>`;
@@ -760,8 +815,15 @@ function renderBadges(svg) {
             el('rect', { x: -14, y: -14, width: w + 16, height: 28, class: 'badge-pill' }, b);
             el('text', { x: 18, y: 4, class: 'badge-name' }, b).textContent = fullName(c);
         }
-        el('circle', { r: 11, fill: SECTEURS[sec].c[1], class: 'badge-dot' }, b);
-        el('text', { y: 3.3, class: 'badge-txt' }, b).textContent = !c ? '?' : ids.length > 1 && !S.who ? ids.length + '' : initials(c).slice(0, 3);
+        const ph = c && !(ids.length > 1 && !S.who) && photoUrl(c.id);
+        if (ph) { // photo dans la pastille : motif SVG (un par ATC, créé une fois)
+            const pid = svg.id + '-ph-' + c.id; let pat = svg.querySelector('#' + CSS.escape(pid));
+            if (!pat) { pat = el('pattern', { id: pid, patternUnits: 'objectBoundingBox', patternContentUnits: 'objectBoundingBox', width: 1, height: 1 }, $('defs', svg)); el('image', { href: ph, width: 1, height: 1, preserveAspectRatio: 'xMidYMin slice' }, pat); }
+            el('circle', { r: solo ? 13 : 12, fill: `url(#${pid})`, class: 'badge-dot badge-ph', stroke: SECTEURS[sec].c[1] }, b);
+        } else {
+            el('circle', { r: 11, fill: SECTEURS[sec].c[1], class: 'badge-dot' }, b);
+            el('text', { y: 3.3, class: 'badge-txt' }, b).textContent = !c ? '?' : ids.length > 1 && !S.who ? ids.length + '' : initials(c).slice(0, 3);
+        }
     }
 }
 

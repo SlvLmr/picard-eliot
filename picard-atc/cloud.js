@@ -24,7 +24,7 @@ function createCloudStore(url, key) {
         mode: 'cloud',
         async init() {
             const ch = sb.channel('picard-atc-live');
-            for (const t of ['imports', 'etats', 'commerciaux', 'affectations', 'zones_info', 'reglages']) ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, notify);
+            for (const t of ['imports', 'etats', 'photos', 'commerciaux', 'affectations', 'zones_info', 'reglages']) ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, notify);
             ch.subscribe();
             return true;
         },
@@ -48,16 +48,16 @@ function createCloudStore(url, key) {
 
         // ─── Lecture ───
         async loadAll() {
-            const [reg, com, sec, zi, am, jo, sm, pf, et, imp] = await Promise.all([
+            const [reg, com, sec, zi, am, jo, sm, pf, et, ph, imp] = await Promise.all([
                 sb.from('reglages').select('*').eq('id', 1).maybeSingle().then(ok),
-                all('commerciaux', 'ordre'), all('affectations'), all('zones_info'), all('atc_mois'), all('jours', 'date'), all('societe_mois'), all('portefeuille', 'date'), all('etats'),
+                all('commerciaux', 'ordre'), all('affectations'), all('zones_info'), all('atc_mois'), all('jours', 'date'), all('societe_mois'), all('portefeuille', 'date'), all('etats'), all('photos'),
                 sb.from('imports').select('created_at').order('created_at', { ascending: false }).limit(1).then(ok),
             ]);
             const affectations = {}; for (const a of sec) ((affectations[a.force] ||= {})[a.secteur] ||= []).push(a.commercial_id);
             const zonesInfo = {}; for (const z of zi) zonesInfo[z.zone] = { potentiel: +z.potentiel, iap: z.iap };
             const jours = jo.map(j => ({ d: j.date, enr: +j.enregistre, fact: +j.facture }));
             return {
-                reglages: reg || {}, commerciaux: com, affectations, zonesInfo, etats: Object.fromEntries(et.map(e => [e.type, e.contenu])),
+                reglages: reg || {}, commerciaux: com, affectations, zonesInfo, etats: Object.fromEntries(et.map(e => [e.type, e.contenu])), photos: Object.fromEntries(ph.map(x => [x.commercial_id, x.image])),
                 atcMois: am.map(x => ({ c: x.commercial_id, a: x.annee, m: x.mois, g: x.gamme, r: x.realise == null ? null : +x.realise, b: +x.budget, q: x.qte == null ? null : +x.qte, n1: +x.realise_n1 })),
                 jours,
                 societeMois: sm.map(x => ({ a: x.annee, m: x.mois, b_enr: +x.budget_enr, b_fact: +x.budget_fact, jours_ouvres: x.jours_ouvres, n1_enr: +x.n1_enr, n1_fact: +x.n1_fact })),
@@ -76,6 +76,10 @@ function createCloudStore(url, key) {
             return ok(await sb.from('commerciaux').insert(row).select().single());
         },
         async deleteCommercial(id) { ok(await sb.from('commerciaux').delete().eq('id', id)); },
+        async setPhoto(id, image) {
+            if (image) ok(await sb.from('photos').upsert({ commercial_id: id, image, maj: new Date().toISOString() }));
+            else ok(await sb.from('photos').delete().eq('commercial_id', id));
+        },
         async setAffectation(force, secteur, ids) {
             ok(await sb.from('affectations').delete().eq('force', force).eq('secteur', secteur));
             if (ids.length) ok(await sb.from('affectations').insert(ids.map((commercial_id, ordre) => ({ force, secteur, commercial_id, ordre }))));
@@ -97,7 +101,7 @@ function createCloudStore(url, key) {
                 const ids = {}; const parEquipe = {};
                 for (const p of data.personnes) {
                     const k = parEquipe[p.equipe] = (parEquipe[p.equipe] ?? -1) + 1;
-                    let c = existants.find(x => x.code === p.code || norm(x.prenom + ' ' + x.nom) === norm(p.prenom + ' ' + p.nom));
+                    let c = existants.find(x => x.code === p.code) || existants.find(x => x.actif !== false && norm(x.prenom + ' ' + x.nom) === norm(p.prenom + ' ' + p.nom));
                     if (!c) {
                         c = ok(await sb.from('commerciaux').insert({ code: p.code, prenom: p.prenom, nom: p.nom, equipe: p.equipe, couleur: nuance(equipeDe(p.equipe).couleur, k),
                             fonction: p.equipe === 'DIR' ? 'Direction' : p.equipe === 'DOM' ? 'Zone DOM-TOM' : 'ATC', ordre: existants.length }).select().single());
