@@ -590,3 +590,43 @@ input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer
 .ti-text strong { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ti-text small { color: var(--muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .atc-item .avatar, .palette .avatar { border-radius: 50%; }
+
+/* ─── Synthèse société ─── */
+.crumb { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: -4px; }
+.crumb b { color: var(--text); font-weight: 600; }
+.lnk-back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0; color: var(--gold); font-weight: 500; }
+.lnk-back:hover { text-decoration: underline; text-underline-offset: 3px; }
+.hero-figs { display: flex; align-items: flex-start; gap: 44px; flex-wrap: wrap; }
+.hero-enr { padding-left: 28px; border-left: 1px solid var(--line); }
+.hero-val2 { font-size: 24px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; margin-top: 10px; }
+.dot-enr { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #7aa7f7; margin-right: 6px; vertical-align: 1px; }
+.hero > .hero-head .hero-date:first-child { display: flex; align-items: center; }
+.gtiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.gtile { display: flex; flex-direction: column; gap: 6px; text-align: left; color: inherit; padding: 14px 16px 13px; cursor: pointer; transition: border-color .2s, background .2s; }
+.gtile:hover { border-color: var(--line-strong); background: var(--card-2); }
+.gtile.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.gt-top { display: flex; align-items: center; gap: 10px; }
+.gt-name { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 12.5px; font-weight: 500; line-height: 1.25; }
+.gt-name small { color: var(--muted); font-size: 11px; font-weight: 400; min-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gtile .spark { width: 64px; height: 24px; color: var(--gold-2); opacity: .85; flex: none; }
+.gt-val { display: flex; align-items: baseline; gap: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.015em; margin-top: 4px; }
+.gt-val small { font-size: 11.5px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+.gtile .bar { margin-top: 2px; }
+.gt-foot { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--muted); }
+.gt-foot b { font-weight: 500; }
+.row-2.solo { grid-template-columns: 1fr; }
+.mc-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.mc-top .hero-val2 { margin-top: 4px; }
+#mini-carnet { display: flex; flex-direction: column; gap: 10px; }
+#mini-carnet .list-in { margin: 0 -12px; }
+b.down-t { color: var(--late-text); font-weight: 500; }
+@media (max-width: 1280px) { .gtiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .gtiles { grid-template-columns: 1fr 1fr; } .hero-enr { padding-left: 0; border-left: 0; } .hero-figs { gap: 16px; } }
+.gt-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gt-val .spark { margin-left: auto; align-self: center; }
+.gt-val, .gt-val small { white-space: nowrap; }
+.gtile .spark { width: 52px; height: 22px; }
+.scope { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pill-all { padding-left: 6px; }
+.pill-all.on { border-color: var(--gold); color: var(--gold); background: rgba(241, 197, 135, .07); }
+.pill-av i { font-size: 14px; color: var(--muted); }

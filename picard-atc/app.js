@@ -13,10 +13,13 @@ const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).
 const VIEWS = { synthese: 'Synthèse', commerciaux: 'Commerciaux', secteurs: 'Secteurs', carnet: 'Carnet de commandes', clients: 'Clients' };
 const S = {
     store: null, base: null, D: null, ref: new Date(),
-    view: 'synthese', period: 'mois', who: null, gamme: null, zone: null, mapMode: 'secteurs', clientsMode: 'clients', sort: 'atteinte', mask: false,
+    view: 'synthese', period: 'mois', sel: null, gamme: null, zone: null, mapMode: 'secteurs', clientsMode: 'clients', sort: 'atteinte', mask: false,
     charts: {}, session: { isAdmin: false },
 };
 try { const p = JSON.parse(localStorage.getItem('picard_atc_vue') || '{}'); for (const k of ['period', 'mapMode', 'clientsMode', 'sort', 'mask']) if (p[k] != null) S[k] = p[k]; } catch (e) {}
+// La Synthèse et le Carnet sont toujours une vue d'ensemble société ; ailleurs, le périmètre choisi (S.sel) s'applique
+const GLOBAL_VIEWS = new Set(['synthese', 'carnet']);
+Object.defineProperty(S, 'who', { get() { return GLOBAL_VIEWS.has(S.view) ? null : S.sel; }, set(v) { S.sel = v || null; } });
 const remember = () => { try { localStorage.setItem('picard_atc_vue', JSON.stringify({ period: S.period, mapMode: S.mapMode, clientsMode: S.clientsMode, sort: S.sort, mask: S.mask })); } catch (e) {} };
 
 // Montants masqués (œil en haut à droite) : utile en rendez-vous
@@ -55,26 +58,36 @@ async function loadAll() {
     S.base = await S.store.loadAll();
     S.D = { idx: buildIndex(S.base.atcMois) };
     S.ref = S.base.etat?.derniere_date ? parseIso(S.base.etat.derniere_date) : new Date();
-    if (S.who && !isEquipe(S.who) && !commercial(S.who)) S.who = null;
+    if (S.sel && !isEquipe(S.sel) && !commercial(S.sel)) S.sel = null;
     document.title = S.base.reglages.nom || 'PICARD-ATC';
 }
 
 function renderAll({ animate = true } = {}) {
     S.kCache = new Map();
-    renderChrome(); renderLive();
-    const v = S.view;
-    if (v === 'synthese') { renderHero(animate); renderPerf(); renderKpis(animate); renderGammes(); renderRank(); renderMonths(); }
-    if (v === 'commerciaux') renderTable();
+    applyViews(); renderChrome(); renderLive();
+    const v = S.view; const solo = S.sel && !isEquipe(S.sel);
+    if (v === 'synthese' || (v === 'commerciaux' && S.sel)) { renderCrumb(); renderHero(animate); renderGTiles(); renderPerf(); renderKpis(animate); renderRank(); renderMiniCarnet(); renderMonths(); }
+    if (v === 'commerciaux' && !solo) renderTable();
     if (v === 'secteurs') renderMap();
     if (v === 'carnet') renderCarnet();
     if (v === 'clients') renderClients();
+}
+
+// Rubrique Commerciaux avec un ATC ou une équipe choisi : sa synthèse s'affiche (au-dessus du tableau pour une équipe)
+function applyViews() {
+    const solo = S.sel && !isEquipe(S.sel);
+    $$('.view').forEach(sec => { const v = sec.dataset.view;
+        sec.hidden = !(v === S.view ? !(v === 'commerciaux' && solo) : v === 'synthese' && S.view === 'commerciaux' && !!S.sel); });
+}
+function renderCrumb() {
+    const c = $('#crumb'); c.hidden = !(S.view === 'commerciaux' && S.sel);
+    if (!c.hidden) c.innerHTML = `<button class="lnk-back" data-who=""><i class="ri-arrow-left-line"></i>Commerciaux</button><span>/</span>${avatarWho(S.sel, 'xs')}<b>${esc(nomWho())}</b>`;
 }
 
 // ─── Navigation ─────────────────────────────────────────────
 function go(view, { push = true } = {}) {
     if (!VIEWS[view]) view = 'synthese';
     const changed = view !== S.view; S.view = view;
-    $$('.view').forEach(s => s.hidden = s.dataset.view !== view);
     $$('#nav [data-view]').forEach(a => a.classList.toggle('on', a.dataset.view === view));
     $('#side').classList.remove('open');
     if (push && location.hash !== '#' + view) history.replaceState(null, '', urlFor());
@@ -82,14 +95,17 @@ function go(view, { push = true } = {}) {
     requestAnimationFrame(() => { Object.values(S.charts).forEach(c => c.resize()); if (view === 'secteurs') { MAP.rect = $('#map').getBoundingClientRect(); zoomToSelection(); } });
     if (changed) $('#main').scrollTo?.(0, 0), window.scrollTo(0, 0);
 }
-function urlFor() { const u = new URL(location); u.hash = S.view; if (S.who) u.searchParams.set('c', S.who); else u.searchParams.delete('c'); return u; }
+function urlFor() { const u = new URL(location); u.hash = S.view; if (S.sel) u.searchParams.set('c', S.sel); else u.searchParams.delete('c'); return u; }
 
 function select(who) {
     S.who = who || null; S.zone = null;
     closeMenus();
+    if (S.sel && GLOBAL_VIEWS.has(S.view)) return go('commerciaux'); // depuis une vue société, un ATC choisi ouvre sa fiche
     history.replaceState(null, '', urlFor());
     renderAll();
+    requestAnimationFrame(() => Object.values(S.charts).forEach(c => c.resize()));
     if (S.view === 'secteurs') zoomToSelection();
+    window.scrollTo(0, 0);
 }
 
 // ─── Barre du haut & sélecteurs ─────────────────────────────
@@ -100,8 +116,10 @@ function avatarWho(who, cls = '') {
 }
 function renderChrome() {
     $('#top-title').textContent = VIEWS[S.view];
-    $('#who-label').textContent = nomWho();
-    $('#who-av').innerHTML = avatarWho(S.who, 'xs');
+    // « Tous les ATC » reste visible partout ; le sélecteur sert à choisir une équipe ou un ATC (hors vues société)
+    $('#btn-all').classList.toggle('on', !S.who);
+    $('#who-label').textContent = S.who ? nomWho() : 'Choisir un ATC';
+    $('#who-av').innerHTML = S.who ? avatarWho(S.who, 'xs') : '<i class="ri-user-search-line"></i>';
     $('#period-label').textContent = { mois: 'Mois', trimestre: 'Trimestre', annee: 'Année' }[S.period];
     $$('#menu-period [data-period]').forEach(b => b.classList.toggle('on', b.dataset.period === S.period));
     $('#gamme-label').textContent = S.gamme ? gammeNom(S.gamme) : 'Toutes les gammes';
@@ -140,6 +158,7 @@ function delta(v, fmt = x => pct(x, { sign: true })) {
     const ico = cls === 'flat' ? 'ri-subtract-line' : v > 0 ? 'ri-arrow-up-line' : 'ri-arrow-down-line';
     return `<span class="delta ${cls}"><i class="${ico}"></i>${fmt(v)}</span>`;
 }
+const nf2 = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const exemple = '<span class="ex" title="Donnée d\'exemple : non fournie par les fichiers">Exemple</span>';
 function countUp(el, to, fmt, ms = 900) {
     const t0 = performance.now();
@@ -153,6 +172,12 @@ function renderHero(animate) {
     const el = $('#hero-val');
     if (animate && !S.mask) countUp(el, k.realise, v => euros(v, { compact: false })); else el.textContent = euros(k.realise, { compact: false });
     $('#hero-delta').innerHTML = `${delta(k.evol)}<span class="muted">${k.n1 ? `${euros(k.realise - k.n1, { sign: true })} vs ${p.y - 1} à date` : `vs ${p.y - 1}`}</span>`;
+    const box = $('#hero-enr');
+    if (!S.who && !S.gamme && S.base.jours.length) {
+        const e = enregistre(p); box.hidden = false;
+        box.innerHTML = `<div class="hero-date"><i class="dot-enr"></i>Enregistré · prises de commande</div><div class="hero-val2">${euros(e.enr, { compact: false })}</div>
+            <div class="hero-delta">${delta(e.n1 ? (e.enr / e.n1 - 1) * 100 : null)}<span class="muted">objectif à date ${pct(e.bADate ? e.enr / e.bADate * 100 : null)}</span></div>`;
+    } else box.hidden = true;
     renderTrajectory();
 }
 
@@ -167,6 +192,7 @@ const tooltipStyle = () => ({ backgroundColor: '#141417', borderColor: '#26262b'
     textStyle: { color: '#fff', fontSize: 12, fontFamily: 'Inter' }, extraCssText: 'border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.5)' });
 const gradLine = () => GOLD;
 const gradArea = (a = .22) => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: `rgba(231,184,118,${a})` }, { offset: 1, color: 'rgba(231,184,118,0)' }]);
+const enrArea = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(122,167,247,.12)' }, { offset: 1, color: 'rgba(122,167,247,0)' }]);
 const n1Area = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(160,160,170,.10)' }, { offset: 1, color: 'rgba(160,160,170,0)' }]);
 const smooth = { smooth: .4, smoothMonotone: 'x', showSymbol: false };
 const pointer = () => ({ type: 'line', lineStyle: { color: '#3a3a40', width: 1 } });
@@ -178,26 +204,31 @@ function renderTrajectory() {
     const p = pinfo(); const k = Ks();
     const chart = chartOf('chart-traj');
     let dates, series, legend, fmtX, fmtTip;
-    const jm = S.base.jours.filter(j => j.d.startsWith(iso(S.ref).slice(0, 7)));
-    if (!S.who && !S.gamme && S.period === 'mois' && jm.length) {
-        // Société, mois en cours : jour par jour (facturé, enregistré, objectif)
-        const sm = S.base.societeMois.find(x => x.a === p.y && x.m === p.m) || {};
-        const deb = new Date(p.y, p.m - 1, 1), fin = new Date(p.y, p.m, 0);
+    const jp = S.base.jours.filter(j => { const d = parseIso(j.d); return d.getFullYear() === p.y && p.months.includes(d.getMonth() + 1); });
+    let interval = 'auto';
+    if (!S.who && !S.gamme && jp.length) {
+        // Société : facturé et enregistré cumulés jour par jour sur la période, objectif facturé réparti sur les jours ouvrés
+        const sm = m => S.base.societeMois.find(x => x.a === p.y && x.m === m) || {};
+        const deb = new Date(p.y, p.months[0] - 1, 1), fin = new Date(p.y, p.months.at(-1), 0);
         dates = []; for (let d = new Date(deb); d <= fin; d = addDays(d, 1)) if (isWorkday(d)) dates.push(iso(d));
-        const map = new Map(jm.map(j => [j.d, j])); let cf = 0, ce = 0;
-        const fact = [], enr = []; dates.forEach(d => { const j = map.get(d); if (d <= iso(S.ref)) { cf += j?.fact || 0; ce += j?.enr || 0; fact.push(cf); enr.push(ce); } else { fact.push(null); enr.push(null); } });
-        const obj = dates.map((_, i) => (sm.b_fact || k.budget) * (i + 1) / dates.length);
+        const wd = {}; dates.forEach(d => { const m = +d.slice(5, 7); wd[m] = (wd[m] || 0) + 1; });
+        const map = new Map(jp.map(j => [j.d, j])); const refIso = iso(S.ref); let cf = 0, ce = 0, co = 0;
+        const fact = [], enr = [], obj = [];
+        dates.forEach(d => { const m = +d.slice(5, 7); co += (sm(m).b_fact || agg(S.D.idx, idsFor(null), p.y, [m]).b) / wd[m]; obj.push(co);
+            if (d <= refIso) { const j = map.get(d); cf += j?.fact || 0; ce += j?.enr || 0; fact.push(cf); enr.push(ce); } else { fact.push(null); enr.push(null); } });
         const idx = fact.reduce((m, v, i) => v != null ? i : m, -1);
         const proj = dates.map((_, i) => i === idx ? fact[idx] : i === dates.length - 1 ? k.projection : null);
         series = [
-            { name: 'Objectif', type: 'line', data: obj, ...smooth, lineStyle: { width: 1, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
-            { name: 'Enregistré', type: 'line', data: enr, ...smooth, lineStyle: { width: 1.2, color: C.enr }, itemStyle: { color: C.enr } },
+            { name: 'Objectif facturé', type: 'line', data: obj, ...smooth, lineStyle: { width: 1, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
             { name: 'Atterrissage', type: 'line', data: proj, connectNulls: true, showSymbol: false, lineStyle: { width: 1.2, type: [2, 4], color: C.proj }, itemStyle: { color: C.proj } },
-            { name: 'Facturé', type: 'line', data: fact, ...smooth, lineStyle: { width: 1.6, color: C.real }, itemStyle: { color: C.real }, areaStyle: { color: gradArea() } },
+            { name: 'Enregistré', type: 'line', data: enr, ...smooth, lineStyle: { width: 1.6, color: C.enr }, itemStyle: { color: C.enr }, areaStyle: { color: enrArea() } },
+            { name: 'Facturé', type: 'line', data: fact, ...smooth, lineStyle: { width: 1.8, color: C.real }, itemStyle: { color: C.real }, areaStyle: { color: gradArea() } },
         ];
-        legend = [['Facturé', C.real], ['Enregistré', C.enr], ['Objectif', css('--target'), 1], ['Atterrissage (carnet)', C.proj, 1]];
-        fmtX = s => { const d = parseIso(s); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`; };
-        fmtTip = s => dateLongue(parseIso(s));
+        legend = [['Facturé', C.real], ['Enregistré', C.enr], ['Objectif facturé', css('--target'), 1], [S.period === 'mois' ? 'Atterrissage (carnet)' : 'Atterrissage', C.proj, 1]];
+        const firstOfMonth = new Set(); dates.forEach((d, i) => { if (i === 0 || d.slice(5, 7) !== dates[i - 1].slice(5, 7)) firstOfMonth.add(d); });
+        fmtX = S.period === 'mois' ? (d => `${d.slice(8, 10)}/${d.slice(5, 7)}`) : (d => firstOfMonth.has(d) ? MOIS[+d.slice(5, 7) - 1].replace('.', '') : '');
+        if (S.period !== 'mois') interval = 0;
+        fmtTip = d => dateLongue(parseIso(d));
     } else {
         // Cumul mois par mois sur l'année
         const sm = serieMois(S.D, idsFor(), p.y, gammesSel()); let cr = 0, cb = 0, cn = 0;
@@ -212,7 +243,7 @@ function renderTrajectory() {
             { name: 'Atterrissage', type: 'line', data: proj, connectNulls: true, showSymbol: false, lineStyle: { width: 1.2, type: [2, 4], color: C.proj }, itemStyle: { color: C.proj } },
             { name: 'Facturé', type: 'line', data: real, ...smooth, lineStyle: { width: 1.6, color: C.real }, itemStyle: { color: C.real }, areaStyle: { color: gradArea() } },
         ];
-        legend = [['Facturé (cumul)', C.real], ['Budget', css('--target'), 1], [String(p.y - 1), css('--n1')], ['Atterrissage', C.proj, 1]];
+        legend = [['Facturé (cumul)', C.real], ['Budget', css('--target'), 1], [String(p.y - 1), css('--n1')], ['Atterrissage', C.proj, 1], [S.gamme ? 'Enregistré : non suivi par gamme' : 'Enregistré : suivi au niveau société', 'transparent']];
         fmtX = s => s; fmtTip = s => s + ' ' + p.y;
     }
     $('#traj-legend').innerHTML = legendHtml(legend);
@@ -220,7 +251,7 @@ function renderTrajectory() {
         animationDuration: 900, animationEasing: 'cubicOut', grid: { left: 4, right: 10, top: 14, bottom: 2, containLabel: true },
         tooltip: { trigger: 'axis', ...tooltipStyle(), axisPointer: pointer(),
             formatter: ps => `<b>${fmtTip(dates[ps[0].dataIndex])}</b><br>` + ps.filter(x => x.value != null).map(x => `${x.marker}${x.seriesName} <b style="float:right;margin-left:16px">${euros(x.value)}</b>`).join('<br>') },
-        xAxis: { type: 'category', data: dates, boundaryGap: false, ...baseAxis(), splitLine: { show: false }, axisLabel: { ...baseAxis().axisLabel, formatter: fmtX, hideOverlap: true } },
+        xAxis: { type: 'category', data: dates, boundaryGap: false, ...baseAxis(), splitLine: { show: false }, axisLabel: { ...baseAxis().axisLabel, formatter: fmtX, interval, hideOverlap: interval !== 0 } },
         yAxis: { type: 'value', ...baseAxis(), splitNumber: 4, axisLabel: { ...baseAxis().axisLabel, formatter: v => euros(v) } },
         series,
     }, true);
@@ -265,7 +296,7 @@ function renderSignals() {
     if (!S.who || isEquipe(S.who)) {
         const late = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period, S.gamme) }))
             .filter(x => ['late', 'orange'].includes(statut(x.k.atteinte, reg).key)).sort((a, b) => a.k.atteinte - b.k.atteinte);
-        if (late.length) out.push({ cls: 'late', html: `<b>${late.length} ATC</b> sous 85 % : ` + late.slice(0, 3).map(x => `<button class="lnk" data-who="${x.c.id}">${esc(x.c.prenom || x.c.nom)} ${pct(x.k.atteinte)}</button>`).join(', ') + (late.length > 3 ? '…' : '') });
+        if (late.length) out.push({ cls: 'late', html: `<b>${late.length} ATC</b> sous 85 % : ` + late.slice(0, 3).map(x => `<button class="lnk" data-who="${x.c.id}" data-go="commerciaux">${esc(x.c.prenom || x.c.nom)} ${pct(x.k.atteinte)}</button>`).join(', ') + (late.length > 3 ? '…' : '') });
     } else {
         const k = Ks();
         if (k.reste > 0 && p.joursRestants > 0) out.push({ cls: 'info', html: `Pour tenir le budget : <b>${euros(k.reste / p.joursRestants)}</b> par jour ouvré` });
@@ -298,9 +329,9 @@ function renderKpis(animate) {
             row: k.budget ? `${delta(k.ecartProjection, v => euros(v, { sign: true }))}<span>vs budget${k.carnet ? ' · carnet inclus' : ''}</span>` : '<span>au rythme actuel</span>' },
     ];
     if (!S.who && !S.gamme) {
-        const e = enregistre(p);
-        cards.push({ label: 'Prises de commande', val: e.enr, fmt: v => euros(v),
-            row: `${delta(e.n1 ? (e.enr / e.n1 - 1) * 100 : null)}<span>vs ${p.y - 1} · objectif ${pct(e.bADate ? e.enr / e.bADate * 100 : null)}</span>` });
+        const e = enregistre(p); const ratio = k.realise ? e.enr / k.realise : null;
+        cards.push({ label: 'Enregistré / facturé', val: ratio, fmt: v => nf2.format(v),
+            row: ratio == null ? '<span>—</span>' : `<span>${ratio >= 1 ? '<b class="up">le carnet se remplit</b>' : '<b class="down-t">le carnet se vide</b>'} · ${euros(e.enr - k.realise, { sign: true })}</span>` });
     } else {
         cards.push({ label: 'Quantités', val: k.qte, fmt: v => nf0.format(v) + ' u.', row: `<span>unités facturées · ${p.label}</span>` });
     }
@@ -323,21 +354,55 @@ function barHtml(k) {
 }
 function growBars(root) { requestAnimationFrame(() => $$('.bar > span', root).forEach(s => s.style.width = s.dataset.w + '%')); }
 
-function renderGammes() {
-    const tot = Kc(S.who, S.period).realise || 1;
-    $('#gammes').innerHTML = GAMMES.map((g, i) => {
-        const k = Kc(S.who, S.period, g.k);
-        return `<button class="lrow ${S.gamme === g.k ? 'on' : ''}" data-gamme="${g.k}" style="animation-delay:${i * 30}ms" title="Filtrer sur ${esc(g.nom)}">
-            <span class="l-ico"><i class="${g.icon}"></i></span>
-            <span class="l-main"><span class="l-name">${esc(g.nom)}<small>${g.k === 'eliot' ? 'compris dans Serrures' : pct(k.realise / tot * 100) + ' du CA'}</small></span>${barHtml(k)}</span>
-            <span class="l-val">${euros(k.realise)}<small>${pct(k.atteinte)} · ${delta(k.evol)}</small></span></button>`;
-    }).join('');
-    growBars($('#gammes'));
+function smoothPath(pts) {
+    let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        d += `C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    return d;
 }
+function sparkline(vals) {
+    vals = vals.filter(v => v != null);
+    if (vals.length < 2) return '';
+    const max = Math.max(...vals) || 1, min = Math.min(...vals), w = 64, h = 24;
+    const pts = vals.map((v, i) => [i / (vals.length - 1) * w, h - 2 - (v - min) / (max - min || 1) * (h - 4)]);
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${smoothPath(pts)}" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+}
+// Gammes : une tuile par gamme sous la courbe ; un clic filtre toute la synthèse
+function renderGTiles() {
+    const p = pinfo(); const tot = Kc(S.who, S.period).realise || 1;
+    $('#gtiles').innerHTML = GAMMES.map((g, i) => {
+        const k = Kc(S.who, S.period, g.k); const st = statut(k.atteinte, S.base.reglages);
+        const serie = serieMois(S.D, idsFor(), p.y, [g.k]).map(x => x.hasR ? x.r : null);
+        return `<button class="card gtile ${S.gamme === g.k ? 'on' : ''}" data-gamme="${g.k}" style="animation-delay:${i * 40}ms" title="${S.gamme === g.k ? 'Retirer le filtre' : 'Filtrer la synthèse sur ' + esc(g.nom)}">
+            <div class="gt-top"><span class="l-ico"><i class="${g.icon}"></i></span><span class="gt-name">${esc(g.nom)}<small>${g.sub ? esc(g.sub) : '&nbsp;'}</small></span></div>
+            <div class="gt-val">${euros(k.realise)}<small>${g.k === 'eliot' ? (k.qte ? nf0.format(k.qte) + ' u.' : '') : pct(k.realise / tot * 100) + ' du CA'}</small>${sparkline(serie)}</div>
+            ${barHtml(k)}
+            <div class="gt-foot"><span><b class="${st.key}">${pct(k.atteinte)}</b> du budget</span>${delta(k.evol)}</div></button>`;
+    }).join('');
+    growBars($('#gtiles'));
+}
+
+// Carnet de commandes (résumé de la synthèse, société)
+function renderMiniCarnet() {
+    const sec = $('#sec-carnet'); const pf = S.base.portefeuille;
+    sec.hidden = !!S.who || !pf.length; $('#row-2').classList.toggle('solo', sec.hidden);
+    if (sec.hidden) return;
+    const last = pf.at(-1); const debMois = pf.find(x => x.d.slice(0, 7) === last.d.slice(0, 7)) || pf[0];
+    const ech = [['Livrable ce mois', last.lm_total], ['M+1', last.m1_total], ['M+2', last.m2_total]]; const maxE = Math.max(...ech.map(e => e[1] || 0)) || 1;
+    $('#mini-carnet-sub').textContent = `· au ${dateCourte(parseIso(last.d))}`;
+    $('#mini-carnet').innerHTML = `<div class="mc-top"><div><div class="hero-date">Reste à livrer</div><div class="hero-val2">${euros(last.pf_total)}</div></div>
+        <div class="hero-delta">${delta(debMois.pf_total ? (last.pf_total / debMois.pf_total - 1) * 100 : null)}<span class="muted">depuis le 1er du mois</span></div></div>
+        <div class="list-in">${ech.map(([n, v]) => `<div class="lrow static"><span class="l-main"><span class="l-name">${n}</span><span class="bar"><span class="gold" data-w="${(v || 0) / maxE * 100}"></span></span></span><span class="l-val">${euros(v || 0)}</span></div>`).join('')}</div>
+        <p class="perf-note">Facturé du mois + livrable ce mois = <b>${euros(Kc(null, 'mois').projection)}</b> d'atterrissage ${MOIS_LONG[S.ref.getMonth()]}.</p>`;
+    growBars($('#mini-carnet'));
+}
+
 
 function renderRank() {
     const solo = S.who && !isEquipe(S.who);
-    $('#rank-title').textContent = solo ? 'Mes secteurs' : isEquipe(S.who) ? 'Commerciaux de l\'équipe' : 'Commerciaux';
+    $('#rank-title').textContent = solo ? 'Fiche' : isEquipe(S.who) ? 'Commerciaux de l\'équipe' : 'Meilleurs commerciaux';
     $('#rank-link').hidden = solo;
     if (solo) {
         const c = commercial(S.who); const zones = zonesOf(c.id); const iap = iapDe();
@@ -352,7 +417,7 @@ function renderRank() {
     }
     const list = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period, S.gamme) }))
         .sort((a, b) => (b.k.atteinte ?? -1) - (a.k.atteinte ?? -1)).slice(0, 6);
-    $('#rank').innerHTML = list.map(({ c, k }, i) => `<button class="lrow" data-who="${c.id}" style="animation-delay:${i * 30}ms">
+    $('#rank').innerHTML = list.map(({ c, k }, i) => `<button class="lrow" data-who="${c.id}" data-go="commerciaux" style="animation-delay:${i * 30}ms">
         ${avatarWho(c.id, 'sm')}<span class="l-main"><span class="l-name">${esc(fullName(c))}<small>${esc(equipeDe(c.equipe).nom)}</small></span>${barHtml(k)}</span>
         <span class="l-val">${euros(k.realise)}<small><b class="${statut(k.atteinte, S.base.reglages).key}">${pct(k.atteinte)}</b> · ${delta(k.evol)}</small></span></button>`).join('') || '<div class="empty">Aucun ATC</div>';
     growBars($('#rank'));
@@ -393,7 +458,7 @@ function renderTable() {
     $('#atc-sub').textContent = `· ${p.label}${S.gamme ? ' · ' + gammeNom(S.gamme) : ''} · ${rows.length} ATC`;
     const tot = rows.reduce((s, x) => ({ r: s.r + x.k.realise, b: s.b + x.k.budget, n1: s.n1 + x.k.n1, pr: s.pr + x.ka.projection }), { r: 0, b: 0, n1: 0, pr: 0 });
     $('#atc-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th>Équipe</th><th class="num">Facturé</th><th class="num">Budget</th><th style="width:22%">Budget réalisé</th><th class="num">vs ${p.y - 1}</th><th class="num">Atterrissage ${p.y}</th><th class="num">Zones</th><th class="num">IAP</th></tr></thead><tbody>
-        ${rows.map(({ c, k, ka }, i) => { const st = statut(k.atteinte, reg); return `<tr data-who="${c.id}" data-go="synthese" class="${S.who === c.id ? 'on' : ''}" style="animation-delay:${i * 18}ms">
+        ${rows.map(({ c, k, ka }, i) => { const st = statut(k.atteinte, reg); return `<tr data-who="${c.id}" data-go="commerciaux" class="${S.who === c.id ? 'on' : ''}" style="animation-delay:${i * 18}ms">
             <td><span class="cell-who">${avatarWho(c.id, 'sm')}<span><b>${esc(fullName(c))}</b><small>${esc(c.fonction || 'ATC')}</small></span></span></td>
             <td class="muted">${esc(equipeDe(c.equipe).nom)}</td>
             <td class="num">${euros(k.realise)}</td><td class="num muted">${euros(k.budget)}</td>
@@ -813,7 +878,7 @@ async function boot() {
         const dd = e.target.closest('[data-dd]'); if (dd) return toggleMenu(dd);
         if (!e.target.closest('.menu')) closeMenus();
         const per = e.target.closest('[data-period]'); if (per) { S.period = per.dataset.period; remember(); closeMenus(); return renderAll(); }
-        const gm = e.target.closest('[data-gamme]'); if (gm) { const g = gm.dataset.gamme || null; S.gamme = S.gamme === g && gm.closest('#gammes') ? null : g; closeMenus(); return renderAll(); }
+        const gm = e.target.closest('[data-gamme]'); if (gm) { const g = gm.dataset.gamme || null; S.gamme = S.gamme === g && gm.closest('#gtiles') ? null : g; closeMenus(); return renderAll(); }
         const so = e.target.closest('[data-sort]'); if (so) { S.sort = so.dataset.sort; remember(); closeMenus(); return renderAll(); }
         const w = e.target.closest('[data-who]');
         if (w) { const goView = w.dataset.go; select(w.dataset.who); if (goView && goView !== S.view) go(goView); return; }
