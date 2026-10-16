@@ -32,8 +32,8 @@
     --r-sm: 8px;
     --chart-grid: #17171b;
     --chart-axis: #6b6b74;
-    --n1: #55555e;
-    --target: #8a8a94;
+    --n1: #60a5fa;
+    --target: #a78bfa;
     --zone-empty: #1a1a1f;
     --zone-stroke: #000;
     --map-sea-1: #0b0b0d; --map-sea-2: #050506; --map-dot: rgba(255, 255, 255, .03);
@@ -599,7 +599,7 @@ input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer
 .hero-figs { display: flex; align-items: flex-start; gap: 44px; flex-wrap: wrap; }
 .hero-enr { padding-left: 28px; border-left: 1px solid var(--line); }
 .hero-val2 { font-size: 24px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; margin-top: 10px; }
-.dot-enr { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #7aa7f7; margin-right: 6px; vertical-align: 1px; }
+.dot-enr { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #5fd3b4; margin-right: 6px; vertical-align: 1px; }
 .hero > .hero-head .hero-date:first-child { display: flex; align-items: center; }
 .gtiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
 .gtile { display: flex; flex-direction: column; gap: 6px; text-align: left; color: inherit; padding: 14px 16px 13px; cursor: pointer; transition: border-color .2s, background .2s; }
@@ -654,3 +654,18 @@ b.down-t { color: var(--late-text); font-weight: 500; }
 .sr-atc select { padding: 4px 8px !important; font-size: 12px; border-radius: 999px !important; max-width: 170px; }
 .paint { grid-template-columns: 320px 1fr; }
 .locked .cta i { display: inline; font-size: 15px; margin: 0; opacity: 1; }
+
+/* ─── Commandes & délais ─── */
+.kpi-late .kpi-val { color: var(--late-text); } .kpi-warn .kpi-val { color: var(--warn-text); }
+.tbl-cmd td { white-space: normal; font-size: 12.5px; vertical-align: top; }
+.tbl-cmd td:first-child, .tbl-cmd td.num { white-space: nowrap; }
+.tbl-cmd tr.static { cursor: default; }
+.tbl-cmd .cell-who { gap: 6px; white-space: nowrap; }
+.pill-bloque { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 6px; font-size: 10.5px; font-weight: 600; color: var(--late-text); background: rgba(248, 113, 113, .12); }
+#cmd-table .tbl-atc td, #cmd-table .tbl-atc th { padding: 9px 10px; }
+.list-more { display: flex; justify-content: center; padding: 10px; }
+.gt-foot b.att { color: var(--text-2); font-weight: 500; }
+.gt-foot > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gt-att { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); margin-top: -2px; }
+.gt-att i { width: 1.5px; height: 9px; background: #fff; opacity: .6; }
+.gt-att b { color: var(--text-2); font-weight: 500; }

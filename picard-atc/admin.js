@@ -49,12 +49,13 @@ function tabImport() {
             <div><i class="ri-calendar-check-line"></i><b>Tableau commercial quotidien</b><span>Enregistré et facturé société, jour par jour, budgets et 2025</span></div>
             <div><i class="ri-team-line"></i><b>Répartition budget ATC</b><span>Réalisé, budget, quantités et 2025 par ATC et par gamme</span></div>
             <div><i class="ri-truck-line"></i><b>Valorisation du portefeuille</b><span>Carnet de commandes : reste à livrer et échéancier</span></div>
+            <div><i class="ri-file-pdf-2-line"></i><b>États PDF quotidiens</b><span>Commandes non validées, carnet par activité, livraisons par ATC</span></div>
         </div>
         <label class="drop" id="drop">
             <span class="drop-ico"><i class="ri-file-excel-2-line"></i></span>
             <strong>Glissez vos fichiers ici</strong>
-            <span class="muted">ou cliquez pour les choisir · .xlsx, .xls</span>
-            <input type="file" id="file-in" accept=".xlsx,.xls" multiple>
+            <span class="muted">ou cliquez pour les choisir · .xlsx, .xls, .pdf</span>
+            <input type="file" id="file-in" accept=".xlsx,.xls,.pdf" multiple>
         </label>
         ${S.store.mode === 'demo' ? '<p class="note-local"><i class="ri-lock-2-line"></i> Supabase n\'est pas encore branché : les données importées restent <b>uniquement dans ce navigateur</b>. Elles ne sont ni envoyées ni publiées.</p>' : ''}
         <div id="preview"></div>
@@ -69,9 +70,16 @@ function tabImport() {
 }
 
 async function readFiles(files) {
-    if (!window.XLSX) { setStatus('error', 'Lecteur Excel indisponible (connexion internet ?)'); return; }
     for (const file of files) {
         try {
+            if (/\.pdf$/i.test(file.name)) { // états PDF quotidiens
+                const { kind, data } = await lireEtatPdf(await file.arrayBuffer());
+                if (kind === 'encours') { A.files.push({ name: file.name, error: 'État des commandes en cours : déjà couvert par le « Carnet par activité », inutile de l\'importer' }); continue; }
+                if (kind === 'attente' && !data.date) data.date = iso(new Date());
+                A.files = A.files.filter(f => f.kind !== 'etat_' + kind);
+                A.files.push({ name: file.name, kind: 'etat_' + kind, data }); continue;
+            }
+            if (!window.XLSX) throw new Error('lecteur Excel indisponible (connexion internet ?)');
             const wb = readWorkbook(await file.arrayBuffer());
             const kind = detectKind(wb);
             if (!kind) { A.files.push({ name: file.name, error: 'Fichier non reconnu' }); continue; }
@@ -85,6 +93,15 @@ async function readFiles(files) {
 
 function resume(f) {
     const d = f.data;
+    if (f.kind.startsWith('etat_')) {
+        const ratt = rattacheurEtats(S.base.commerciaux); const noms = [...new Set(d.lignes.map(l => l.atc).filter(Boolean))];
+        const inconnus = noms.filter(n => !ratt(n));
+        const items = f.kind === 'etat_livraisons' ? [['Année', d.annee], ['Portes livrées', nf0.format(d.lignes.reduce((s, l) => s + l.q, 0))], ['Mois', Object.keys(d.totaux).length]]
+            : f.kind === 'etat_carnet' ? [['État du', dateLongue(parseIso(d.date))], ['Portes en carnet', nf0.format(d.lignes.reduce((s, l) => s + l.qte, 0))], ['En retard', d.lignes.filter(l => l.dfab && l.dclient && l.dfab > l.dclient).length], ['Bloquées', d.lignes.filter(l => l.bloque).length]]
+            : [['Lignes', d.lignes.length], ['Non validées', d.lignes.filter(l => !l.validee).length], ['Bloquées', d.lignes.filter(l => l.bloque).length]];
+        items.push(['ATC reconnus', `${noms.length - inconnus.length} / ${noms.length}`]);
+        return { lignes: d.lignes.length, items, noms: inconnus.length ? ['Non rattachés (ignorés) : ' + inconnus.join(', ')] : null };
+    }
     if (f.kind === 'quotidien') {
         const last = d.jours.at(-1); const fact = d.jours.reduce((s, j) => s + j.fact, 0), enr = d.jours.reduce((s, j) => s + j.enr, 0);
         return { lignes: d.jours.length, items: [['Jours', d.jours.length], ['Dernier jour', last ? dateLongue(parseIso(last.d)) : '—'], ['Facturé cumulé', euros(fact)], ['Enregistré cumulé', euros(enr)], ['Budget année', euros(d.mois.reduce((s, m) => s + (m.b_fact || 0), 0))]] };
@@ -116,7 +133,7 @@ function renderPreview() {
 async function importer() {
     const btn = $('#pv-go'); btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i>Import…';
     // L'ordre compte : la répartition crée les fiches ATC avant le reste
-    const ordre = { repartition: 0, quotidien: 1, portefeuille: 2 };
+    const ordre = { repartition: 0, quotidien: 1, portefeuille: 2, etat_attente: 3, etat_carnet: 4, etat_livraisons: 5 };
     try {
         for (const f of A.files.filter(f => !f.error).sort((a, b) => ordre[a.kind] - ordre[b.kind])) {
             await save(() => S.store.importer(f.kind, f.data, { fichier: f.name, lignes: resume(f).lignes }));
@@ -186,6 +203,7 @@ function renderFiche(c) {
                 <label class="field">E-mail<input type="email" data-f="email" value="${esc(c.email || '')}"></label>
                 <label class="field">Téléphone<input data-f="telephone" value="${esc(c.telephone || '')}"></label>
                 <label class="field full">Libellé dans le fichier Répartition<input data-f="code" value="${esc(c.code || '')}" placeholder="ex. DUPONT Jean"></label>
+                <label class="field full">Nom dans les états PDF <span class="muted">(si différent du nom de famille, séparés par des virgules)</span><input data-f="alias" value="${esc((c.alias || []).join(', '))}" placeholder="ex. ASSIER"></label>
             </div></div>
 
         <div class="f-block"><h4><i class="ri-community-line"></i>IAP · installateurs agréés</h4>
@@ -232,6 +250,7 @@ function renderFiche(c) {
     fiche.oninput = e => {
         const f = e.target.dataset.f; if (!f) return;
         c[f] = e.target.type === 'checkbox' ? e.target.checked : e.target.type === 'number' ? (e.target.value === '' ? null : +e.target.value) : e.target.value;
+        if (f === 'alias') c.alias = e.target.value.split(',').map(x => x.trim().toUpperCase()).filter(Boolean);
         if (f === 'couleur') $$('.fiche-head .avatar, .atc-item.on .avatar').forEach(a => a.style.setProperty('--c', c.couleur));
         if (f === 'prenom' || f === 'nom') { $('.fiche-id h3').textContent = fullName(c); $('.atc-item.on strong').textContent = fullName(c); }
         persist();

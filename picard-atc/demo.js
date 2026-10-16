@@ -149,7 +149,7 @@ function createDemoStore() {
         async loadAll() {
             const d = donnees();
             const last = d.jours.reduce((m, j) => j.d > m ? j.d : m, '');
-            return { reglages: { ...state.reglages }, commerciaux: state.commerciaux.map(c => ({ ...c })), affectations: JSON.parse(JSON.stringify(state.affectations || {})), zonesInfo: { ...state.zonesInfo },
+            return { reglages: { ...state.reglages }, commerciaux: state.commerciaux.map(c => ({ ...c })), affectations: JSON.parse(JSON.stringify(state.affectations || {})), etats: state.etats || {}, zonesInfo: { ...state.zonesInfo },
                 ...d, etat: { derniere_date: last || null, dernier_import: state.imports[0]?.created_at || null, source: state.donnees ? 'fichiers' : 'demo', zonesExemple: !state.zonesSaisies } };
         },
         // ─── Admin ───
@@ -173,9 +173,11 @@ function createDemoStore() {
         async listImports() { return state.imports.map(i => ({ ...i })); },
         // Import des fichiers Picard : les données restent dans ce navigateur
         async importer(kind, data, meta) {
-            if (!state.donnees) state.donnees = { atcMois: [], jours: [], societeMois: [], portefeuille: [] };
-            const D = state.donnees;
-            if (kind === 'quotidien') {
+            if (kind.startsWith('etat_')) { (state.etats ||= {})[kind.slice(5)] = data; }
+            else if (!state.donnees) state.donnees = { atcMois: [], jours: [], societeMois: [], portefeuille: [] };
+            const D = state.donnees || {};
+            if (kind.startsWith('etat_')) { /* déjà rangé */ }
+            else if (kind === 'quotidien') {
                 const days = new Set(data.jours.map(j => j.d)); D.jours = D.jours.filter(j => !days.has(j.d)).concat(data.jours).sort((a, b) => a.d < b.d ? -1 : 1);
                 const ms = new Set(data.mois.map(x => x.a + '-' + x.m)); D.societeMois = D.societeMois.filter(x => !ms.has(x.a + '-' + x.m)).concat(data.mois);
             } else if (kind === 'portefeuille') {

@@ -23,6 +23,7 @@
             <a href="#commerciaux" data-view="commerciaux"><i class="ri-team-line"></i>Commerciaux</a>
             <a href="#secteurs" data-view="secteurs"><i class="ri-map-2-line"></i>Secteurs</a>
             <a href="#carnet" data-view="carnet"><i class="ri-truck-line"></i>Carnet de commandes</a>
+            <a href="#commandes" data-view="commandes"><i class="ri-file-list-3-line"></i>Commandes &amp; délais</a>
             <a href="#clients" data-view="clients"><i class="ri-store-2-line"></i>Clients<span class="badge-new">Exemple</span></a>
         </nav>
 
@@ -175,6 +176,22 @@
             <div id="carnet"></div>
         </section>
 
+        <!-- ═══ Commandes & délais (états PDF quotidiens) ═══ -->
+        <section class="view" data-view="commandes" hidden>
+            <div class="sec-head"><h2 class="sec-title">Commandes &amp; délais <small id="cmd-sub"></small></h2><span class="muted small">États PDF quotidiens · en portes</span></div>
+            <div id="cmd-vide" hidden></div>
+            <div id="cmd-corps">
+                <section class="kpis" id="cmd-kpis"></section>
+                <div class="row-hero" style="margin-top:18px">
+                    <article class="card table-card"><div id="cmd-table"></div></article>
+                    <article class="card perf"><h3 class="perf-title">Portes livrées <span id="liv-sub"></span></h3><div class="chart" id="chart-liv" style="height:250px"></div><div class="legend" id="liv-legend"></div></article>
+                </div>
+                <div class="sec-head" style="margin-top:18px"><h2 class="sec-title">À traiter <small id="cmd-list-sub"></small></h2>
+                    <div class="tabs" id="cmd-mode"><button data-cmd="bloque">Bloquées</button><button data-cmd="attente">Non validées</button><button data-cmd="retard">En retard</button><button data-cmd="sansdelai">Sans délai</button></div></div>
+                <article class="card table-card"><div id="cmd-list"></div></article>
+            </div>
+        </section>
+
         <!-- ═══ Clients ═══ -->
         <section class="view" data-view="clients" hidden>
             <div class="sec-head"><h2 class="sec-title">Clients <small id="clients-sub"></small></h2>
@@ -229,6 +246,7 @@
 <script src="demo.js"></script>
 <script src="cloud.js"></script>
 <script src="parsers.js"></script>
+<script src="etats.js"></script>
 <script src="app.js"></script>
 <script src="admin.js"></script>
 </body>

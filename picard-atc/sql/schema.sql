@@ -46,6 +46,7 @@ create table public.commerciaux (
   email text,
   telephone text,
   notes text,
+  alias text[] not null default '{}',  -- noms dans les états PDF (ex. un nom de famille différent)
   actif boolean not null default true,
   ordre int not null default 0,
   created_at timestamptz not null default now()
@@ -102,6 +103,14 @@ create table public.portefeuille (
   data jsonb not null
 );
 
+-- États PDF quotidiens (production / ADV) : dernière photo de chaque état
+create table public.etats (
+  type text primary key,            -- attente, carnet, livraisons
+  date_etat date,
+  contenu jsonb not null,
+  maj timestamptz not null default now()
+);
+
 create table public.imports (
   id uuid primary key default gen_random_uuid(),
   type text not null,
@@ -119,7 +128,7 @@ create policy admin_maj on public.reglages for update using (public.is_admin()) 
 do $$
 declare t text;
 begin
-  foreach t in array array['commerciaux', 'affectations', 'zones_info', 'atc_mois', 'jours', 'societe_mois', 'portefeuille', 'imports'] loop
+  foreach t in array array['commerciaux', 'affectations', 'zones_info', 'etats', 'atc_mois', 'jours', 'societe_mois', 'portefeuille', 'imports'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('create policy lecture on public.%I for select using (public.peut_lire())', t);
     execute format('create policy admin_ajout on public.%I for insert with check (public.is_admin())', t);
@@ -141,4 +150,4 @@ create trigger inscriptions_reservees before insert on auth.users
   for each row execute function public.inscriptions_reservees();
 
 -- ─── Temps réel : chaque import rafraîchit les écrans ouverts ──
-alter publication supabase_realtime add table public.imports, public.commerciaux, public.affectations, public.zones_info, public.reglages;
+alter publication supabase_realtime add table public.imports, public.commerciaux, public.affectations, public.zones_info, public.reglages, public.etats;

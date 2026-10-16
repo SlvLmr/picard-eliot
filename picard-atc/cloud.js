@@ -24,7 +24,7 @@ function createCloudStore(url, key) {
         mode: 'cloud',
         async init() {
             const ch = sb.channel('picard-atc-live');
-            for (const t of ['imports', 'commerciaux', 'affectations', 'zones_info', 'reglages']) ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, notify);
+            for (const t of ['imports', 'etats', 'commerciaux', 'affectations', 'zones_info', 'reglages']) ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, notify);
             ch.subscribe();
             return true;
         },
@@ -48,16 +48,16 @@ function createCloudStore(url, key) {
 
         // ─── Lecture ───
         async loadAll() {
-            const [reg, com, sec, zi, am, jo, sm, pf, imp] = await Promise.all([
+            const [reg, com, sec, zi, am, jo, sm, pf, et, imp] = await Promise.all([
                 sb.from('reglages').select('*').eq('id', 1).maybeSingle().then(ok),
-                all('commerciaux', 'ordre'), all('affectations'), all('zones_info'), all('atc_mois'), all('jours', 'date'), all('societe_mois'), all('portefeuille', 'date'),
+                all('commerciaux', 'ordre'), all('affectations'), all('zones_info'), all('atc_mois'), all('jours', 'date'), all('societe_mois'), all('portefeuille', 'date'), all('etats'),
                 sb.from('imports').select('created_at').order('created_at', { ascending: false }).limit(1).then(ok),
             ]);
             const affectations = {}; for (const a of sec) ((affectations[a.force] ||= {})[a.secteur] ||= []).push(a.commercial_id);
             const zonesInfo = {}; for (const z of zi) zonesInfo[z.zone] = { potentiel: +z.potentiel, iap: z.iap };
             const jours = jo.map(j => ({ d: j.date, enr: +j.enregistre, fact: +j.facture }));
             return {
-                reglages: reg || {}, commerciaux: com, affectations, zonesInfo,
+                reglages: reg || {}, commerciaux: com, affectations, zonesInfo, etats: Object.fromEntries(et.map(e => [e.type, e.contenu])),
                 atcMois: am.map(x => ({ c: x.commercial_id, a: x.annee, m: x.mois, g: x.gamme, r: x.realise == null ? null : +x.realise, b: +x.budget, q: x.qte == null ? null : +x.qte, n1: +x.realise_n1 })),
                 jours,
                 societeMois: sm.map(x => ({ a: x.annee, m: x.mois, b_enr: +x.budget_enr, b_fact: +x.budget_fact, jours_ouvres: x.jours_ouvres, n1_enr: +x.n1_enr, n1_fact: +x.n1_fact })),
@@ -71,7 +71,7 @@ function createCloudStore(url, key) {
         async saveCommercial(c) {
             const row = { code: c.code || null, prenom: c.prenom || '', nom: c.nom, equipe: c.equipe || 'DIR', couleur: c.couleur, fonction: c.fonction || null, clientele: c.clientele || [],
                 objectif_marge: c.objectif_marge ?? null, iap_objectif: c.iap_objectif || 0, iap_nouveaux: c.iap_nouveaux || 0,
-                email: c.email || null, telephone: c.telephone || null, notes: c.notes || null, actif: c.actif !== false, ordre: c.ordre ?? 0 };
+                email: c.email || null, telephone: c.telephone || null, notes: c.notes || null, alias: c.alias || [], actif: c.actif !== false, ordre: c.ordre ?? 0 };
             if (c.id) { ok(await sb.from('commerciaux').update(row).eq('id', c.id)); return c; }
             return ok(await sb.from('commerciaux').insert(row).select().single());
         },
@@ -85,7 +85,9 @@ function createCloudStore(url, key) {
 
         // ─── Import des fichiers Picard ───
         async importer(kind, data, meta) {
-            if (kind === 'quotidien') {
+            if (kind.startsWith('etat_')) {
+                ok(await sb.from('etats').upsert({ type: kind.slice(5), date_etat: data.date || null, contenu: data, maj: new Date().toISOString() }));
+            } else if (kind === 'quotidien') {
                 await upsertChunks('jours', data.jours.map(j => ({ date: j.d, enregistre: j.enr, facture: j.fact })));
                 await upsertChunks('societe_mois', data.mois.map(x => ({ annee: x.a, mois: x.m, budget_enr: x.b_enr, budget_fact: x.b_fact, jours_ouvres: x.jours_ouvres, n1_enr: x.n1_enr, n1_fact: x.n1_fact })));
             } else if (kind === 'portefeuille') {

@@ -10,10 +10,10 @@ const initials = c => horsAtc(c) && !c.prenom ? c.equipe : ((c.prenom?.[0] || ''
 const fullName = c => `${c.prenom} ${c.nom}`.trim();
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
-const VIEWS = { synthese: 'Synthèse', commerciaux: 'Commerciaux', secteurs: 'Secteurs', carnet: 'Carnet de commandes', clients: 'Clients' };
+const VIEWS = { synthese: 'Synthèse', commerciaux: 'Commerciaux', secteurs: 'Secteurs', carnet: 'Carnet de commandes', commandes: 'Commandes & délais', clients: 'Clients' };
 const S = {
     store: null, base: null, D: null, ref: new Date(),
-    view: 'synthese', period: 'mois', force: 'serruriers', sel: null, gamme: null, zone: null, mapMode: 'secteurs', clientsMode: 'clients', sort: 'atteinte', mask: false,
+    view: 'synthese', period: 'mois', force: 'serruriers', sel: null, gamme: null, zone: null, mapMode: 'secteurs', clientsMode: 'clients', cmdMode: 'retard', sort: 'atteinte', mask: false,
     charts: {}, session: { isAdmin: false },
 };
 try { const p = JSON.parse(localStorage.getItem('picard_atc_vue') || '{}'); for (const k of ['period', 'force', 'mapMode', 'clientsMode', 'sort', 'mask']) if (p[k] != null) S[k] = p[k]; } catch (e) {}
@@ -94,6 +94,7 @@ function renderAll({ animate = true } = {}) {
     if (v === 'commerciaux' && !solo) renderTable();
     if (v === 'secteurs') renderMap();
     if (v === 'carnet') renderCarnet();
+    if (v === 'commandes') renderCommandes();
     if (v === 'clients') renderClients();
 }
 
@@ -208,7 +209,7 @@ function renderHero(animate) {
 
 // ─── Courbes ────────────────────────────────────────────────
 const GOLD = '#e7b876', GOLD_2 = '#f5d7a8';
-const C = { real: GOLD, proj: GOLD_2, enr: '#7aa7f7' };
+const C = { real: GOLD, proj: GOLD_2, enr: '#5fd3b4' };
 function baseAxis() {
     return { axisLine: { show: false }, axisTick: { show: false },
         axisLabel: { color: css('--chart-axis'), fontSize: 10.5, fontFamily: 'Inter' }, splitLine: { lineStyle: { color: css('--chart-grid') } } };
@@ -217,8 +218,8 @@ const tooltipStyle = () => ({ backgroundColor: '#141417', borderColor: '#26262b'
     textStyle: { color: '#fff', fontSize: 12, fontFamily: 'Inter' }, extraCssText: 'border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.5)' });
 const gradLine = () => GOLD;
 const gradArea = (a = .22) => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: `rgba(231,184,118,${a})` }, { offset: 1, color: 'rgba(231,184,118,0)' }]);
-const enrArea = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(122,167,247,.12)' }, { offset: 1, color: 'rgba(122,167,247,0)' }]);
-const n1Area = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(160,160,170,.10)' }, { offset: 1, color: 'rgba(160,160,170,0)' }]);
+const enrArea = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(95,211,180,.12)' }, { offset: 1, color: 'rgba(95,211,180,0)' }]);
+const n1Area = () => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(96,165,250,.10)' }, { offset: 1, color: 'rgba(96,165,250,0)' }]);
 const smooth = { smooth: .4, smoothMonotone: 'x', showSymbol: false };
 const pointer = () => ({ type: 'line', lineStyle: { color: '#3a3a40', width: 1 } });
 const legendHtml = items => items.map(([n, c, dash]) => `<span><i class="lg-line ${dash ? 'lg-dash' : ''}" style="border-color:${c}"></i>${n}</span>`).join('');
@@ -244,7 +245,7 @@ function renderTrajectory() {
         const idx = fact.reduce((m, v, i) => v != null ? i : m, -1);
         const proj = dates.map((_, i) => i === idx ? fact[idx] : i === dates.length - 1 ? k.projection : null);
         series = [
-            { name: 'Objectif facturé', type: 'line', data: obj, ...smooth, lineStyle: { width: 1, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
+            { name: 'Objectif facturé', type: 'line', data: obj, ...smooth, lineStyle: { width: 1.4, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
             { name: 'Atterrissage', type: 'line', data: proj, connectNulls: true, showSymbol: false, lineStyle: { width: 1.2, type: [2, 4], color: C.proj }, itemStyle: { color: C.proj } },
             { name: 'Enregistré', type: 'line', data: enr, ...smooth, lineStyle: { width: 1.6, color: C.enr }, itemStyle: { color: C.enr }, areaStyle: { color: enrArea() } },
             { name: 'Facturé', type: 'line', data: fact, ...smooth, lineStyle: { width: 1.8, color: C.real }, itemStyle: { color: C.real }, areaStyle: { color: gradArea() } },
@@ -263,8 +264,8 @@ function renderTrajectory() {
         const ka = Kc(S.who, 'annee', S.gamme);
         const proj = dates.map((_, i) => i === p.m - 1 ? real[i] : i === 11 ? ka.projection : null);
         series = [
-            { name: String(p.y - 1), type: 'line', data: n1, ...smooth, lineStyle: { width: 1, color: css('--n1') }, itemStyle: { color: css('--n1') }, areaStyle: { color: n1Area() } },
-            { name: 'Budget', type: 'line', data: bud, ...smooth, lineStyle: { width: 1, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
+            { name: String(p.y - 1), type: 'line', data: n1, ...smooth, lineStyle: { width: 1.4, color: css('--n1') }, itemStyle: { color: css('--n1') }, areaStyle: { color: n1Area() } },
+            { name: 'Budget', type: 'line', data: bud, ...smooth, lineStyle: { width: 1.4, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
             { name: 'Atterrissage', type: 'line', data: proj, connectNulls: true, showSymbol: false, lineStyle: { width: 1.2, type: [2, 4], color: C.proj }, itemStyle: { color: C.proj } },
             { name: 'Facturé', type: 'line', data: real, ...smooth, lineStyle: { width: 1.6, color: C.real }, itemStyle: { color: C.real }, areaStyle: { color: gradArea() } },
         ];
@@ -329,6 +330,8 @@ function renderSignals() {
     let worst = null;
     if (!S.gamme) for (const g of CA_GAMMES) { const kg = Kc(S.who, S.period, g); if (kg.n1 > 0 && kg.evol != null && (!worst || kg.evol < worst.evol)) worst = { g, evol: kg.evol }; }
     if (worst && worst.evol < 0) out.push({ cls: 'warn', html: `Gamme en recul : <b>${gammeNom(worst.g)}</b> ${pct(worst.evol, { sign: true })} vs ${p.y - 1}` });
+    if (!S.who && S.base.etats?.carnet) { const E = etatsSel(); const r = E.carnet.filter(enRetard).length, bq = E.attente.filter(l => l.bloque).length;
+        if (r || bq) out.push({ cls: 'warn', html: `<a class="lnk" href="#commandes"><b>${r}</b> portes en retard · <b>${bq}</b> commandes bloquées</a>` }); }
     $('#signals').innerHTML = out.map(s => `<div class="signal ${s.cls}">${s.html}</div>`).join('');
 }
 
@@ -404,7 +407,8 @@ function renderGTiles() {
             <div class="gt-top"><span class="l-ico"><i class="${g.icon}"></i></span><span class="gt-name">${esc(g.nom)}<small>${g.sub ? esc(g.sub) : '&nbsp;'}</small></span></div>
             <div class="gt-val">${euros(k.realise)}<small>${g.k === 'eliot' ? (k.qte ? nf0.format(k.qte) + ' u.' : '') : pct(k.realise / tot * 100) + ' du CA'}</small>${sparkline(serie)}</div>
             ${barHtml(k)}
-            <div class="gt-foot"><span><b class="${st.key}">${pct(k.atteinte)}</b> du budget</span>${delta(k.evol)}</div></button>`;
+            <div class="gt-foot"><span><b class="${st.key}">${pct(k.atteinte)}</b> du budget ${S.period === 'annee' ? 'annuel' : S.period === 'trimestre' ? 'du trimestre' : 'du mois'}</span>${delta(k.evol)}</div>
+            ${k.attendu != null ? `<div class="gt-att"><i></i>Attendu à date : <b>${pct(k.attendu)}</b></div>` : ''}</button>`;
     }).join('');
     growBars($('#gtiles'));
 }
@@ -464,8 +468,8 @@ function renderMonths() {
         xAxis: { type: 'category', data: MOIS.map(m => m.replace('.', '')), boundaryGap: false, ...baseAxis(), splitLine: { show: false } },
         yAxis: { type: 'value', ...baseAxis(), splitNumber: 4, axisLabel: { ...baseAxis().axisLabel, formatter: v => euros(v) } },
         series: [
-            { name: String(p.y - 1), type: 'line', data: sm.map(x => x.n1), ...smooth, lineStyle: { width: 1, color: css('--n1') }, itemStyle: { color: css('--n1') }, areaStyle: { color: n1Area() } },
-            { name: 'Budget', type: 'line', data: sm.map(x => x.b), ...smooth, lineStyle: { width: 1, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
+            { name: String(p.y - 1), type: 'line', data: sm.map(x => x.n1), ...smooth, lineStyle: { width: 1.4, color: css('--n1') }, itemStyle: { color: css('--n1') }, areaStyle: { color: n1Area() } },
+            { name: 'Budget', type: 'line', data: sm.map(x => x.b), ...smooth, lineStyle: { width: 1.4, type: [4, 4], color: css('--target') }, itemStyle: { color: css('--target') } },
             { name: 'Projection', type: 'line', data: proj, ...smooth, lineStyle: { width: 1.2, type: [2, 4], color: C.proj }, itemStyle: { color: C.proj } },
             { name: String(p.y), type: 'line', data: real, smooth: .4, smoothMonotone: 'x', symbol: 'circle', symbolSize: 4, itemStyle: { color: C.real },
               lineStyle: { width: 1.6, color: C.real }, areaStyle: { color: gradArea(.18) } },
@@ -516,6 +520,102 @@ function renderClients() {
         <span class="l-main"><span class="l-name">${esc(x.n)}</span><span class="bar"><span class="gold" data-w="${x.v / max * 100}"></span></span></span>
         <span class="l-val">${euros(x.v)}<small>${pct(total ? x.v / total * 100 : null)} du CA</small></span></div>`).join('');
     growBars($('#clients'));
+}
+
+// ─── Commandes & délais (états PDF quotidiens, en portes) ──
+const GAMME_COUL = { diamant: '#7ea9dc', hall: '#f0ac74', technica: '#7fcaa8', eliot: '#e68aa6' };
+const joursEntre = (a, b) => Math.round((parseIso(b) - parseIso(a)) / 864e5);
+// Lignes des états rattachées aux fiches, filtrées sur le périmètre choisi
+function etatsSel() {
+    const E = S.base.etats || {}; const ratt = rattacheurEtats(S.base.commerciaux); const ids = S.who ? idsFor() : null;
+    const garde = l => { l.id = ratt(l.atc); return !ids || (l.id && ids.has(l.id)); };
+    return {
+        attente: (E.attente?.lignes || []).map(l => ({ ...l })).filter(garde), dAttente: E.attente?.date,
+        carnet: (E.carnet?.lignes || []).map(l => ({ ...l })).filter(garde), dCarnet: E.carnet?.date,
+        livraisons: (E.livraisons?.lignes || []).map(l => ({ ...l })).filter(garde), annee: E.livraisons?.annee, dLiv: E.livraisons?.date,
+        inconnus: [...new Set([...(E.attente?.lignes || []), ...(E.carnet?.lignes || []), ...(E.livraisons?.lignes || [])].map(l => l.atc).filter(n => n && !ratt(n)))],
+    };
+}
+const enRetard = l => l.dfab && l.dclient && l.dfab > l.dclient;
+
+function renderCommandes() {
+    const E = etatsSel(); const vide = !E.carnet.length && !E.attente.length && !E.livraisons.length && !S.base.etats?.carnet;
+    $('#cmd-vide').hidden = !vide; $('#cmd-corps').hidden = vide;
+    if (vide) { $('#cmd-vide').innerHTML = `<article class="card empty"><i class="ri-file-pdf-2-line"></i>Importez les états PDF du jour (Admin › Import) : commandes non validées, carnet par activité, livraisons par ATC.</article>`; return; }
+    const ref = E.dCarnet || E.dAttente || iso(S.ref);
+    $('#cmd-sub').textContent = `· ${nomWho()} · état du ${dateLongue(parseIso(ref))}`;
+    const C2 = E.carnet, A2 = E.attente;
+    const retards = C2.filter(enRetard); const moyRet = retards.length ? retards.reduce((s, l) => s + joursEntre(l.dclient, l.dfab), 0) / retards.length : 0;
+    const nonVal = A2.filter(l => !l.validee); const bloq = A2.filter(l => l.bloque);
+    const plusVieille = nonVal.reduce((m, l) => Math.max(m, l.saisie ? joursEntre(l.saisie, ref) : 0), 0);
+    const mRef = +(E.dLiv || ref).slice(5, 7);
+    const livM = E.livraisons.filter(l => l.m === mRef).reduce((s, l) => s + l.q, 0), livA = E.livraisons.reduce((s, l) => s + l.q, 0);
+    const portes = C2.reduce((s, l) => s + l.qte, 0), eliot = C2.filter(l => siteFamille(l.fam) === 'Eliot').reduce((s, l) => s + l.qte, 0);
+    const cards = [
+        ['Portes en carnet', nf0.format(portes), `<span>dont ${nf0.format(eliot)} fabriquées chez Eliot</span>`],
+        ['En retard', nf0.format(retards.length), `<span>délai fab après le délai client · ${nf0.format(moyRet)} j en moyenne</span>`, retards.length ? 'late' : ''],
+        ['Non validées', nf0.format(nonVal.length), `<span><b class="${bloq.length ? 'down-t' : ''}">${bloq.length} bloquées</b> · la plus ancienne : ${plusVieille} j</span>`, nonVal.length ? 'warn' : ''],
+        ['Livrées ce mois', nf0.format(livM), `<span>${nf0.format(livA)} portes depuis janvier</span>`],
+    ];
+    $('#cmd-kpis').innerHTML = cards.map(([l, v, r, k], i) => `<article class="card kpi ${k ? 'kpi-' + k : ''}" style="animation-delay:${i * 40}ms"><div class="kpi-top">${l}</div><div class="kpi-val">${v}</div><div class="kpi-row">${r}</div></article>`).join('');
+
+    // Par ATC
+    const par = new Map(); const ligne = id => par.get(id) || par.set(id, { carnet: 0, retard: 0, sans: 0, attente: 0, bloque: 0, livM: 0, livA: 0 }).get(id);
+    for (const l of C2) { const x = ligne(l.id); x.carnet += l.qte; if (enRetard(l)) x.retard++; if (!l.dclient) x.sans++; }
+    for (const l of A2) { const x = ligne(l.id); if (!l.validee) x.attente++; if (l.bloque) x.bloque++; }
+    for (const l of E.livraisons) { const x = ligne(l.id); x.livA += l.q; if (l.m === mRef) x.livM += l.q; }
+    const rows = [...par].filter(([id]) => id).sort((a, b) => b[1].retard - a[1].retard || b[1].carnet - a[1].carnet);
+    const n = v => v ? nf0.format(v) : '<span class="muted">—</span>';
+    $('#cmd-table').innerHTML = `<table class="tbl tbl-atc"><thead><tr><th>ATC</th><th class="num">Carnet</th><th class="num">En retard</th><th class="num">Sans délai</th><th class="num">Non validées</th><th class="num">Bloquées</th><th class="num">Livrées ${MOIS[mRef - 1]}</th><th class="num">Livrées ${E.annee || ''}</th></tr></thead><tbody>
+        ${rows.map(([id, x]) => { const c = commercial(id); return `<tr data-who="${id}" class="${S.who === id ? 'on' : ''}"><td><span class="cell-who">${avatarWho(id, 'sm')}<span><b>${esc(fullName(c))}</b><small>${esc(typeAtc(id))}</small></span></span></td>
+            <td class="num">${n(x.carnet)}</td><td class="num">${x.retard ? `<b class="late">${x.retard}</b>` : n(0)}</td><td class="num">${n(x.sans)}</td><td class="num">${x.attente ? `<b class="warn">${x.attente}</b>` : n(0)}</td><td class="num">${x.bloque ? `<b class="late">${x.bloque}</b>` : n(0)}</td><td class="num">${n(x.livM)}</td><td class="num">${n(x.livA)}</td></tr>`; }).join('')}
+        </tbody></table>${!S.who && E.inconnus.length ? `<p class="muted small" style="padding:10px 12px">Non rattachés : ${E.inconnus.map(esc).join(', ')} — à renseigner dans la fiche ATC (champ « Nom dans les états PDF »).</p>` : ''}`;
+
+    // Livraisons par mois et par gamme
+    const mois = [...new Set(E.livraisons.map(l => l.m))].sort((a, b) => a - b);
+    const gammes = ['diamant', 'hall', 'technica', 'eliot'];
+    $('#liv-sub').textContent = E.annee ? `· ${E.annee}` : '';
+    $('#liv-legend').innerHTML = legendHtml(gammes.map(g => [gammeNom(g), GAMME_COUL[g]]));
+    chartOf('chart-liv').setOption({
+        animationDuration: 800, grid: { left: 4, right: 6, top: 10, bottom: 2, containLabel: true },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(255,255,255,.04)' } }, ...tooltipStyle(),
+            formatter: ps => `<b>${MOIS_LONG[mois[ps[0].dataIndex] - 1]}</b><br>` + ps.filter(p => p.value).map(p => `${p.marker}${p.seriesName} <b style="float:right;margin-left:14px">${nf0.format(p.value)}</b>`).join('<br>') },
+        xAxis: { type: 'category', data: mois.map(m => MOIS[m - 1].replace('.', '')), ...baseAxis(), splitLine: { show: false } },
+        yAxis: { type: 'value', ...baseAxis(), splitNumber: 4 },
+        series: gammes.map((g, i) => ({ name: gammeNom(g), type: 'bar', stack: 'liv', barWidth: '55%', data: mois.map(m => E.livraisons.filter(l => l.m === m && gammeFamille(l.fam) === g).reduce((s, l) => s + l.q, 0)),
+            itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: GAMME_COUL[g] }, { offset: 1, color: GAMME_COUL[g] + 'aa' }]), borderRadius: i === gammes.length - 1 ? [4, 4, 0, 0] : 0 } })),
+    }, true);
+
+    // À traiter
+    $$('#cmd-mode button').forEach(b => b.classList.toggle('on', b.dataset.cmd === S.cmdMode));
+    let list, cols;
+    const atcCell = l => { const c = l.id && commercial(l.id); return c ? `<span class="cell-who">${avatarWho(c.id, 'xs')}${esc(fullName(c))}</span>` : esc(l.atc || '—'); };
+    const dt = d => d ? dateCourte(parseIso(d)) : '—';
+    if (S.cmdMode === 'attente') {
+        list = A2.filter(l => !l.validee).sort((a, b) => (a.saisie || '').localeCompare(b.saisie || ''));
+        cols = ['Commande', 'ATC', 'Client', 'Réf. client', 'Saisie le', 'Attente'];
+        list = list.map(l => [`${esc(l.cmd)} <small class="muted">/${l.l}</small>${l.bloque ? ' <span class="pill-bloque">Bloquée</span>' : ''}`, atcCell(l), esc(l.client), esc(l.ref), dt(l.saisie), l.saisie ? `<b class="${joursEntre(l.saisie, ref) > 15 ? 'late' : 'warn'}">${joursEntre(l.saisie, ref)} j</b>` : '—']);
+    } else if (S.cmdMode === 'bloque') {
+        const vus = new Set();
+        list = [...A2.filter(l => l.bloque).map(l => ({ ...l, src: l.validee ? 'Validée, sans délai' : 'Non validée' })), ...C2.filter(l => l.bloque).map(l => ({ ...l, src: l.fam }))]
+            .filter(l => { const k = l.cmd + '/' + l.l; if (vus.has(k)) return false; vus.add(k); return true; });
+        cols = ['Commande', 'ATC', 'Client', 'Réf. client', 'Où'];
+        list = list.map(l => [`${esc(l.cmd)} <small class="muted">/${l.l}</small>`, atcCell(l), esc(l.client), esc(l.ref), esc(l.src)]);
+    } else if (S.cmdMode === 'retard') {
+        list = C2.filter(enRetard).sort((a, b) => joursEntre(b.dclient, b.dfab) - joursEntre(a.dclient, a.dfab));
+        cols = ['Commande', 'ATC', 'Client', 'Produit', 'Délai client', 'Nouveau délai', 'Retard'];
+        list = list.map(l => [`${esc(l.cmd)} <small class="muted">/${l.l}</small>${l.bloque ? ' <span class="pill-bloque">Bloquée</span>' : ''}`, atcCell(l), esc(l.client), `${esc(l.des)} <small class="muted">${esc(l.fam)}</small>`, dt(l.dclient), dt(l.dfab), `<b class="late">+${joursEntre(l.dclient, l.dfab)} j</b>`]);
+    } else {
+        list = C2.filter(l => !l.dclient).sort((a, b) => (a.valide || '').localeCompare(b.valide || ''));
+        cols = ['Commande', 'ATC', 'Client', 'Produit', 'Validée le', 'Depuis'];
+        list = list.map(l => [`${esc(l.cmd)} <small class="muted">/${l.l}</small>${l.bloque ? ' <span class="pill-bloque">Bloquée</span>' : ''}`, atcCell(l), esc(l.client), `${esc(l.des)} <small class="muted">${esc(l.fam)}</small>`, dt(l.valide), l.valide ? `${joursEntre(l.valide, ref)} j` : '—']);
+    }
+    $('#cmd-list-sub').textContent = `· ${list.length} ligne${list.length > 1 ? 's' : ''}`;
+    const MAX = S.cmdTout ? 1000 : 25;
+    $('#cmd-list').innerHTML = list.length ? `<table class="tbl tbl-atc tbl-cmd"><thead><tr>${cols.map((c, i) => `<th class="${i >= cols.length - 1 ? 'num' : ''}">${c}</th>`).join('')}</tr></thead><tbody>
+        ${list.slice(0, MAX).map(r => `<tr class="static">${r.map((v, i) => `<td class="${i >= r.length - 1 ? 'num' : ''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table>${list.length > 25 ? `<div class="list-more"><button class="pill pill-sm" id="cmd-tout">${S.cmdTout ? 'Réduire' : `Tout afficher (${list.length})`}</button></div>` : ''}`
+        : '<div class="empty"><i class="ri-checkbox-circle-line"></i>Rien à traiter ici</div>';
+    $('#cmd-tout')?.addEventListener('click', () => { S.cmdTout = !S.cmdTout; renderCommandes(); });
 }
 
 // ─── Carnet de commandes (reste à livrer, société) ──────────
@@ -926,6 +1026,7 @@ async function boot() {
     });
     $('#force-tabs').addEventListener('click', e => { const b = e.target.closest('[data-force]'); if (!b) return; S.force = b.dataset.force; remember(); deriveForce(); renderAll({ animate: false }); });
     $('#map-mode').addEventListener('click', e => { const b = e.target.closest('[data-map]'); if (b) { S.mapMode = b.dataset.map; remember(); renderMap(); } });
+    $('#cmd-mode').addEventListener('click', e => { const b = e.target.closest('[data-cmd]'); if (b) { S.cmdMode = b.dataset.cmd; S.cmdTout = false; renderCommandes(); } });
     $('#clients-mode').addEventListener('click', e => { const b = e.target.closest('[data-cmode]'); if (b) { S.clientsMode = b.dataset.cmode; remember(); renderClients(); } });
     $('#search').addEventListener('input', renderWhoList);
     $('#search').addEventListener('keydown', e => { if (e.key === 'Enter') { const b = $('#who-list [data-who]'); if (b) select(b.dataset.who); } });

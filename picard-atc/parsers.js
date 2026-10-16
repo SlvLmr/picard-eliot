@@ -23,7 +23,8 @@ function detectKind(wb) {
     if (names.includes('janvier') && /enregistre|tableau de bord commer/.test(firstCells(0))) return 'quotidien';
     return null;
 }
-const KIND_LABEL = { quotidien: 'Tableau commercial quotidien', portefeuille: 'Valorisation du portefeuille', repartition: 'Répartition budget ATC' };
+const KIND_LABEL = { quotidien: 'Tableau commercial quotidien', portefeuille: 'Valorisation du portefeuille', repartition: 'Répartition budget ATC',
+    etat_attente: 'Commandes non lancées / non validées (PDF)', etat_carnet: 'Carnet par activité (PDF)', etat_livraisons: 'Livraisons par ATC (PDF)' };
 
 function findCell(A, test, from = 0) {
     for (let r = from; r < A.length; r++) for (let c = 0; c < (A[r] || []).length; c++) if (typeof A[r][c] === 'string' && test(norm(A[r][c]))) return [r, c];
