@@ -196,7 +196,7 @@ h1, h2, h3, p { margin: 0; }
     position: relative; z-index: 1; width: 15px; height: 15px; margin: 1.5px 0 4px; border-radius: 50%; display: grid; place-items: center;
     font-size: 10px; color: var(--paper); background: var(--card); border: 2px solid var(--line-2);
 }
-.hstep.done .hnode { background: var(--c); border-color: var(--c); }
+.hstep.done .hnode { background: var(--c); border-color: var(--c); color: #1a1a1f; }
 .hstep.now .hnode { border: 2px solid var(--gold); }
 .hstep.now .hnode::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
 .hstep.late .hnode { border: 4px solid var(--late); box-shadow: 0 0 0 3px color-mix(in srgb, var(--late) 18%, transparent); }

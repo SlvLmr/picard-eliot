@@ -1092,3 +1092,27 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 [data-theme="dark"] .login-ico { background: linear-gradient(135deg, #f1c587, #c98a3e); color: var(--on-hl); }
 [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: var(--surface-2); border-color: var(--border-strong); }
 @media (max-width: 760px) { .data-block { margin-left: 0; order: 3; } }
+
+/* ─── Palette douce (couleurs pastel des rubriques et thèmes) ─── */
+/* Bandes de chronologie : plus fines, sans chevrons agressifs */
+.sn-seg { width: 8px; margin-left: -4px; border-radius: 4px; opacity: .75;
+    clip-path: none; background: linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 55%, transparent)); }
+.sn-cap { display: none; }
+.sn-arm { height: 2px; opacity: .6; }
+.sn-knot { width: 12px; height: 12px; margin: -6px 0 0 -6px; background: var(--c); box-shadow: 0 0 0 3px var(--surface); }
+.sn-card::before { height: 2px; opacity: .8; }
+/* Texte sombre sur les fonds pastel */
+.ag-dot, .ag-scrub-m.is-active, .pole-tab.active, .pole-tab.active i, .pole-tab.active .count { color: #1a1a1f; }
+.pole-tab.active .count { background: rgba(0, 0, 0, .1); }
+.pole-tab.active { box-shadow: none; }
+/* Mode clair : titres et dates en version foncée de la couleur pastel */
+:root:not([data-theme="dark"]) .sn-date, :root:not([data-theme="dark"]) .sn-actions li.sn-more { color: color-mix(in srgb, var(--c) 45%, #1a1a1f); }
+:root:not([data-theme="dark"]) .story-col-head h3, :root:not([data-theme="dark"]) .ag-month-label { color: color-mix(in srgb, var(--pole, var(--pole-current)) 45%, #1a1a1f); }
+/* Agenda : repère « aujourd'hui » et échéances proches en doré, sans clignotement */
+[data-theme="dark"] .ag-today .ag-date, [data-theme="dark"] .is-now .ag-date { color: var(--gold); }
+[data-theme="dark"] .ag-today .ag-dot { background: var(--gold); }
+[data-theme="dark"] .ag-today .ag-dot::after { border-color: var(--gold); }
+[data-theme="dark"] .ag-today-body { color: var(--gold); background: linear-gradient(rgba(241, 197, 135, .45), rgba(241, 197, 135, .45)) left 8px / 100% 1px no-repeat; }
+[data-theme="dark"] .ag-today-body * { color: var(--gold); }
+[data-theme="dark"] .ag-when.now { color: var(--gold); background: rgba(241, 197, 135, .14); border-color: transparent; animation: none; }
+[data-theme="dark"] .ag-scrub-m.is-today::after { background: var(--gold); }
