@@ -19,7 +19,7 @@ const DEMO_ATC = [
 ];
 const COEF_MOIS = [0.0855, 0.0855, 0.094, 0.0987, 0.0684, 0.0893, 0.0897, 0.0329, 0.0987, 0.094, 0.0897, 0.0735];
 const DEMO_FONCTIONS = ['ATC', 'Spécialiste Diamant', 'Spécialiste Hall', 'ATC', 'ATC', 'Spécialiste Hall', 'ATC', 'ATC', 'ATC', 'ATC', 'Chef de secteur', 'ATC', 'Spécialiste Diamant', 'ATC', 'ATC', 'ATC', 'Direction'];
-const METROPOLES = ['75', '92', '93', '94', '13', '69', '59', '33', '31', '06', '44', '67', '34', '35', '76', '38', 'BE-BRU', 'CH-GE', 'CH-ZH', 'LU'];
+const METROPOLES = ['75', '92', '93', '94', '13', '69', '59', '33', '31', '06', '44', '67', '34', '35', '76', '38', 'BE', 'CH', 'LU'];
 
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function demoRef() { let d = addDays(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()), -1); while (!isWorkday(d)) d = addDays(d, -1); return d; }
@@ -117,6 +117,8 @@ function createDemoStore() {
         const rang = {}; state.commerciaux.forEach(c => { const k = rang[c.equipe] = (rang[c.equipe] ?? -1) + 1; c.couleur = nuance(equipeDe(c.equipe).couleur, k); });
         state.palette = 2;
     }
+    { const f = fusionnerZones(state.secteurs, state.zonesInfo); // carte à une zone par pays pour BE / CH
+      if (f.change) { state.secteurs = f.secteurs; state.zonesInfo = state.zonesSaisies ? f.zonesInfo : demoZonesInfo(); } }
     if (state.reglages.seuil_jaune == null) Object.assign(state.reglages, { seuil_vert: 90, seuil_jaune: 85, seuil_orange: 60 });
     const listeners = [];
     const save = () => { try { localStorage.setItem(DEMO_KEY, JSON.stringify(state)); } catch (e) { console.warn('Stockage local plein', e); } listeners.forEach(f => f()); };
