@@ -98,7 +98,7 @@ function createCloudStore(url, key) {
                     let c = existants.find(x => x.code === p.code || norm(x.prenom + ' ' + x.nom) === norm(p.prenom + ' ' + p.nom));
                     if (!c) {
                         c = ok(await sb.from('commerciaux').insert({ code: p.code, prenom: p.prenom, nom: p.nom, equipe: p.equipe, couleur: nuance(equipeDe(p.equipe).couleur, k),
-                            fonction: p.equipe === 'DIR' ? 'Direction' : 'ATC', ordre: existants.length }).select().single());
+                            fonction: p.equipe === 'DIR' ? 'Direction' : p.equipe === 'DOM' ? 'Zone DOM-TOM' : 'ATC', ordre: existants.length }).select().single());
                         existants.push(c); // secteurs : à affecter dans l'admin (onglet Secteurs)
                     }
                     ids[p.code] = c.id;

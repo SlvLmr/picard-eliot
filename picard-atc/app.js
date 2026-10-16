@@ -6,7 +6,7 @@
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const initials = c => c.equipe === 'DIR' && !c.prenom ? 'DIR' : ((c.prenom?.[0] || '') + (c.nom?.[0] || '')).toUpperCase();
+const initials = c => horsAtc(c) && !c.prenom ? c.equipe : ((c.prenom?.[0] || '') + (c.nom?.[0] || '')).toUpperCase();
 const fullName = c => `${c.prenom} ${c.nom}`.trim();
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
@@ -30,7 +30,7 @@ const commercial = id => S.base.commerciaux.find(c => c.id === id);
 const actifs = () => S.base.commerciaux.filter(c => c.actif !== false);
 const equipesUtilisees = () => EQUIPES.filter(e => actifs().some(c => c.equipe === e.code));
 const membres = code => actifs().filter(c => c.equipe === code);
-const atcs = () => actifs().filter(c => c.equipe !== 'DIR');
+const atcs = () => actifs().filter(c => !horsAtc(c));
 const isEquipe = w => typeof w === 'string' && w.startsWith('eq:');
 const idsFor = (who = S.who) => new Set(!who ? actifs().map(c => c.id) : isEquipe(who) ? membres(who.slice(3)).map(c => c.id) : [who]);
 // Secteurs : la carte montre une force à la fois (S.force) ; S.base.secteurs = zone → 1er ATC du secteur dans cette force
@@ -73,6 +73,9 @@ async function loadAll() {
     S.base = await S.store.loadAll();
     S.base.zonesInfo = fusionnerZones({}, S.base.zonesInfo).zonesInfo;
     S.base.affectations ||= {};
+    // Secteur outre-mer : revient à la fiche « DOM-TOM » tant qu'il n'est pas affecté autrement
+    const dom = S.base.commerciaux.find(c => c.equipe === 'DOM' && c.actif !== false);
+    if (dom) for (const f of FORCES) { const a = (S.base.affectations[f.id] ||= {}); if (!a.dom?.length) a.dom = [dom.id]; }
     if (!FORCES.some(f => f.id === S.force)) S.force = FORCES[0].id;
     // Couleur d'un ATC = dégradé de son (premier) secteur
     for (const c of S.base.commerciaux) { const a = affectationsDe(S.base.affectations, c.id)[0]; if (a) c.couleur = SECTEURS[a.secteur].c[1]; }
@@ -155,12 +158,12 @@ function renderWhoList() {
     const q = norm($('#search').value);
     const row = (who, titre, sous) => { const k = Kc(who || null, S.period);
         return `<button data-who="${who}" class="${(S.who || '') === who ? 'on' : ''}">${avatarWho(who || null, 'sm')}<span class="ml-txt"><b>${esc(titre)}</b><small>${sous}</small></span><span class="ml-val">${euros(k.realise)}<small class="${statut(k.atteinte, S.base.reglages).key}">${pct(k.atteinte)}</small></span></button>`; };
-    let html = q ? '' : row('', 'Tous les ATC', `${atcs().length} ATC · ${equipesUtilisees().filter(e => e.code !== 'DIR').length} équipes`);
+    let html = q ? '' : row('', 'Tous les ATC', `${atcs().length} ATC · ${equipesUtilisees().filter(e => e.code !== 'DIR' && e.code !== 'DOM').length} équipes`);
     for (const e of equipesUtilisees()) {
         const ms = membres(e.code).filter(c => !q || norm(fullName(c) + ' ' + c.code + ' ' + e.nom).includes(q));
         if (!ms.length) continue;
         html += `<div class="ml-group">${esc(e.nom)}</div>`;
-        if (e.code !== 'DIR' && !q) html += row('eq:' + e.code, 'Équipe ' + e.nom, `${ms.length} ATC`);
+        if (e.code !== 'DIR' && e.code !== 'DOM' && !q) html += row('eq:' + e.code, 'Équipe ' + e.nom, `${ms.length} ATC`);
         html += ms.map(c => row(c.id, fullName(c), esc(typeAtc(c.id)))).join('');
     }
     $('#who-list').innerHTML = html || '<div class="empty">Aucun résultat</div>';
@@ -316,7 +319,7 @@ function renderPerf() {
 function renderSignals() {
     const p = pinfo(); const reg = S.base.reglages; const out = [];
     if (!S.who || isEquipe(S.who)) {
-        const late = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period, S.gamme) }))
+        const late = [...idsFor()].map(commercial).filter(c => c && !horsAtc(c)).map(c => ({ c, k: Kc(c.id, S.period, S.gamme) }))
             .filter(x => ['late', 'orange'].includes(statut(x.k.atteinte, reg).key)).sort((a, b) => a.k.atteinte - b.k.atteinte);
         if (late.length) out.push({ cls: 'late', html: `<b>${late.length} ATC</b> sous 85 % : ` + late.slice(0, 3).map(x => `<button class="lnk" data-who="${x.c.id}" data-go="commerciaux">${esc(x.c.prenom || x.c.nom)} ${pct(x.k.atteinte)}</button>`).join(', ') + (late.length > 3 ? '…' : '') });
     } else {
@@ -439,7 +442,7 @@ function renderRank() {
             <a class="link" href="#secteurs">Voir sur la carte<i class="ri-arrow-right-s-line"></i></a></div>`;
         return;
     }
-    const list = [...idsFor()].map(commercial).filter(c => c && c.equipe !== 'DIR').map(c => ({ c, k: Kc(c.id, S.period, S.gamme) }))
+    const list = [...idsFor()].map(commercial).filter(c => c && !horsAtc(c)).map(c => ({ c, k: Kc(c.id, S.period, S.gamme) }))
         .sort((a, b) => (b.k.atteinte ?? -1) - (a.k.atteinte ?? -1)).slice(0, 6);
     $('#rank').innerHTML = list.map(({ c, k }, i) => `<button class="lrow" data-who="${c.id}" data-go="commerciaux" style="animation-delay:${i * 30}ms">
         ${avatarWho(c.id, 'sm')}<span class="l-main"><span class="l-name">${esc(fullName(c))}<small>${esc(equipeDe(c.equipe).nom)}</small></span>${barHtml(k)}</span>

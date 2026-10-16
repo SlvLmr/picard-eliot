@@ -17,15 +17,16 @@ const DEMO_ATC = [
     ['PACA', 'Manon', 'Chevalier', [85, 490, 20, 20, 6]], ['PACA', 'Louis', 'Bonnet', [22, 740, 40, 40, 6]], ['PACA', 'Sarah', 'Guérin', [890, 720, 40, 40, 6]],
     ['NORD', 'Paul', 'Martin', [60, 420, 30, 60, 5]], ['IDF', 'Julie', 'Petit', [70, 380, 25, 50, 5]], ['IDF', 'Romain', 'Dubreuil', [40, 260, 380, 210, 10]], ['IDF', 'Claire', 'Vidal', [30, 220, 410, 260, 8]],
     ['DIR', '', 'Direction', [4300, 20, 25, 0, 1000]],
+    ['DOM', '', 'DOM-TOM', [310, 140, 15, 25, 30]],
 ];
 const COEF_MOIS = [0.0855, 0.0855, 0.094, 0.0987, 0.0684, 0.0893, 0.0897, 0.0329, 0.0987, 0.094, 0.0897, 0.0735];
 const DEMO_FONCTIONS = ['ATC dédié', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'ATC mixte', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'Chef de secteur', 'ATC mixte',
-    'ATC dédié', 'ATC mixte', 'ATC mixte', 'ATC mixte', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'Direction'];
+    'ATC dédié', 'ATC mixte', 'ATC mixte', 'ATC mixte', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'ATC dédié', 'Direction', 'Zone DOM-TOM'];
 // Affectations fictives : secteur → n° de l'ATC dans DEMO_ATC (5 mixtes présents dans les 3 forces)
 const DEMO_AFFECT = {
-    serruriers: { benelux: [4], nord: [3], idfo: [1], idfe: [0], ouest: [8], atlantique: [7], est: [6], centre: [11], ra: [10], so: [15], med: [13], paca: [14], dom: [20] },
-    menuisiers: { benelux: [4], nord: [5], idfo: [2], idfe: [17], grandouest: [9], est: [16], centre: [11], ra: [12], so: [15], med: [13], paca: [14], dom: [20] },
-    marches: { benelux: [4], nord: [3], idf: [18, 19, 0, 1], ouest: [8], atlantique: [7], est: [6], centre: [11], ra: [10], so: [15], med: [13], paca: [14], dom: [20] },
+    serruriers: { benelux: [4], nord: [3], idfo: [1], idfe: [0], ouest: [8], atlantique: [7], est: [6], centre: [11], ra: [10], so: [15], med: [13], paca: [14], dom: [21] },
+    menuisiers: { benelux: [4], nord: [5], idfo: [2], idfe: [17], grandouest: [9], est: [16], centre: [11], ra: [12], so: [15], med: [13], paca: [14], dom: [21] },
+    marches: { benelux: [4], nord: [3], idf: [18, 19, 0, 1], ouest: [8], atlantique: [7], est: [6], centre: [11], ra: [10], so: [15], med: [13], paca: [14], dom: [21] },
 };
 const METROPOLES = ['75', '92', '93', '94', '13', '69', '59', '33', '31', '06', '44', '67', '34', '35', '76', '38', 'BE', 'CH', 'LU'];
 
@@ -38,7 +39,7 @@ function demoInitialState() {
     const commerciaux = DEMO_ATC.map(([eq, prenom, nom], i) => {
         const k = parEquipe[eq] = (parEquipe[eq] ?? -1) + 1;
         return { id: 'demo-' + i, code: `${nom.toUpperCase()} ${prenom}`.trim(), prenom, nom, equipe: eq, couleur: nuance(equipeDe(eq).couleur, k), fonction: DEMO_FONCTIONS[i],
-            actif: true, ordre: i, clientele: [], objectif_marge: 34, iap_objectif: eq === 'DIR' ? 0 : 6 + (i % 4) * 2, iap_nouveaux: i % 3,
+            actif: true, ordre: i, clientele: [], objectif_marge: 34, iap_objectif: eq === 'DIR' || eq === 'DOM' ? 0 : 6 + (i % 4) * 2, iap_nouveaux: i % 3,
             email: prenom ? `${norm(prenom)}.${norm(nom).replace(/ /g, '')}@exemple.fr` : '', telephone: '' };
     });
     const affectations = {};
@@ -46,7 +47,7 @@ function demoInitialState() {
     return { reglages: { nom: 'PICARD-ATC', sous_titre: 'Pilotage du chiffre des ATC', lecture_publique: true, seuil_vert: 90, seuil_jaune: 85, seuil_orange: 60,
         types_clientele: ['Serruriers', 'Menuisiers', 'Installateurs', 'Négoces & distributeurs', 'Entreprises du bâtiment', 'Grands comptes', 'Collectivités', 'Syndics & bailleurs'],
         fonctions: ['ATC dédié', 'ATC mixte', 'Chef de secteur', 'Direction'] },
-        commerciaux, affectations, zonesInfo: demoZonesInfo(), imports: [], donnees: null, palette: 2 };
+        commerciaux, affectations, zonesInfo: demoZonesInfo(), imports: [], donnees: null, palette: 2, v: 3 };
 }
 
 // Potentiel de marché et IAP par zone (exemple)
@@ -127,6 +128,7 @@ function createDemoStore() {
     }
     { const f = fusionnerZones({}, state.zonesInfo); // carte à une zone par pays pour BE / CH
       if (f.change) state.zonesInfo = state.zonesSaisies ? f.zonesInfo : demoZonesInfo(); }
+    if (state.v !== 3 && state.affectations && state.commerciaux.every(c => String(c.id).startsWith('demo-'))) state = { ...demoInitialState(), donnees: state.donnees, imports: state.imports }; // ajout de la zone DOM-TOM
     if (!state.affectations) { // passage aux forces commerciales : la démo est régénérée, de vraies fiches gardent leurs données
         if (state.commerciaux.every(c => String(c.id).startsWith('demo-'))) state = { ...demoInitialState(), donnees: state.donnees, imports: state.imports };
         else state.affectations = {};
@@ -201,7 +203,7 @@ function rattacher(state, personnes, remplacerDemo) {
         const k = parEquipe[p.equipe] = (parEquipe[p.equipe] ?? -1) + 1;
         if (!c) {
             c = { id: 'atc-' + Math.random().toString(36).slice(2, 9), code: p.code, prenom: p.prenom, nom: p.nom, equipe: p.equipe, couleur: nuance(equipeDe(p.equipe).couleur, k),
-                fonction: p.equipe === 'DIR' ? 'Direction' : 'ATC', actif: true, ordre: state.commerciaux.length, clientele: [], iap_objectif: 0, iap_nouveaux: 0 };
+                fonction: p.equipe === 'DIR' ? 'Direction' : p.equipe === 'DOM' ? 'Zone DOM-TOM' : 'ATC', actif: true, ordre: state.commerciaux.length, clientele: [], iap_objectif: 0, iap_nouveaux: 0 };
             state.commerciaux.push(c); // secteurs : à affecter dans l'admin (onglet Secteurs)
         }
         ids[p.code] = c.id;

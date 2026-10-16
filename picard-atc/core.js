@@ -43,6 +43,7 @@ const EQUIPES = [
     { code: 'OUEST', nom: 'Ouest', couleur: '#4f6bed' },
     { code: 'RA', nom: 'Rhône-Alpes', couleur: '#0e7490' },
     { code: 'PACA', nom: 'PACA', couleur: '#7cb4f2' },
+    { code: 'DOM', nom: 'Outre-mer', couleur: '#a5adb8' },
     { code: 'DIR', nom: 'Direction', couleur: '#94a3b8' },
 ];
 const equipeDe = code => EQUIPES.find(e => e.code === code) || { code, nom: code, couleur: '#94a3b8' };
@@ -80,6 +81,8 @@ const FORCES = [
     { id: 'menuisiers', nom: 'Fenêtriers · Menuisiers', court: 'Menuisiers', secteurs: ['benelux', 'nord', 'idfo', 'idfe', 'grandouest', 'est', 'centre', 'ra', 'so', 'med', 'paca', 'dom'] },
     { id: 'marches', nom: 'Marchés pro', court: 'Marchés pro', secteurs: ['benelux', 'nord', 'idf', 'ouest', 'atlantique', 'est', 'centre', 'ra', 'so', 'med', 'paca', 'dom'] },
 ];
+// Fiches qui ne sont pas des ATC : la Direction et la zone DOM-TOM
+const horsAtc = c => c.equipe === 'DIR' || c.equipe === 'DOM';
 const forceDe = id => FORCES.find(f => f.id === id) || FORCES[0];
 // Zone → secteur, pour une force
 function zoneSecteurs(force) { const m = {}; for (const s of forceDe(force).secteurs) for (const z of SECTEURS[s].zones) m[z] = s; return m; }

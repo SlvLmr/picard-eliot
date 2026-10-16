@@ -127,6 +127,7 @@ function lireSection(A, start) {
         if (kE >= 0) data.eliot = { r: val(kE), b: val(kE + 1), n1: norm(s[kE + 2]) === 'r2025' ? val(kE + 2) : null };
         if (LIGNES_EQUIPE[n]) { attente.forEach(l => l.equipe = LIGNES_EQUIPE[n]); lignes.push(...attente); attente = []; continue; }
         if (n === 'direction') { lignes.push({ nom: nom.trim(), equipe: 'DIR', data }); continue; }
+        if (/^dom\b|dom ?tom|outre ?mer/.test(n)) { lignes.push({ nom: nom.trim(), equipe: 'DOM', data }); continue; }
         attente.push({ nom: nom.trim(), data });
     }
     return lignes;
@@ -155,7 +156,7 @@ function parseRepartition(wb) {
     const personnes = []; const vus = new Set();
     for (const m of Object.keys(parMois).sort((a, b) => a - b)) for (const l of parMois[m].mensuel) {
         if (vus.has(l.nom)) continue; vus.add(l.nom);
-        personnes.push({ code: l.nom, equipe: l.equipe || 'DIR', ...(l.equipe === 'DIR' ? { prenom: '', nom: 'Direction' } : nomPrenom(l.nom)) });
+        personnes.push({ code: l.nom, equipe: l.equipe || 'DIR', ...(l.equipe === 'DIR' ? { prenom: '', nom: 'Direction' } : l.equipe === 'DOM' ? { prenom: '', nom: 'DOM-TOM' } : nomPrenom(l.nom)) });
     }
     // Lignes mois × gamme ; Eliot N-1 mensuel = différence des cumuls
     const lignes = [];

@@ -355,7 +355,7 @@ function tabBudgets() {
     for (const e of EQUIPES) {
         const ms = S.base.commerciaux.filter(c => c.equipe === e.code); if (!ms.length) continue;
         rows += ms.map(c => ligne(new Set([c.id]), fullName(c), `<span class="avatar" style="--c:${c.couleur};width:22px;height:22px;font-size:8px;display:inline-grid;margin-right:8px;vertical-align:middle">${esc(initials(c))}</span>`)).join('');
-        if (e.code !== 'DIR') rows += ligne(new Set(ms.map(c => c.id)), 'Équipe ' + e.nom, '', 'sub');
+        if (e.code !== 'DIR' && e.code !== 'DOM') rows += ligne(new Set(ms.map(c => c.id)), 'Équipe ' + e.nom, '', 'sub');
     }
     rows += ligne(new Set(S.base.commerciaux.map(c => c.id)), 'Total société', '', 'tot');
     $('#admin-body').innerHTML = `<p class="a-intro">Budgets ${y} par ATC et par gamme, <b>lus dans le fichier « Répartition budget ATC »</b>. Pour les modifier, réimportez le fichier mis à jour. Eliot est compris dans Serrures (il n'est pas ajouté au total).</p>
