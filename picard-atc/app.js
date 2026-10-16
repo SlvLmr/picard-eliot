@@ -872,35 +872,38 @@ function renderMapLegend(maxPot) {
 // Encart « Potentiel » : une zone cliquée, ou à défaut le secteur sélectionné
 function renderPotentiel() {
     const box = $('#potentiel'); const zi = S.base.zonesInfo;
+    const ex = S.base.etat?.zonesExemple ? exemple : ''; // valeurs d'exemple (démo) tant que rien n'est saisi
+    const vide = '<span class="muted small">à renseigner</span>';
     if (S.zone) {
         const z = zoneInfo.get(S.zone); const info = zi[S.zone] || {}; const owner = commercial(S.base.secteurs[S.zone]);
         const zs = owner ? zonesOf(owner.id) : []; const potSect = zs.reduce((s, x) => s + (zi[x]?.potentiel || 0), 0);
-        const ka = owner ? Kc(owner.id, 'annee') : null;
+        const ka = owner ? Kc(owner.id, 'annee') : null; const iapAtc = owner ? iapDe(owner.id) : null;
         const couv = ka && potSect ? ka.projection * ((info.potentiel || 0) / potSect) : null; // part du chiffre de l'ATC rapportée au poids de la zone
-        box.innerHTML = `<header><h3 class="perf-title">Potentiel ${exemple}</h3><button class="pt-x" data-pt-close title="Fermer"><i class="ri-close-line"></i></button></header>
+        box.innerHTML = `<header><h3 class="perf-title">Potentiel ${ex}</h3><button class="pt-x" data-pt-close title="Fermer"><i class="ri-close-line"></i></button></header>
             <h4>${esc(z?.nom || S.zone)} <small>${/^\d/.test(S.zone) ? S.zone : ''}</small></h4>
-            <div class="pt-big">${euros(info.potentiel || 0)}<small>potentiel annuel</small></div>
+            <div class="pt-big">${info.potentiel ? euros(info.potentiel) : vide}<small>potentiel annuel de la zone</small></div>
             <div class="pt-grid">
-                <span>IAP installés<b>${info.iap ?? 0}</b></span>
-                <span>Potentiel / IAP<b>${info.iap ? euros(info.potentiel / info.iap) : '—'}</b></span>
-                <span>Poids dans le secteur<b>${potSect ? pct(info.potentiel / potSect * 100) : '—'}</b></span>
+                <span>Poids dans le secteur<b>${potSect && info.potentiel ? pct(info.potentiel / potSect * 100) : '—'}</b></span>
                 <span>Couverture estimée<b>${couv != null && info.potentiel ? pct(couv / info.potentiel * 100) : '—'}</b></span>
+                ${iapAtc?.reel ? `<span class="pt-wide">IAP de l'ATC<b>${iapAtc.nb}</b><span class="iap-sts">${statutsHtml(iapAtc.parStatut)}</span></span>` : `<span>IAP de la zone<b>${info.iap ?? 0}</b></span>`}
             </div>
-            ${owner ? `<button class="pt-atc" data-who="${owner.id}"><span class="avatar" style="--c:${owner.couleur}">${esc(initials(owner))}</span>${esc(fullName(owner))}<i class="ri-arrow-right-line"></i></button>` : '<p class="muted">Zone sans ATC</p>'}`;
+            ${owner ? `<button class="pt-atc" data-who="${owner.id}">${avatarWho(owner.id)}${esc(fullName(owner))}<i class="ri-arrow-right-line"></i></button>` : '<p class="muted">Zone sans ATC</p>'}`;
     } else {
         const zones = S.who ? zonesFor() : Object.keys(zi);
-        const pot = zones.reduce((s, x) => s + (zi[x]?.potentiel || 0), 0), iap = zones.reduce((s, x) => s + (zi[x]?.iap || 0), 0);
+        const pot = zones.reduce((s, x) => s + (zi[x]?.potentiel || 0), 0);
+        const I = iapDe(); const iap = I.nb;
         const ka = Kc(S.who, 'annee');
-        box.innerHTML = `<header><h3 class="perf-title">Potentiel ${exemple}</h3></header>
-            <h4>${S.who ? (isEquipe(S.who) ? 'Équipe ' + esc(equipeDe(S.who.slice(3)).nom) : esc(fullName(commercial(S.who)))) : 'Tous les ATC'}</h4>
-            <div class="pt-big">${euros(pot)}<small>potentiel annuel · ${zones.length} zones</small></div>
+        box.innerHTML = `<header><h3 class="perf-title">Potentiel ${ex}</h3></header>
+            <h4>${esc(nomWho())}</h4>
+            <div class="pt-big">${pot ? euros(pot) : vide}<small>potentiel annuel${pot ? ` · ${zones.length} zones` : ''}</small></div>
             <div class="pt-grid">
                 <span>Atterrissage ${S.ref.getFullYear()}<b>${euros(ka.projection)}</b></span>
                 <span>Couverture<b>${pot ? pct(ka.projection / pot * 100) : '—'}</b></span>
-                <span>IAP installés<b>${iap}</b></span>
-                <span>Potentiel / IAP<b>${iap ? euros(pot / iap) : '—'}</b></span>
+                <span class="${I.reel ? 'pt-wide' : ''}">IAP installés<b>${iap}</b>${I.reel ? `<span class="iap-sts">${statutsHtml(I.parStatut)}</span>` : ''}</span>
+                ${I.reel ? '' : `<span>Potentiel / IAP<b>${iap && pot ? euros(pot / iap) : '—'}</b></span>`}
+                ${I.reel && pot ? `<span>Potentiel / IAP<b>${iap ? euros(pot / iap) : '—'}</b></span>` : ''}
             </div>
-            <p class="pt-hint">Le potentiel de marché est saisi par zone dans l'administration (onglet Secteurs). Cliquez une zone de la carte pour son détail ; double-cliquez pour ouvrir son ATC.</p>
+            <p class="pt-hint">${pot ? "Cliquez une zone de la carte pour son détail ; double-cliquez pour ouvrir son ATC." : "Le potentiel de marché n'est pas encore renseigné : il se saisit par zone (département ou pays) dans Admin › Secteurs › Potentiel & IAP, ou s'importe en une fois depuis un fichier."}</p>
             ${S.who ? '' : `<a class="link" href="#commerciaux">Voir les commerciaux<i class="ri-arrow-right-s-line"></i></a>`}`;
     }
 }
