@@ -77,6 +77,11 @@ function loadData() {
     let local = null;
     try { local = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { /* stockage indisponible */ }
     store.isLocal = !!(local && Array.isArray(local.themes));
+    // Une copie locale ancienne ne connaît pas les réglages ajoutés depuis (Masquée, Exemple) : on reprend ceux publiés
+    if (store.isLocal) (local.rubriques || []).forEach(r => {
+        const pub = (base.rubriques || []).find(x => x.id === r.id);
+        if (pub) ['hidden', 'example'].forEach(k => { if (!(k in r) && k in pub) r[k] = pub[k]; });
+    });
     store.data = normalize(store.isLocal ? local : base);
     return store.data;
 }
