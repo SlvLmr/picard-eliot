@@ -27,7 +27,7 @@ function data() { return store.data; }
 function themeById(id) { return data().themes.find(t => t.id === id); }
 
 function visibleThemes() {
-    return data().themes.filter(t =>
+    return publicThemes().filter(t =>
         (state.rubrique === 'all' || t.rubrique === state.rubrique) &&
         (!state.owner || t.owner === state.owner));
 }
@@ -63,12 +63,13 @@ function dateSpan(start, end) {
 
 // ─── Onglets & rubriques ─────────────────────────
 function renderTabs() {
-    const tabs = [{ id: 'all', name: "Vue d'ensemble", icon: 'ri-apps-2-line', color: 'var(--hl)' }, ...data().rubriques];
+    const tabs = [{ id: 'all', name: "Vue d'ensemble", icon: 'ri-apps-2-line', color: 'var(--hl)' }, ...publicRubriques()];
     $('#pole-tabs').innerHTML = tabs.map(t => {
-        const n = t.id === 'all' ? data().themes.length : themesOf(t.id).length;
+        const n = t.id === 'all' ? publicThemes().length : themesOf(t.id).length;
         return `<button class="pole-tab ${state.rubrique === t.id ? 'active' : ''}" data-rubrique="${esc(t.id)}" style="--pole:${t.color}">
             <i class="${esc(t.icon)}"></i>${esc(t.name)}<span class="count">${n}</span>${t.example ? exampleTag() : ''}</button>`;
     }).join('');
+    $('#pole-tabs').hidden = publicRubriques().length <= 1;
     document.documentElement.style.setProperty('--pole-current', state.rubrique === 'all' ? 'var(--hl)' : rubriqueOf(state.rubrique).color);
     renderDemo();
 }
@@ -77,7 +78,7 @@ function renderTabs() {
 function exampleTag() { return '<span class="tag-example">Exemple</span>'; }
 
 function renderDemo() {
-    const ex = data().rubriques.filter(r => r.example && (state.rubrique === 'all' || state.rubrique === r.id));
+    const ex = publicRubriques().filter(r => r.example && (state.rubrique === 'all' || state.rubrique === r.id));
     $('#demo-banner').hidden = !ex.length;
     $('#demo-text').textContent = ex.length
         ? `Données d'exemple pour ${ex.map(r => r.name).join(' et ')} : elles seront remplacées par les vraies actions.`
@@ -87,7 +88,7 @@ function renderDemo() {
 function renderOverview() {
     const el = $('#poles-overview');
     // Vue d'ensemble : une carte par rubrique ; dans un onglet : la carte de la rubrique affichée
-    const rubs = state.rubrique === 'all' ? data().rubriques : data().rubriques.filter(r => r.id === state.rubrique);
+    const rubs = publicRubriques().filter(r => state.rubrique === 'all' || r.id === state.rubrique);
     el.innerHTML = rubs.map(r => {
         const themes = themesOf(r.id);
         const hs = themes.map(themeHealth);
@@ -188,7 +189,7 @@ function renderGantt() {
     };
 
     const groups = state.rubrique === 'all'
-        ? data().rubriques.map(r => ({ r, items: sortThemes(themes.filter(t => t.rubrique === r.id), state.ganttSort) })).filter(g => g.items.length)
+        ? publicRubriques().map(r => ({ r, items: sortThemes(themes.filter(t => t.rubrique === r.id), state.ganttSort) })).filter(g => g.items.length)
         : [{ r: null, items: sortThemes(themes, state.ganttSort) }];
     const rows = groups.map(g =>
         (g.r ? `<div class="g-group" style="--pole:${g.r.color}"><i class="${esc(g.r.icon)}"></i>${esc(g.r.name)}<span>${weightedProgress(g.items)}%</span></div>` : '') +
@@ -597,7 +598,7 @@ function renderStory() {
     }
     if (state.rubrique === 'all') {
         $('#story-sub').textContent = 'Les grands thèmes de chaque rubrique et leur avancement';
-        $('#story').innerHTML = `<div class="story-cols">${data().rubriques.map(r => {
+        $('#story').innerHTML = `<div class="story-cols">${publicRubriques().map(r => {
             const themes = themesOf(r.id).filter(t => !state.owner || t.owner === state.owner);
             return `<div class="story-col" style="--pole:${r.color}">
                 <header class="story-col-head" data-rubrique="${esc(r.id)}" data-reveal>
@@ -938,7 +939,7 @@ function adminMessagesHtml() {
 function adminRubriquesHtml() {
     return `<form class="admin-pane" data-form="rubriques" autocomplete="off" onsubmit="return false">
         <p class="help">Les rubriques sont les grandes parties de l'outil (onglets, timeline, rapport). Une rubrique qui contient des thèmes ne peut pas être supprimée : déplacez d'abord ses thèmes.</p>
-        <div class="rows-head row-pole"><span>Nom</span><span>Couleur</span><span>Icône</span><span>Exemple</span><span>Thèmes</span><span></span></div>
+        <div class="rows-head row-pole"><span>Nom</span><span>Couleur</span><span>Icône</span><span>Exemple</span><span>Masquée</span><span>Thèmes</span><span></span></div>
         <div class="rows">${data().rubriques.map((r, i) => {
             const n = themesOf(r.id).length;
             return `<div class="row row-pole" data-rubrique-id="${esc(r.id)}">
@@ -946,6 +947,7 @@ function adminRubriquesHtml() {
                 <input type="color" name="r-color" value="${esc(r.color)}">
                 <span class="icon-pick"><i class="${esc(r.icon)}"></i><select name="r-icon">${iconOptions(r.icon)}</select></span>
                 <label class="r-example" title="Données d'exemple (étiquette violette)"><input type="checkbox" name="r-example" ${r.example ? 'checked' : ''}></label>
+                <label class="r-example" title="Masquée sur le site public et dans le rapport (reste modifiable ici)"><input type="checkbox" name="r-hidden" ${r.hidden ? 'checked' : ''}></label>
                 <span class="muted">${n}</span>
                 <span class="inline-actions">
                     <button type="button" class="btn btn-icon" data-rubrique-move="${i}" title="Monter" ${i === 0 ? 'disabled' : ''}><i class="ri-arrow-up-line"></i></button>
@@ -965,6 +967,7 @@ function readRubriquesForm(form) {
         r.color = row.querySelector('[name="r-color"]').value;
         r.icon = row.querySelector('[name="r-icon"]').value;
         r.example = row.querySelector('[name="r-example"]').checked;
+        r.hidden = row.querySelector('[name="r-hidden"]').checked;
         row.querySelector('.icon-pick i').className = r.icon;
     });
 }
@@ -1245,7 +1248,7 @@ function toast(msg, isError = false) {
 
 // ─── Assemblage ──────────────────────────────────
 function renderOwnerFilter() {
-    const owners = [...new Set(data().themes.filter(t => state.rubrique === 'all' || t.rubrique === state.rubrique).map(t => t.owner).filter(Boolean))].sort();
+    const owners = [...new Set(publicThemes().filter(t => state.rubrique === 'all' || t.rubrique === state.rubrique).map(t => t.owner).filter(Boolean))].sort();
     if (!owners.includes(state.owner)) state.owner = '';
     $('#filter-owner').innerHTML = `<option value="">Tous les responsables</option>` +
         owners.map(o => `<option ${o === state.owner ? 'selected' : ''}>${esc(o)}</option>`).join('');
@@ -1260,7 +1263,15 @@ function saveUiPrefs() {
     try { localStorage.setItem('picard2030_sort', JSON.stringify({ gantt: state.ganttSort })); } catch (e) { /* ignore */ }
 }
 
+// Rubrique affichée : jamais une rubrique masquée ; s'il n'en reste qu'une, on l'affiche directement
+function normalizeRubrique() {
+    const pubs = publicRubriques();
+    if (pubs.length === 1) state.rubrique = pubs[0].id;
+    else if (state.rubrique !== 'all' && !pubs.some(r => r.id === state.rubrique)) state.rubrique = 'all';
+}
+
 function renderAll() {
+    normalizeRubrique();
     renderSortButtons();
     renderTabs();
     renderOwnerFilter();
@@ -1281,7 +1292,7 @@ function setRubrique(id) {
 function openIdea() {
     hideTip();
     const sel = $('#idea-sujet');
-    sel.innerHTML = ['Picard 2030 en général', ...data().rubriques.map(r => r.name), "L'outil de suivi"]
+    sel.innerHTML = ['Picard 2030 en général', ...publicRubriques().map(r => r.name), "L'outil de suivi"]
         .map(o => `<option ${state.rubrique !== 'all' && rubriqueOf(state.rubrique).name === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
     $('#idea').classList.add('open');
     $('#idea').setAttribute('aria-hidden', 'false');

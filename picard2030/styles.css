@@ -1029,7 +1029,7 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 }
 .demo-banner i { font-size: 16px; }
 .r-example { display: grid; place-items: center; }
-.row-pole { grid-template-columns: 1fr 70px 190px 60px 60px 80px; }
+.row-pole { grid-template-columns: 1fr 70px 190px 60px 64px 60px 80px; }
 
 /* ═══ Charte noire à accent doré (mode par défaut) ═══ */
 [data-theme="dark"] body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; font-feature-settings: "tnum" 1, "cv11" 1; -webkit-font-smoothing: antialiased; }
@@ -1116,3 +1116,4 @@ input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius
 [data-theme="dark"] .ag-today-body * { color: var(--gold); }
 [data-theme="dark"] .ag-when.now { color: var(--gold); background: rgba(241, 197, 135, .14); border-color: transparent; animation: none; }
 [data-theme="dark"] .ag-scrub-m.is-today::after { background: var(--gold); }
+.pole-tabs[hidden], .demo-banner[hidden] { display: none; }

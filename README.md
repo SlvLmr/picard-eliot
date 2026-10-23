@@ -40,7 +40,7 @@ Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-
 
 **Charte** : fond noir, cartes sombres arrondies à filet fin, police Inter, un seul accent doré (bouton Admin, rubrique active, courbes, repère « aujourd'hui »). Les couleurs de statut (rouge, orange, vert) sont conservées. Le bouton ☀ de l'en-tête passe en mode clair, et le choix est mémorisé dans le navigateur.
 
-Dans la barre des rubriques, le **bloc brun** affiche la date des données et ouvre l'admin pour les mettre à jour. Une rubrique cochée **Exemple** (admin, onglet *Rubriques*) porte une étiquette violette, et un bandeau violet rappelle que ses données sont des exemples.
+Dans la barre des rubriques, le **bloc brun** affiche la date des données et ouvre l'admin pour les mettre à jour. Une rubrique cochée **Exemple** (admin, onglet *Rubriques*) porte une étiquette violette, et un bandeau violet rappelle que ses données sont des exemples. Une rubrique cochée **Masquée** n'apparaît ni sur le site public ni dans le rapport, mais reste modifiable dans l'admin. C'est le cas de Production pour l'instant. Quand il ne reste qu'une rubrique visible, les onglets disparaissent et la page affiche directement cette rubrique.
 
 En haut de page, la **boîte à idées** (« Soumettez-nous vos idées, remarques ») ouvre un petit formulaire : type (idée, remarque, question), sujet et message. Le message est enregistré directement dans la base Supabase, sans passer par la messagerie. Il n'est lisible que par les administrateurs, dans l'onglet **Messages** de l'admin.
 

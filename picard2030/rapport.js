@@ -94,7 +94,7 @@ function footer(n, total) {
 }
 
 function rubriques() {
-    return store.data.rubriques.filter(r => opts.rubrique === 'all' || r.id === opts.rubrique);
+    return publicRubriques().filter(r => opts.rubrique === 'all' || r.id === opts.rubrique);
 }
 
 // ─── Page de synthèse ────────────────────────────
@@ -113,7 +113,7 @@ function summaryPage(total) {
         ${pageHead('')}
         <div class="hero card">
             <div class="hero-txt">
-                <p class="kicker">Avancement global du plan</p>
+                <p class="kicker">${rubs.length === 1 ? `Avancement · ${esc(rubs[0].name)}` : 'Avancement global du plan'}</p>
                 <p class="big">${pct(weightedProgress(themes))}</p>
                 <p class="gapline">${gapLine(themes)}</p>
                 <div class="hero-stats">
@@ -126,7 +126,7 @@ function summaryPage(total) {
             </div>
         </div>
 
-        <div class="rubs">${rubs.map(r => {
+        ${rubs.length < 2 ? '' : `<div class="rubs">${rubs.map(r => {
             const ts = themesOf(r.id), v = weightedProgress(ts);
             return `<div class="card rub" style="--c:${r.color}">
                 <div class="rub-top">
@@ -140,7 +140,7 @@ function summaryPage(total) {
                 <p class="gapline small">${gapLine(ts)}</p>
                 <div class="mini">${ts.map(t => `<span class="${HEALTH[themeHealth(t)].cls}" title="${esc(t.name)}"></span>`).join('')}</div>
             </div>`;
-        }).join('')}</div>
+        }).join('')}</div>`}
 
         <div class="card">
             <h2>Météo des ${themes.length} thèmes</h2>
@@ -256,7 +256,8 @@ function render() {
 
 loadData();
 $id('opt-rubrique').innerHTML = `<option value="all">Toutes les rubriques</option>` +
-    store.data.rubriques.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+    publicRubriques().map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+if (publicRubriques().length <= 1) $id('opt-rubrique').hidden = true;
 $id('opt-actions').onchange = e => { opts.actions = e.target.checked; render(); };
 $id('opt-notes').onchange = e => { opts.notes = e.target.checked; render(); };
 $id('opt-rubrique').onchange = e => { opts.rubrique = e.target.value; render(); };

@@ -41,7 +41,8 @@ window.PICARD2030_DATA = {
       "name": "Production",
       "color": "#9fbbe6",
       "icon": "ri-tools-line",
-      "example": true
+      "example": true,
+      "hidden": true
     }
   ],
   "themes": [

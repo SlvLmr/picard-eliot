@@ -193,6 +193,10 @@ function sortThemes(themes, by) {
 
 function themesOf(rubriqueId) { return store.data.themes.filter(t => t.rubrique === rubriqueId); }
 
+// Partie publique : les rubriques cochées « Masquée » dans l'admin n'apparaissent ni sur le site ni dans le rapport
+function publicRubriques() { return store.data.rubriques.filter(r => !r.hidden); }
+function publicThemes() { const ids = new Set(publicRubriques().map(r => r.id)); return store.data.themes.filter(t => ids.has(t.rubrique)); }
+
 // ─── Visuels partagés ────────────────────────────
 function gaugeSvg(value, color, size, stroke, animate) {
     const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - clamp(value, 0, 100) / 100);
