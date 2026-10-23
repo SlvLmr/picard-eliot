@@ -47,6 +47,23 @@ async function signOut() {
     cloud.isAdmin = false; cloud.email = ''; cloud.newCount = 0;
 }
 
+// ─── Données partagées (rubriques, thèmes, actions) ──
+// Lecture publique ; écriture réservée aux admins (règles RLS côté base)
+async function fetchShared() {
+    if (!cloud.client) return null;
+    const cols = cloud.isAdmin ? 'data, updated_at, updated_by' : 'data, updated_at';
+    const { data, error } = await cloud.client.from('donnees').select(cols).eq('id', 'plan').maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+}
+
+async function saveShared(d) {
+    if (!cloud.client || !cloud.isAdmin) throw new Error('Connexion admin requise');
+    const { data, error } = await cloud.client.from('donnees').upsert({ id: 'plan', data: d }).select('data, updated_at, updated_by').single();
+    if (error) throw new Error(error.message);
+    return data;
+}
+
 // ─── Messages de la boîte à idées ────────────────
 async function submitMessage({ type, sujet, message, nom }) {
     if (!cloud.client) throw new Error('Service indisponible');

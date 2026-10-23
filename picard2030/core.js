@@ -54,7 +54,7 @@ function daysBetween(a, b) { return Math.round((b - a) / DAY); }
 function uid(prefix) { return prefix + '-' + Math.random().toString(36).slice(2, 9); }
 
 // ─── Données ─────────────────────────────────────
-const store = { data: null, isLocal: false };
+const store = { data: null, isLocal: false, shared: null };
 
 function settings() { return { ...DEFAULT_SETTINGS, ...(store.data && store.data.settings) }; }
 
@@ -84,6 +84,13 @@ function loadData() {
     });
     store.data = normalize(store.isLocal ? local : base);
     return store.data;
+}
+
+// Version partagée (base Supabase) : c'est elle que voient tous les visiteurs
+function useShared(row) {
+    store.shared = row;
+    store.data = normalize(structuredClone(row.data));
+    store.isLocal = false;
 }
 
 function saveLocal() {

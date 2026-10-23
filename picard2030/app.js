@@ -1040,6 +1040,7 @@ function autosave(form) {
 }
 
 function flashSaved() {
+    if (cloud.isAdmin) return;   // l'état de publication s'affiche à la place
     const el = $('#admin-status');
     el.classList.add('saved');
     el.innerHTML = '<i class="ri-check-line"></i> Enregistré';
@@ -1189,9 +1190,82 @@ const DATA_HEADER = `/* ========================================================
    ============================================================ */
 `;
 
+// Chaque modification de l'admin est publiée pour tous (base partagée).
+// La copie locale ne sert que de filet : elle est effacée dès que la publication réussit.
+let publishTimer = null, publishGen = 0;
 function persist() {
     saveLocal();
-    $('#local-banner').hidden = false;
+    clearTimeout(publishTimer);
+    if (!cloud.isAdmin) { $('#local-banner').hidden = false; return; }
+    setSaveState('pending');
+    publishTimer = setTimeout(publishNow, 700);
+}
+
+async function publishNow() {
+    clearTimeout(publishTimer);
+    const gen = ++publishGen;
+    try {
+        setSaveState('pending');
+        const row = await saveShared(data());
+        if (gen !== publishGen) return false;   // annulé entre-temps
+        store.shared = row;
+        clearLocal();
+        store.isLocal = false;
+        $('#local-banner').hidden = true;
+        setSaveState('ok');
+        updateDataDate();
+        return true;
+    } catch (e) {
+        if (gen !== publishGen) return false;
+        $('#local-banner').hidden = false;
+        setSaveState('error');
+        toast('Publication impossible : ' + e.message, true);
+        return false;
+    }
+}
+
+function setSaveState(st) {
+    const el = $('#admin-status');
+    if (!el) return;
+    clearTimeout(el._t);
+    el.classList.toggle('saved', st === 'ok');
+    el.innerHTML = { pending: '<i class="ri-loader-4-line spin"></i> Publication…', ok: '<i class="ri-cloud-line"></i> Publié pour tous', error: '<i class="ri-error-warning-line"></i> Non publié' }[st];
+}
+
+function updateDataDate() {
+    const upd = store.shared?.updated_at || data().meta.updatedAt;
+    $('#data-date').textContent = upd ? `Données au ${fmtDate(new Date(upd))}` : 'Données à jour';
+}
+
+// Au chargement et après connexion : la version partagée s'affiche pour tous.
+// Si ce navigateur contient des modifications faites avant la mise en commun (copie locale),
+// et qu'un admin est connecté, elles sont publiées pour que tout le monde les voie.
+async function syncShared() {
+    let row = null;
+    try { row = await fetchShared(); } catch (e) { return; }
+    if (store.isLocal && cloud.isAdmin) {
+        const mine = row && row.updated_by === cloud.email;
+        const msg = row
+            ? `Ce navigateur contient des modifications que vous avez faites dans l'admin, pas encore visibles par tous.\n\nUne version a déjà été publiée le ${fmtDate(new Date(row.updated_at))}${mine ? ' (par vous)' : ' par un autre administrateur'}.\n\nOK : publier vos modifications pour tous (elles remplacent cette version)\nAnnuler : abandonner vos modifications et garder la version publiée`
+            : `Ce navigateur contient des modifications que vous avez faites dans l'admin, pas encore visibles par tous.\n\nOK : les publier pour tous\nAnnuler : les abandonner`;
+        if (!confirm(msg)) {
+            clearLocal();
+            if (row) useShared(row); else loadData();
+            $('#local-banner').hidden = true;
+        } else {
+            if (await publishNow()) toast('Vos modifications sont publiées pour tous');
+        }
+    } else if (row && !store.isLocal) {
+        useShared(row);
+    } else if (row && store.isLocal) {
+        // Copie locale d'un admin non connecté : on la garde de côté, le site affiche la version partagée
+        store.shared = row;
+        store.data = normalize(structuredClone(row.data));
+        $('#local-banner').hidden = false;
+    }
+    applySettings();
+    renderAll();
+    if ($('#admin').classList.contains('open')) openAdmin();
 }
 
 function exportData() {
@@ -1226,9 +1300,10 @@ function importFile(file) {
 }
 
 function resetLocal() {
-    if (!confirm('Revenir aux données publiées (data/projets.js) et perdre les modifications locales ?')) return;
+    if (!confirm('Abandonner les modifications faites sur ce navigateur et revenir à la version publiée ?')) return;
+    clearTimeout(publishTimer); publishGen++;
     clearLocal();
-    loadData();
+    if (store.shared) useShared(store.shared); else loadData();
     $('#local-banner').hidden = true;
     if (!data().rubriques.some(r => r.id === state.rubrique)) state.rubrique = 'all';
     applySettings();
@@ -1354,6 +1429,7 @@ async function doLogin(e) {
         closeLogin();
         state.messages = null;
         loadMessages();
+        await syncShared();
         openAdmin();
         toast('Connecté');
     } catch (err) {
@@ -1394,8 +1470,7 @@ function applySettings() {
     document.title = s.title;
     $('#app-title').textContent = s.title;
     $('#today-label').textContent = [s.subtitle, fmtDate(today)].filter(Boolean).join(' · ');
-    const upd = data().meta.updatedAt;
-    $('#data-date').textContent = upd ? `Données au ${fmtDate(upd)}` : 'Données à jour';
+    updateDataDate();
     $('#zoom-plan').textContent = `${s.planStart} → ${s.planEnd}`;
     document.documentElement.style.setProperty('--accent', s.accent);
 }
@@ -1499,7 +1574,7 @@ function bind() {
         updateThemeButton();
     };
     updateThemeButton();
-    $('#btn-banner-export').onclick = exportData;
+    $('#btn-banner-export').onclick = () => cloud.isAdmin ? publishNow().then(ok => ok && toast('Publié pour tous')) : openLogin();
     $('#btn-reset').onclick = resetLocal;
     $('#import-file').onchange = e => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; };
 }
@@ -1514,6 +1589,6 @@ try {
     if (sort && ['date', 'theme'].includes(sort.gantt)) state.ganttSort = sort.gantt;
 } catch (e) { /* ignore */ }
 bind();
-if (initCloud()) refreshSession().then(ok => { if (ok) loadMessages(); });
+if (initCloud()) refreshSession().then(ok => { if (ok) loadMessages(); return syncShared(); });
 applySettings();
 renderAll();

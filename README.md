@@ -76,10 +76,14 @@ Le bouton **Admin** ouvre quatre onglets. Chaque modification est **enregistrée
 
 ## Mettre à jour les données
 
-La source de vérité est **`picard2030/data/projets.js`**.
+La source de vérité est la **version partagée**, enregistrée dans la base Supabase (table `donnees`). Tous les visiteurs la voient, et le rapport PDF aussi.
 
-1. **Via Claude** : décrivez le changement (« ERP : paramétrage à 70 % », « ajoute une action au thème Réseau de distribution… »). Claude modifie le fichier, puis commit et push.
-2. **Via l'admin** : les modifications sont d'abord enregistrées dans votre navigateur. Pour les partager, allez dans *Données → Exporter* et remplacez `picard2030/data/projets.js` par le fichier téléchargé.
+1. **Via l'admin** : chaque modification d'un administrateur connecté est **publiée immédiatement pour tous**. L'état s'affiche en bas de l'admin (« Publié pour tous »).
+2. **Via Claude** : décrivez le changement (« ERP : paramétrage à 70 % », « ajoute une action au thème… »). Claude met à jour la version partagée.
+
+`picard2030/data/projets.js` ne sert plus que de secours : il s'affiche si la base est injoignable, ou tant qu'aucune version n'a été publiée.
+
+**Modifications faites avant la mise en commun** : elles sont restées dans le navigateur de leur auteur. À sa prochaine visite connecté, le site lui demande s'il veut les publier pour tous (OK) ou les abandonner (Annuler). Une modification non publiée affiche aussi le bandeau « Publier pour tous ».
 
 ## Logo
 
@@ -99,9 +103,9 @@ Le logo retenu est l'**emblème** : le carré Picard et « 2030 » en blanc, ave
 |---|---|
 | `picard2030/index.html`, `app.js`, `styles.css` | Application interactive |
 | `picard2030/core.js` | Calculs partagés (avancement, météo, échéances) |
-| `picard2030/cloud.js` | Connexion à Supabase (connexion admin, boîte à idées, messages) |
+| `picard2030/cloud.js` | Connexion à Supabase (connexion admin, données partagées, boîte à idées, messages) |
 | `picard2030/rapport.html`, `rapport.js`, `rapport.css` | Rapport A4 / PDF |
-| `picard2030/data/projets.js` | Données |
+| `picard2030/data/projets.js` | Données de secours (si la base est injoignable) |
 | `picard2030/logo/` | Logos (SVG) |
 
 ## Base de données (Supabase)
@@ -109,6 +113,7 @@ Le logo retenu est l'**emblème** : le carré Picard et « 2030 » en blanc, ave
 Projet Supabase **picard2030** (organisation Picard Serrures, région Francfort).
 
 - Table `messages` : dépôt ouvert à tous, lecture, modification et suppression réservées aux administrateurs (règles RLS).
+- Table `donnees` : une ligne `plan` avec toutes les données. Lecture publique (données et date seulement, pas l'auteur) ; ajout et modification réservés aux administrateurs. La date et l'auteur de chaque modification sont enregistrés automatiquement.
 - Fonction `is_admin()` : liste des e-mails administrateurs.
 - Comptes : uniquement les deux administrateurs. Toute autre création de compte est refusée par la base (déclencheur `inscriptions_reservees` sur `auth.users`).
 - La clé utilisée dans `cloud.js` est la **clé publique** du projet. La sécurité repose sur les règles de la base, pas sur le secret de cette clé.

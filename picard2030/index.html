@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
-    <link rel="stylesheet" href="styles.css?v=20261023b">
+    <link rel="stylesheet" href="styles.css?v=20261023c">
 </head>
 <body>
     <header class="topbar">
@@ -31,8 +31,8 @@
 
     <div class="local-banner" id="local-banner" hidden>
         <i class="ri-information-line"></i>
-        <span>Modifications locales non publiées. Exportez <code>data/projets.js</code> pour les partager.</span>
-        <button class="btn btn-small" id="btn-banner-export">Exporter</button>
+        <span>Ce navigateur contient des modifications pas encore visibles par tous. Connectez-vous à l'admin pour les publier.</span>
+        <button class="btn btn-small" id="btn-banner-export">Publier pour tous</button>
         <button class="btn btn-small btn-ghost" id="btn-reset">Annuler mes modifications</button>
     </div>
 
@@ -186,7 +186,7 @@
             </div>
             <div class="admin-body" id="admin-body"></div>
             <div class="modal-foot">
-                <span class="admin-status" id="admin-status"><i class="ri-save-line"></i> Enregistrement automatique</span>
+                <span class="admin-status" id="admin-status"><i class="ri-cloud-line"></i> Publication automatique pour tous</span>
                 <span class="admin-user"><i class="ri-shield-user-line"></i><span id="admin-user"></span>
                     <button type="button" class="btn btn-small btn-ghost" id="btn-logout"><i class="ri-logout-box-r-line"></i> Se déconnecter</button></span>
             </div>
@@ -196,9 +196,9 @@
     <div class="tip" id="tip" role="tooltip"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-    <script src="data/projets.js?v=20261023b"></script>
-    <script src="core.js?v=20261023b"></script>
-    <script src="cloud.js?v=20261023b"></script>
-    <script src="app.js?v=20261023b"></script>
+    <script src="data/projets.js?v=20261023c"></script>
+    <script src="core.js?v=20261023c"></script>
+    <script src="cloud.js?v=20261023c"></script>
+    <script src="app.js?v=20261023c"></script>
 </body>
 </html>

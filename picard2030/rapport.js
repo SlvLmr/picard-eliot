@@ -264,3 +264,7 @@ $id('opt-rubrique').onchange = e => { opts.rubrique = e.target.value; render(); 
 $id('opt-paper').onchange = e => { opts.paper = e.target.value; render(); };
 $id('btn-print').onclick = () => window.print();
 render();
+// Version partagée (celle que voient tous les visiteurs), sauf pour un admin qui a des modifications en cours sur ce navigateur
+if (initCloud()) refreshSession().then(() => fetchShared()).then(row => {
+    if (row && !(store.isLocal && cloud.isAdmin)) { useShared(row); render(); }
+}).catch(() => { /* hors ligne : données publiées du fichier */ });
