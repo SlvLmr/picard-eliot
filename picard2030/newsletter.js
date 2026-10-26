@@ -125,15 +125,15 @@ function friseChantiers() {
     const qs = [];
     for (let d = q0; d <= t1; d = new Date(d.getFullYear(), d.getMonth() + 3, 1)) qs.push({ s: d, e: new Date(d.getFullYear(), d.getMonth() + 3, 0, 23) });
     const iNow = qs.findIndex(q => q.s <= today && today <= q.e);
-    const LBL = 150, cw = Math.floor((600 - 72 - LBL) / qs.length);
+    const LBL = 200, cw = Math.floor((600 - 72 - LBL) / qs.length);
     const cellBg = (i) => i === iNow ? '#fbf1df' : '#ffffff';
 
     // en-têtes : années puis trimestres
     const years = [];
     qs.forEach(q => { const y = q.s.getFullYear(); const last = years[years.length - 1]; if (last && last.y === y) last.n++; else years.push({ y, n: 1 }); });
-    const head1 = `<tr><td width="${LBL}"></td>${years.map(y => `<td colspan="${y.n}" align="center" style="font:bold 12px/16px ${FONT};color:${C.ink};border-left:1px solid ${C.line};padding-bottom:2px">${y.y}</td>`).join('')}</tr>`;
-    const head2 = `<tr><td width="${LBL}" style="font:11px/14px ${FONT};color:${C.muted};padding-bottom:6px">Trimestre</td>${qs.map((q, i) => `<td width="${cw}" align="center" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};font:${i === iNow ? 'bold ' : ''}11px/14px ${FONT};color:${i === iNow ? C.goldInk : C.muted};padding:2px 0 6px;${q.s.getMonth() === 0 ? `border-left:1px solid ${C.line};` : ''}">T${q.s.getMonth() / 3 + 1}</td>`).join('')}</tr>`;
-    const nowRow = iNow < 0 ? '' : `<tr><td></td>${qs.map((q, i) => `<td align="center" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};font:bold 10px/12px ${FONT};color:${C.goldInk};padding-bottom:4px;white-space:nowrap">${i === iNow ? "▼ Aujourd'hui" : ''}</td>`).join('')}</tr>`;
+    const head1 = `<tr><td class="lbl" width="${LBL}"></td>${years.map(y => `<td colspan="${y.n}" align="center" style="font:bold 12px/16px ${FONT};color:${C.ink};border-left:1px solid ${C.line};padding-bottom:2px">${y.y}</td>`).join('')}</tr>`;
+    const head2 = `<tr><td class="lbl" width="${LBL}" style="font:11px/14px ${FONT};color:${C.muted};padding-bottom:6px">Trimestre</td>${qs.map((q, i) => `<td width="${cw}" align="center" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};font:${i === iNow ? 'bold ' : ''}11px/14px ${FONT};color:${i === iNow ? C.goldInk : C.muted};padding:2px 0 6px;${q.s.getMonth() === 0 ? `border-left:1px solid ${C.line};` : ''}">T${q.s.getMonth() / 3 + 1}</td>`).join('')}</tr>`;
+    const nowRow = iNow < 0 ? '' : `<tr><td class="lbl"></td>${qs.map((q, i) => `<td align="center" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};font:bold 10px/12px ${FONT};color:${C.goldInk};padding-bottom:4px;white-space:nowrap">${i === iNow ? "▼ Aujourd'hui" : ''}</td>`).join('')}</tr>`;
 
     const rows = ax.map(a => {
         // point d'avancement : la part réalisée de la durée totale
@@ -157,11 +157,12 @@ function friseChantiers() {
             }
             return `<td valign="middle" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};padding:9px 0;border-top:1px solid ${C.line};${q.s.getMonth() === 0 ? `border-left:1px solid ${C.line};` : ''}">${bar}</td>`;
         }).join('');
-        return `<tr>
-            <td width="${LBL}" valign="middle" style="padding:7px 10px 7px 0;border-top:1px solid ${C.line}">
-                <div style="font:bold 13px/17px ${FONT};color:${C.ink}">${a.emoji}&nbsp; ${esc(a.titre)}</div>
-                <div style="font:11.5px/15px ${FONT};color:${C.muted};padding-top:1px"><b style="color:${a.etat === 'fait' ? C.done : C.goldInk}">${a.prog} %</b> · fin ${MONTHS[a.end.getMonth()]} ${a.end.getFullYear()}</div>
-            </td>${cells}</tr>`;
+        const info = `<div style="font:bold 14px/18px ${FONT};color:${C.ink}">${a.emoji}&nbsp; ${esc(a.titre)}</div>
+                ${a.texte ? `<div style="font:12px/16px ${FONT};color:${C.ink2};padding-top:3px">${esc(a.texte)}</div>` : ''}
+                <div style="padding-top:7px;font:11.5px/16px ${FONT};color:${C.muted}"><b style="font-size:17px;color:${a.etat === 'fait' ? C.done : C.ink};letter-spacing:-.02em">${a.prog}&nbsp;%</b>&nbsp; <span style="display:inline-block;padding:1px 8px;border-radius:20px;background:${ETATS[a.etat].bg};color:${ETATS[a.etat].fg};font:bold 10.5px/15px ${FONT};vertical-align:2px">${ETATS[a.etat].txt}</span><br>Objectif : ${moisAnnee(a.end)}</div>`;
+        // sur téléphone : le texte passe au-dessus de la barre (ligne masquée sur ordinateur)
+        return `<tr class="mrow" style="display:none;mso-hide:all"><td colspan="${qs.length + 1}" style="padding:14px 0 2px;border-top:1px solid ${C.line}">${info}</td></tr>
+            <tr><td class="lbl" width="${LBL}" valign="middle" style="padding:14px 12px 14px 0;border-top:1px solid ${C.line}">${info}</td>${cells}</tr>`;
     }).join('');
 
     const legende = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px"><tr>
@@ -179,32 +180,6 @@ const ETATS = {
     lance: { txt: 'Lancé', bg: C.goldSoft, fg: C.goldInk },
     avenir: { txt: 'Bientôt', bg: '#f0eee9', fg: C.ink2 },
 };
-
-function carteChantier(a) {
-    const e = ETATS[a.etat];
-    return `${T(`width="100%" bgcolor="#ffffff" style="background:#ffffff;border:1px solid ${C.line};border-radius:16px"`)}<tr><td style="padding:18px 18px 16px">
-        ${T('width="100%"')}<tr>
-            <td width="46" valign="top">${T()}<tr><td width="42" height="42" align="center" valign="middle" bgcolor="${C.goldSoft}" style="width:42px;height:42px;background:${C.goldSoft};border-radius:12px;font:22px/42px ${FONT};text-align:center">${a.emoji}</td></tr></table></td>
-            <td valign="middle" align="right"><span style="display:inline-block;padding:3px 10px;border-radius:20px;background:${e.bg};color:${e.fg};font:bold 11px/16px ${FONT};white-space:nowrap">${e.txt}</span></td>
-        </tr></table>
-        <div style="font:bold 16px/21px ${FONT};color:${C.ink};padding-top:12px;letter-spacing:-.01em">${esc(a.titre)}</div>
-        <div style="font:12.5px/17px ${FONT};color:${C.ink2};padding-top:3px;min-height:34px">${esc(a.texte || '')}</div>
-        <div style="font:bold 30px/34px ${FONT};color:${C.ink};letter-spacing:-.03em;padding-top:10px">${a.prog}<span style="font-size:15px;color:${C.muted}">&nbsp;%</span></div>
-        <div style="padding-top:8px">${segments(a.prog, 10, a.etat === 'fait' ? C.done : C.gold, '#ece8e1', 8, 2)}</div>
-        <div style="font:11.5px/16px ${FONT};color:${C.muted};padding-top:8px">${a.etat === 'fait' ? 'Objectif atteint' : `Objectif : ${moisAnnee(a.end)}`}</div>
-    </td></tr></table>`;
-}
-
-function grilleChantiers(ax) {
-    const rows = [];
-    for (let i = 0; i < ax.length; i += 2) {
-        rows.push(`<tr>
-            <td class="col" width="50%" valign="top" style="padding:0 6px 12px 0">${carteChantier(ax[i])}</td>
-            <td class="col" width="50%" valign="top" style="padding:0 0 12px 6px">${ax[i + 1] ? carteChantier(ax[i + 1]) : '&nbsp;'}</td>
-        </tr>`);
-    }
-    return `${T('width="100%"')}${rows.join('')}</table>`;
-}
 
 function colonneListe(titreTxt, icone, color, items) {
     return `<div style="font:bold 15px/20px ${FONT};color:${C.ink};padding-bottom:12px"><span style="color:${color}">${icone}</span>&nbsp; ${titreTxt}</div>
@@ -243,6 +218,9 @@ function emailHtml(mode) {
     .wrap{width:100% !important}
     .px{padding-left:20px !important;padding-right:20px !important}
     .col{display:block !important;width:100% !important;padding:0 0 12px 0 !important}
+    .lbl{display:none !important}
+    .mrow{display:table-row !important}
+    .mrow + tr td{border-top:0 !important;padding-top:6px !important}
     .big{font-size:64px !important;line-height:64px !important}
     .h1{font-size:30px !important;line-height:36px !important}
   }
@@ -285,14 +263,8 @@ ${brevo ? `<tr><td align="center" style="font:11px/16px ${FONT};color:${C.muted}
 
 <!-- ══ La frise ══ -->
 <tr><td bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 26px" class="px">
-  ${sectionTitre('La frise Picard 2030', 'Nos grands chantiers dans le temps')}
+  ${sectionTitre('La frise Picard 2030', `Nos ${ax.length} grands chantiers`)}
   ${friseChantiers()}
-</td></tr>
-
-<!-- ══ Chantiers ══ -->
-<tr><td bgcolor="${C.page2}" style="background:${C.page2};padding:36px 30px 24px" class="px">
-  <div style="padding:0 6px">${sectionTitre('Nos grands chantiers', `${ax.length} chantiers pour transformer notre façon de vendre`)}</div>
-  ${grilleChantiers(ax)}
 </td></tr>
 
 ${rdv ? `<!-- ══ Rendez-vous ══ -->
