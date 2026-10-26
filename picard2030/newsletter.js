@@ -70,65 +70,6 @@ function chiffres() {
     };
 }
 
-// Frise : lancement, étapes passées, aujourd'hui, prochains rendez-vous, fin des chantiers
-function frise() {
-    const themes = themesNewsletter(), ax = axes();
-    if (!themes.length) return [];
-    const ev = [];
-    const debut = new Date(Math.min(...themes.map(t => themeRange(t).start)));
-    ev.push({ d: debut, txt: 'Lancement', etat: 'fait' });
-    themes.forEach(t => t.actions.filter(isMilestone).forEach(a => {
-        const d = actionRange(a).end;
-        ev.push({ d, txt: courte(a.name), etat: a.progress >= 100 || d < today ? 'fait' : 'avenir', rdv: true });
-    }));
-    ax.forEach(a => ev.push({ d: a.end, txt: a.titre, etat: a.etat === 'fait' ? 'fait' : 'avenir', fin: true }));
-    ev.push({ d: today, txt: "Aujourd'hui", etat: 'ici' });
-    // regroupe par mois
-    const byMonth = new Map();
-    ev.sort((a, b) => a.d - b.d).forEach(e => {
-        const k = e.etat === 'ici' ? 'ici' : `${e.d.getFullYear()}-${e.d.getMonth()}`;
-        if (!byMonth.has(k)) byMonth.set(k, { d: e.d, etat: e.etat, items: [] });
-        const g = byMonth.get(k);
-        if (e.etat !== 'ici') g.items.push(e);
-        if (e.etat === 'avenir') g.etat = 'avenir';
-    });
-    let pts = [...byMonth.values()].sort((a, b) => a.d - b.d);
-    // au plus 6 points : le lancement, le dernier passé, aujourd'hui, puis les suivants
-    const iIci = pts.findIndex(p => p.etat === 'ici');
-    const passes = pts.slice(0, iIci), futurs = pts.slice(iIci + 1);
-    const garde = [passes[0], passes.length > 1 ? passes[passes.length - 1] : null].filter(Boolean);
-    pts = [...garde, pts[iIci], ...futurs].slice(0, 6);
-    if (futurs.length && !pts.includes(futurs[futurs.length - 1])) pts[pts.length - 1] = futurs[futurs.length - 1];
-    return pts.map(p => ({ ...p, label: p.etat === 'ici' ? "Aujourd'hui" : resume(p.items), sub: detail(p) }));
-}
-
-// Une ligne d'explication sous chaque étape de la route
-function detail(p) {
-    if (p.etat === 'ici') { const k = chiffres(); return `${k.encours} actions en cours · ${k.fait} terminées`; }
-    const rdv = p.items.filter(i => i.rdv), fins = p.items.filter(i => i.fin);
-    if (p.items.length === 1 && p.items[0].txt === 'Lancement') return 'Les premiers chantiers démarrent';
-    if (rdv.length > 1) return rdv.slice(0, 2).map(i => i.txt).join(' · ') + (rdv.length > 2 ? '…' : '');
-    if (rdv.length === 1 && fins.length) return `Et l'objectif pour : ${fins.map(f => f.txt).join(', ')}`;
-    if (fins.length === 1) return p.etat === 'fait' ? 'Chantier terminé' : 'Fin prévue du chantier';
-    if (fins.length > 1) return fins.map(f => f.txt).join(', ');
-    return '';
-}
-
-function resume(items) {
-    const rdv = items.filter(i => i.rdv), fins = items.filter(i => i.fin);
-    if (rdv.length === 1) return rdv[0].txt;
-    if (rdv.length > 1) return `${rdv.length} étapes clés`;
-    if (fins.length === 1) return fins[0].txt;
-    if (fins.length > 1) return `${fins.length} chantiers à boucler`;
-    return items[0]?.txt || '';
-}
-
-// Raccourcit un intitulé d'action pour la frise (avant « : » ou « (»)
-function courte(s) {
-    const t = s.split(/\s[:(–-]\s?/)[0].trim();
-    return t.length > 34 ? t.slice(0, 32) + '…' : t;
-}
-
 function prochainRdv() {
     const rdv = themesNewsletter().flatMap(t => t.actions.filter(a => isMilestone(a) && a.progress < 100).map(a => ({ a, d: actionRange(a).end })))
         .filter(x => x.d >= today).sort((x, y) => x.d - y.d);
@@ -174,38 +115,62 @@ function stat(nb, label, color, icone) {
     </td>`;
 }
 
-// Route verticale : passé ✓, « vous êtes ici », prochaines étapes, horizon 2030
-function routeHtml() {
-    const pts = frise();
-    if (!pts.length) return '';
-    const steps = [...pts, { d: new Date(2030, 0, 1), etat: 'horizon', label: 'Picard 2030', sub: "L'horizon de notre feuille de route" }];
-    return T('width="100%"') + steps.map((p, i) => {
-        const last = i === steps.length - 1, ici = p.etat === 'ici', fait = p.etat === 'fait', hz = p.etat === 'horizon';
-        const nodeBg = fait ? C.done : ici ? C.gold : hz ? C.dark : '#ffffff';
-        const nodeBd = fait ? C.done : ici ? C.gold : hz ? C.dark : C.next;
-        const sym = fait ? '✓' : ici ? '★' : hz ? '⚑' : '';
-        const lineCol = (steps[i + 1] && (steps[i + 1].etat === 'fait' || steps[i + 1].etat === 'ici')) ? C.done : C.next;
-        const date = ici ? "AUJOURD'HUI" : hz ? '2030' : `${MONTHS[p.d.getMonth()].replace('.', '').toUpperCase()} ${p.d.getFullYear()}`;
-        const sub = p.sub || (ici ? 'Vous êtes ici' : '');
+// Frise des grands chantiers : une ligne par chantier, une colonne par trimestre.
+// La barre couvre la durée prévue ; sa partie foncée montre l'avancement.
+function friseChantiers() {
+    const ax = axes();
+    if (!ax.length) return '';
+    const t0 = new Date(Math.min(...ax.map(a => a.start))), t1 = new Date(Math.max(...ax.map(a => a.end)));
+    const q0 = new Date(t0.getFullYear(), Math.floor(t0.getMonth() / 3) * 3, 1);
+    const qs = [];
+    for (let d = q0; d <= t1; d = new Date(d.getFullYear(), d.getMonth() + 3, 1)) qs.push({ s: d, e: new Date(d.getFullYear(), d.getMonth() + 3, 0, 23) });
+    const iNow = qs.findIndex(q => q.s <= today && today <= q.e);
+    const LBL = 150, cw = Math.floor((600 - 72 - LBL) / qs.length);
+    const cellBg = (i) => i === iNow ? '#fbf1df' : '#ffffff';
+
+    // en-têtes : années puis trimestres
+    const years = [];
+    qs.forEach(q => { const y = q.s.getFullYear(); const last = years[years.length - 1]; if (last && last.y === y) last.n++; else years.push({ y, n: 1 }); });
+    const head1 = `<tr><td width="${LBL}"></td>${years.map(y => `<td colspan="${y.n}" align="center" style="font:bold 12px/16px ${FONT};color:${C.ink};border-left:1px solid ${C.line};padding-bottom:2px">${y.y}</td>`).join('')}</tr>`;
+    const head2 = `<tr><td width="${LBL}" style="font:11px/14px ${FONT};color:${C.muted};padding-bottom:6px">Trimestre</td>${qs.map((q, i) => `<td width="${cw}" align="center" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};font:${i === iNow ? 'bold ' : ''}11px/14px ${FONT};color:${i === iNow ? C.goldInk : C.muted};padding:2px 0 6px;${q.s.getMonth() === 0 ? `border-left:1px solid ${C.line};` : ''}">T${q.s.getMonth() / 3 + 1}</td>`).join('')}</tr>`;
+    const nowRow = iNow < 0 ? '' : `<tr><td></td>${qs.map((q, i) => `<td align="center" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};font:bold 10px/12px ${FONT};color:${C.goldInk};padding-bottom:4px;white-space:nowrap">${i === iNow ? "▼ Aujourd'hui" : ''}</td>`).join('')}</tr>`;
+
+    const rows = ax.map(a => {
+        // point d'avancement : la part réalisée de la durée totale
+        const pt = new Date(+a.start + (a.end - a.start) * a.prog / 100);
+        const full = a.etat === 'fait' ? C.done : C.gold, light = '#f0dcb8';
+        const cells = qs.map((q, i) => {
+            const L = q.e - q.s, f = d => clamp((d - q.s) / L, 0, 1);
+            const x0 = f(a.start), x1 = f(a.end), xp = clamp(f(pt), x0, x1);
+            let bar = '&nbsp;';
+            if (a.start <= q.e && a.end >= q.s && x1 > x0) {
+                const startsHere = a.start >= q.s, endsHere = a.end <= q.e;
+                const parts = [[x0, null], [xp - x0, full], [x1 - xp, light], [1 - x1, null]]
+                    .map(([w, c]) => [Math.round(w * 100), c]).filter(([w]) => w > 0);
+                const coloured = parts.filter(([, c]) => c);
+                bar = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${parts.map(([w, c]) => {
+                    if (!c) return `<td width="${w}%" style="font-size:0;line-height:0">&nbsp;</td>`;
+                    const rl = startsHere && coloured[0][1] === c && coloured[0][0] === w ? '8px' : '0';
+                    const rr = endsHere && coloured[coloured.length - 1][1] === c && coloured[coloured.length - 1][0] === w ? '8px' : '0';
+                    return `<td width="${w}%" height="16" bgcolor="${c}" style="height:16px;background:${c};font-size:0;line-height:0;border-radius:${rl} ${rr} ${rr} ${rl}">&nbsp;</td>`;
+                }).join('')}</tr></table>`;
+            }
+            return `<td valign="middle" bgcolor="${cellBg(i)}" style="background:${cellBg(i)};padding:9px 0;border-top:1px solid ${C.line};${q.s.getMonth() === 0 ? `border-left:1px solid ${C.line};` : ''}">${bar}</td>`;
+        }).join('');
         return `<tr>
-            <td width="96" valign="top" align="right" style="padding:${ici ? 13 : 5}px 14px 0 0;font:bold 11px/14px ${FONT};letter-spacing:.06em;color:${ici ? C.goldInk : fait ? C.done : C.muted};white-space:nowrap">${date}</td>
-            <td width="30" valign="top" align="center">
-                ${T('width="30"')}<tr><td align="center" height="${ici ? 30 : 24}" valign="middle">
-                    ${T()}<tr><td width="${ici ? 28 : 22}" height="${ici ? 28 : 22}" align="center" valign="middle" bgcolor="${nodeBg}"
-                        style="width:${ici ? 28 : 22}px;height:${ici ? 28 : 22}px;background:${nodeBg};border:2px solid ${nodeBd};border-radius:30px;color:#ffffff;font:bold ${ici ? 14 : 12}px/${ici ? 28 : 22}px ${FONT};text-align:center">${sym || '&nbsp;'}</td></tr></table>
-                </td></tr>
-                ${last ? '' : `<tr><td align="center">${T()}<tr><td width="3" height="${ici ? 40 : 34}" bgcolor="${lineCol}" style="width:3px;height:${ici ? 40 : 34}px;background:${lineCol};font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>`}
-                </table>
-            </td>
-            <td valign="top" style="padding:${ici ? 0 : 2}px 0 ${last ? 0 : 10}px 14px">
-                ${ici ? `${T(`width="100%" bgcolor="${C.goldSoft}" style="background:${C.goldSoft};border:1px solid #efd9b0;border-radius:12px"`)}<tr><td style="padding:10px 14px">
-                    <div style="font:bold 15px/20px ${FONT};color:${C.ink}">📍 Vous êtes ici</div>
-                    <div style="font:13px/18px ${FONT};color:${C.goldInk}">${esc(p.sub || '')}</div></td></tr></table>`
-                : `<div style="font:bold 15px/20px ${FONT};color:${hz ? C.ink : p.etat === 'avenir' ? C.ink : C.ink}">${esc(p.label)}</div>
-                   ${sub ? `<div style="font:13px/18px ${FONT};color:${C.ink2}">${esc(sub)}</div>` : ''}`}
-            </td>
-        </tr>`;
-    }).join('') + '</table>';
+            <td width="${LBL}" valign="middle" style="padding:7px 10px 7px 0;border-top:1px solid ${C.line}">
+                <div style="font:bold 13px/17px ${FONT};color:${C.ink}">${a.emoji}&nbsp; ${esc(a.titre)}</div>
+                <div style="font:11.5px/15px ${FONT};color:${C.muted};padding-top:1px"><b style="color:${a.etat === 'fait' ? C.done : C.goldInk}">${a.prog} %</b> · fin ${MONTHS[a.end.getMonth()]} ${a.end.getFullYear()}</div>
+            </td>${cells}</tr>`;
+    }).join('');
+
+    const legende = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px"><tr>
+        <td width="22" height="10" bgcolor="${C.gold}" style="background:${C.gold};border-radius:5px;font-size:0">&nbsp;</td>
+        <td style="font:12px/16px ${FONT};color:${C.ink2};padding:0 16px 0 7px">Déjà réalisé</td>
+        <td width="22" height="10" bgcolor="#f0dcb8" style="background:#f0dcb8;border-radius:5px;font-size:0">&nbsp;</td>
+        <td style="font:12px/16px ${FONT};color:${C.ink2};padding:0 0 0 7px">Reste à faire</td>
+    </tr></table>`;
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed">${head1}${head2}${nowRow}${rows}</table>${legende}`;
 }
 
 const ETATS = {
@@ -318,10 +283,10 @@ ${brevo ? `<tr><td align="center" style="font:11px/16px ${FONT};color:${C.muted}
 </td></tr>
 <tr><td height="5" bgcolor="${C.gold}" style="background:${C.gold};height:5px;font-size:0;line-height:0">&nbsp;</td></tr>
 
-<!-- ══ La route ══ -->
+<!-- ══ La frise ══ -->
 <tr><td bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 26px" class="px">
-  ${sectionTitre('La route Picard 2030', 'D’où on vient, où on va')}
-  ${routeHtml()}
+  ${sectionTitre('La frise Picard 2030', 'Nos grands chantiers dans le temps')}
+  ${friseChantiers()}
 </td></tr>
 
 <!-- ══ Chantiers ══ -->
