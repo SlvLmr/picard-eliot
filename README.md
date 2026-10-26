@@ -57,6 +57,8 @@ Le bouton **Newsletter** ouvre la lettre Picard 2030, générée automatiquement
 
 Le regroupement des thèmes en grands chantiers et leurs libellés se règlent en haut de `newsletter.js` (liste `AXES`). Un nouveau thème apparaît tout seul, sous son propre nom.
 
+Le bouton « Je partage mon idée » de la lettre ouvre **`idee.html`**, une page dédiée qui contient uniquement le formulaire d'idée. On peut y présélectionner un sujet avec `idee.html?sujet=Nos%20produits`.
+
 ### Météo
 
 L'avancement réel est comparé à l'avancement attendu à la date du jour, en supposant une progression linéaire entre la date de début et la date de fin.
@@ -121,6 +123,7 @@ Le logo retenu est l'**emblème** : le carré Picard et « 2030 » en blanc, ave
 Projet Supabase **picard2030** (organisation Picard Serrures, région Francfort).
 
 - Table `messages` : dépôt ouvert à tous, lecture, modification et suppression réservées aux administrateurs (règles RLS).
+- **Transmission des idées par e-mail** : chaque nouveau message déclenche (via `pg_net`) la fonction `idee-email`, qui l'envoie à l'adresse de l'équipe Picard 2030 par l'API de Brevo. Un message n'est transmis qu'une fois (colonne `transmis_le`). La fonction a besoin du secret **`BREVO_API_KEY`** (Supabase → Edge Functions → Secrets). Le secret facultatif `IDEE_EXPEDITEUR` fixe l'expéditeur, qui doit être un expéditeur validé dans Brevo ; par défaut, c'est l'adresse de l'équipe. Sans clé, les idées restent dans l'admin et aucun e-mail ne part.
 - Table `donnees` : une ligne `plan` avec toutes les données. Lecture publique (données et date seulement, pas l'auteur) ; ajout et modification réservés aux administrateurs. La date et l'auteur de chaque modification sont enregistrés automatiquement.
 - Fonction `is_admin()` : liste des e-mails administrateurs.
 - Comptes : uniquement les deux administrateurs. Toute autre création de compte est refusée par la base (déclencheur `inscriptions_reservees` sur `auth.users`).
