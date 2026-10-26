@@ -1589,6 +1589,8 @@ try {
     if (sort && ['date', 'theme'].includes(sort.gantt)) state.ganttSort = sort.gantt;
 } catch (e) { /* ignore */ }
 bind();
+// Lien direct vers la boîte à idées (bouton de la newsletter)
+if (location.hash === '#idee') setTimeout(openIdea, 300);
 if (initCloud()) refreshSession().then(ok => { if (ok) loadMessages(); return syncShared(); });
 applySettings();
 renderAll();
