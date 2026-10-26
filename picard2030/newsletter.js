@@ -266,7 +266,7 @@ ${brevo ? `<tr><td align="center" style="font:11px/16px ${FONT};color:${C.muted}
 <!-- En-tête -->
 <tr><td bgcolor="${C.dark}" style="background:${C.dark};border-radius:16px 16px 0 0;padding:28px 32px 26px" class="px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-    <td width="64" valign="middle"><img src="${LOGO_URL}" width="52" height="52" alt="Picard 2030" style="display:block;border:0;width:52px;height:52px"></td>
+    <td width="64" valign="middle"><img src="${LOGO_URL}" width="52" height="51" alt="Picard 2030" style="display:block;border:0;width:52px;height:51px"></td>
     <td valign="middle" style="padding-left:14px">
       <div style="font:bold 11px/14px ${FONT};letter-spacing:.14em;text-transform:uppercase;color:${C.gold}">La lettre Picard 2030</div>
       <div style="font:bold 24px/30px ${FONT};color:#ffffff">Où en sommes-nous&nbsp;?</div>
