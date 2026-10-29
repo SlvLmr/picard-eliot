@@ -65,7 +65,7 @@ function trajectory(themes, color, w, h) {
 }
 
 function gapLine(themes) {
-    const done = weightedProgress(themes), exp = Math.round(expectedAt(themes, today)), d = done - exp;
+    const done = weightedProgress(themes), exp = weightedExpected(themes), d = done - exp;
     const cls = d >= -settings().warnThreshold ? 'h-ok' : d >= -settings().lateThreshold ? 'h-warn' : 'h-late';
     return `<span class="gap ${cls}">${d >= 0 ? '+' : '−'}${Math.abs(d)} pts</span><span class="muted">vs prévu à date (${exp} %)</span>`;
 }

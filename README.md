@@ -63,6 +63,8 @@ Le bouton « Je partage mon idée » de la lettre ouvre **`idee.html`**, une pag
 
 L'avancement réel est comparé à l'avancement attendu à la date du jour, en supposant une progression linéaire entre la date de début et la date de fin.
 
+Les actions **à venir** (pas encore commencées et sans avancement saisi) ne comptent pas dans les pourcentages : elles ne pénalisent pas un thème qui démarre. Elles affichent « Débute en… » au lieu d'une barre à 0 %. Un thème dont aucune action n'a commencé ne compte pas non plus dans l'avancement de sa rubrique.
+
 - ≥ −5 pts → *Dans les temps*
 - entre −5 et −15 pts → *Vigilance*
 - < −15 pts, ou une action dont la date de fin est dépassée sans être terminée → *En retard*

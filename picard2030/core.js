@@ -132,19 +132,29 @@ function themeRange(t) {
     return { start: new Date(Math.min(...dates)), end: new Date(Math.max(...dates)) };
 }
 
-// Avancement d'un thème : moyenne des actions pondérée par leur durée.
+// Les actions « à venir » (pas encore commencées, sans avancement saisi) ne comptent pas
+// dans les pourcentages : elles ne pénalisent pas un thème qui démarre.
+function actionCounts(a) { return a.progress > 0 || actionRange(a).start <= today; }
+function countedActions(t) { return t.actions.filter(actionCounts); }
+function themeStarted(t) { return t.actions.length ? countedActions(t).length > 0 : themeRange(t).start <= today || Number(t.progress) > 0; }
+
+// Avancement d'un thème : moyenne des actions commencées, pondérée par leur durée.
 // Sans action, on utilise l'avancement saisi sur le thème.
 function themeProgress(t) {
     if (!t.actions.length) return clamp(Number(t.progress) || 0, 0, 100);
+    const acts = countedActions(t);
+    if (!acts.length) return 0;
     let w = 0, s = 0;
-    t.actions.forEach(a => { const r = actionRange(a), d = spanDays(r.start, r.end); w += d; s += d * a.progress; });
+    acts.forEach(a => { const r = actionRange(a), d = spanDays(r.start, r.end); w += d; s += d * a.progress; });
     return Math.round(s / w);
 }
 
 function themeExpected(t) {
     if (!t.actions.length) { const r = themeRange(t); return linearExpected(r.start, r.end); }
+    const acts = countedActions(t);
+    if (!acts.length) return 0;
     let w = 0, s = 0;
-    t.actions.forEach(a => { const r = actionRange(a), d = spanDays(r.start, r.end); w += d; s += d * linearExpected(r.start, r.end); });
+    acts.forEach(a => { const r = actionRange(a), d = spanDays(r.start, r.end); w += d; s += d * linearExpected(r.start, r.end); });
     return Math.round(s / w);
 }
 
@@ -173,11 +183,14 @@ function themeHealth(t) {
     return rateHealth(themeProgress(t), themeExpected(t), r.start, overdueActions(t).length > 0 || (!t.actions.length && r.end < today));
 }
 
-function weightedProgress(themes) {
+// Avancement d'un ensemble de thèmes (rubrique, plan) : seuls les thèmes commencés comptent
+function weightedBy(themes, fn) {
     let w = 0, s = 0;
-    themes.forEach(t => { const r = themeRange(t), d = spanDays(r.start, r.end); w += d; s += d * themeProgress(t); });
+    themes.filter(themeStarted).forEach(t => { const r = themeRange(t), d = spanDays(r.start, r.end); w += d; s += d * fn(t); });
     return w ? Math.round(s / w) : 0;
 }
+function weightedProgress(themes) { return weightedBy(themes, themeProgress); }
+function weightedExpected(themes) { return weightedBy(themes, themeExpected); }
 
 // Prochaine échéance : fin d'une action non terminée (ou d'un thème sans action)
 function upcomingDeadlines(themes) {
