@@ -8,20 +8,8 @@
    avancé. Les images sont appelées par une adresse publique.
    ============================================================ */
 
-const SITE_URL = 'https://slvlmr.github.io/picard-eliot/picard2030/';
+// Les constantes partagées (adresses, chantiers, chiffres) viennent de chantiers.js
 const LOGO_URL = SITE_URL + 'logo/picard2030-email.png';
-const IDEE_URL = SITE_URL + 'idee.html';
-
-// Les grands chantiers, en mots simples. Un thème absent de cette liste
-// (ajouté plus tard) apparaît seul, sous son propre nom.
-const AXES = [
-    { emoji: '👥', titre: 'Nos équipes', texte: 'Recruter, redessiner les secteurs et accompagner chacun.', themes: ['c-recrutement', 'c-organisation'] },
-    { emoji: '🤝', titre: 'Nos installateurs agréés', texte: 'Un nouveau partenariat avec nos installateurs IAP.', themes: ['c-iap'] },
-    { emoji: '🔐', titre: 'Nos produits', texte: 'Des gammes plus claires et de nouveaux produits.', themes: ['c-mkt-produits', 'c-reflex-confort'] },
-    { emoji: '📣', titre: 'Faire connaître Picard', texte: 'Publicité, salons, réseaux sociaux et infos internes.', themes: ['c-mkt-operationnel', 'c-communication'] },
-    { emoji: '🎧', titre: 'Nos clients', texte: 'Un service client et un SAV encore plus efficaces.', themes: ['c-service-client'] },
-    { emoji: '🛡️', titre: 'Eliot', texte: 'Une nouvelle feuille de route pour Eliot.', themes: ['c-eliot'] },
-];
 
 const C = {
     page: '#ece8e1', page2: '#f6f3ee', card: '#ffffff', ink: '#16161a', ink2: '#55555e', muted: '#8a8a94', line: '#e7e3dc',
@@ -29,62 +17,16 @@ const C = {
     done: '#2f9e6e', doneSoft: '#e5f5ee', next: '#cfc9bf',
 };
 const FONT = "Inter, 'Segoe UI', Arial, Helvetica, sans-serif";
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
-const opts = { intro: '' };
-const INTRO_DEFAUT = "Picard 2030, c'est notre feuille de route pour les années à venir. Chaque mois, on fait le point ensemble : ce qui avance, ce qui est fait et ce qui arrive.";
+// Deux versions : « usine » (l'essentiel, en grand) et « bureaux » (commerciaux et bureaux, plus détaillée)
+const VERSIONS = {
+    usine: { nom: 'Usine', intro: "Picard 2030, c'est le projet de toute l'entreprise pour les années à venir. Voici où nous en sommes, en un coup d'œil." },
+    bureaux: { nom: 'Commerciaux & bureaux', intro: "Picard 2030, c'est notre feuille de route pour les années à venir. Chaque mois, on fait le point ensemble : ce qui avance, ce qui est fait et ce qui arrive." },
+};
+const opts = { version: 'bureaux', intro: { usine: '', bureaux: '' } };
+function introCourante() { return (opts.intro[opts.version] || VERSIONS[opts.version].intro).trim(); }
 
 function $id(id) { return document.getElementById(id); }
-function moisAnnee(d) { return `${MOIS[d.getMonth()]} ${d.getFullYear()}`; }
-function capital(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-// ─── Données ─────────────────────────────────────
-function themesNewsletter() { return publicThemes(); }
-
-function axes() {
-    const themes = themesNewsletter(), pris = new Set();
-    const list = AXES.map(a => {
-        const ts = themes.filter(t => a.themes.includes(t.id));
-        ts.forEach(t => pris.add(t.id));
-        return { ...a, ts };
-    }).filter(a => a.ts.length);
-    themes.filter(t => !pris.has(t.id)).forEach(t => list.push({ emoji: '📌', titre: t.name, texte: '', ts: [t] }));
-    return list.map(a => {
-        const acts = a.ts.flatMap(t => t.actions);
-        const prog = weightedProgress(a.ts);
-        const start = new Date(Math.min(...a.ts.map(t => themeRange(t).start)));
-        const end = new Date(Math.max(...a.ts.map(t => themeRange(t).end)));
-        const etat = prog >= 100 ? 'fait' : start > today ? 'avenir' : prog > 0 ? 'encours' : 'lance';
-        return { ...a, prog, start, end, etat, nDone: acts.filter(x => x.progress >= 100).length, n: acts.length };
-    });
-}
-
-function chiffres() {
-    const acts = themesNewsletter().flatMap(t => t.actions);
-    return {
-        total: acts.length,
-        fait: acts.filter(a => a.progress >= 100).length,
-        encours: acts.filter(a => a.progress < 100 && actionRange(a).start <= today).length,
-        avenir: acts.filter(a => a.progress < 100 && actionRange(a).start > today).length,
-        prog: weightedProgress(themesNewsletter()),
-    };
-}
-
-function prochainRdv() {
-    const rdv = themesNewsletter().flatMap(t => t.actions.filter(a => isMilestone(a) && a.progress < 100).map(a => ({ a, d: actionRange(a).end })))
-        .filter(x => x.d >= today).sort((x, y) => x.d - y.d);
-    return rdv[0] || null;
-}
-
-function faits() {
-    return themesNewsletter().flatMap(t => t.actions.filter(a => a.progress >= 100).map(a => ({ a, t, d: actionRange(a).end })))
-        .sort((x, y) => y.d - x.d).slice(0, 4);
-}
-
-function aVenir() {
-    const rdv = prochainRdv();
-    return upcomingDeadlines(themesNewsletter()).filter(x => !rdv || x.action !== rdv.a).slice(0, 3);
-}
 
 // ─── Briques e-mail (tableaux + styles en ligne) ──
 const T = (attrs = '') => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" ${attrs}>`;
@@ -191,13 +133,83 @@ function colonneListe(titreTxt, icone, color, items) {
         </td></tr>`).join('')}</table>`;
 }
 
+// ─── Blocs de la version usine ───────────────────
+// Les chantiers en grand : picto, nom, une phrase, une jauge, un pourcentage
+function chantiersSimples(ax) {
+    return `${T('width="100%"')}${ax.map(a => `<tr><td style="padding:0 0 12px">
+        ${T(`width="100%" bgcolor="#ffffff" style="background:#ffffff;border:1px solid ${C.line};border-radius:16px"`)}<tr><td style="padding:18px 20px">
+            ${T('width="100%"')}<tr>
+                <td width="52" valign="middle">${T()}<tr><td width="48" height="48" align="center" valign="middle" bgcolor="${C.goldSoft}" style="width:48px;height:48px;background:${C.goldSoft};border-radius:14px;font:26px/48px ${FONT};text-align:center">${a.emoji}</td></tr></table></td>
+                <td valign="middle" style="padding-left:14px">
+                    <div style="font:bold 18px/22px ${FONT};color:${C.ink};letter-spacing:-.01em">${esc(a.titre)}</div>
+                    ${a.texte ? `<div style="font:13.5px/19px ${FONT};color:${C.ink2};padding-top:2px">${esc(a.texte)}</div>` : ''}
+                </td>
+                <td width="86" align="right" valign="middle" style="font:bold 32px/34px ${FONT};color:${a.etat === 'fait' ? C.done : C.ink};letter-spacing:-.03em">${a.prog}<span style="font-size:16px;color:${C.muted}">%</span></td>
+            </tr></table>
+            <div style="padding-top:14px">${segments(a.prog, 10, a.etat === 'fait' ? C.done : C.gold, '#ece8e1', 12, 3)}</div>
+        </td></tr></table>
+    </td></tr>`).join('')}</table>`;
+}
+
+function retenirHtml() {
+    return `${T('width="100%"')}${aRetenir().map(x => `<tr>
+        <td width="52" valign="top" style="font:30px/36px ${FONT};padding-bottom:14px">${x.icone}</td>
+        <td valign="middle" style="font:bold 17px/24px ${FONT};color:${C.ink};padding:0 0 14px 6px">${esc(x.txt)}</td>
+    </tr>`).join('')}</table>`;
+}
+
+// ─── Blocs de la version commerciaux & bureaux ───
+function miniBarre(pct, color) { return segments(pct, 10, color, '#ece8e1', 6, 2); }
+
+function detailChantiers(ax) {
+    return `${T('width="100%"')}${ax.map(a => {
+        const col = a.etat === 'fait' ? C.done : C.gold;
+        const themes = a.ts.length > 1 ? a.ts.map(t => `<tr>
+            <td valign="middle" style="font:13px/18px ${FONT};color:${C.ink};padding:4px 10px 4px 0">${esc(t.name)}</td>
+            <td width="120" valign="middle">${miniBarre(themeProgress(t), col)}</td>
+            <td width="44" align="right" valign="middle" style="font:bold 13px/18px ${FONT};color:${C.ink}">${themeProgress(t)}%</td>
+        </tr>`).join('') : '';
+        const encours = a.encours.slice(0, 3).map(x => `<tr>
+            <td width="14" valign="top" style="font:bold 13px/19px ${FONT};color:${C.gold}">▸</td>
+            <td valign="top" style="font:13px/19px ${FONT};color:${C.ink};padding-bottom:3px">${esc(x.a.name)}</td>
+            <td width="44" align="right" valign="top" style="font:bold 12px/19px ${FONT};color:${C.goldInk}">${x.a.progress}%</td>
+        </tr>`).join('');
+        return `<tr><td style="padding:0 0 14px">
+        ${T(`width="100%" bgcolor="#ffffff" style="background:#ffffff;border:1px solid ${C.line};border-radius:16px"`)}<tr><td style="padding:18px 20px">
+            ${T('width="100%"')}<tr>
+                <td valign="middle" style="font:bold 17px/22px ${FONT};color:${C.ink}">${a.emoji}&nbsp; ${esc(a.titre)}</td>
+                <td width="90" align="right" valign="middle" style="font:bold 24px/28px ${FONT};color:${C.ink};letter-spacing:-.02em">${a.prog}<span style="font-size:13px;color:${C.muted}">%</span></td>
+            </tr></table>
+            <div style="padding:8px 0 4px">${segments(a.prog, 20, col, '#ece8e1', 8, 2)}</div>
+            ${themes ? `<div style="font:bold 10.5px/14px ${FONT};letter-spacing:.1em;text-transform:uppercase;color:${C.muted};padding:12px 0 4px">Les thèmes</div>${T('width="100%"')}${themes}</table>` : ''}
+            ${encours ? `<div style="font:bold 10.5px/14px ${FONT};letter-spacing:.1em;text-transform:uppercase;color:${C.muted};padding:12px 0 6px">En cours</div>${T('width="100%"')}${encours}</table>` : ''}
+            ${a.prochaine ? `<div style="font:12.5px/18px ${FONT};color:${C.ink2};padding-top:10px;border-top:1px solid ${C.line};margin-top:10px">⏭ Prochaine échéance : <b style="color:${C.ink}">${esc(a.prochaine.name)}</b> · ${fmtDate(a.prochaine.date)}</div>` : ''}
+        </td></tr></table>
+    </td></tr>`;
+    }).join('')}</table>`;
+}
+
+function surveillerHtml(list) {
+    return `${T(`width="100%" bgcolor="#fff6ec" style="background:#fff6ec;border:1px solid #f3dcc2;border-radius:16px"`)}<tr><td style="padding:18px 20px 8px">
+        <div style="font:bold 15px/20px ${FONT};color:#9a4d12;padding-bottom:10px">⚡ Un coup d'accélérateur sur ${list.length} action${list.length > 1 ? 's' : ''}</div>
+        ${T('width="100%"')}${list.map(x => `<tr>
+            <td valign="top" style="padding:0 0 12px">
+                <div style="font:bold 13.5px/18px ${FONT};color:${C.ink}">${esc(x.a.name)}</div>
+                <div style="font:12px/16px ${FONT};color:${C.ink2};padding-top:2px">${esc(x.t.name)} · échéance ${fmtDate(x.d)} · ${x.a.progress}% réalisé</div>
+            </td>
+            <td width="84" align="right" valign="top"><span style="display:inline-block;padding:2px 9px;border-radius:20px;background:${x.h === 'late' ? '#fde2e2' : '#fdebd3'};color:${x.h === 'late' ? '#b42318' : '#9a4d12'};font:bold 11px/16px ${FONT};white-space:nowrap">${x.h === 'late' ? 'En retard' : 'À surveiller'}</span></td>
+        </tr>`).join('')}</table>
+    </td></tr></table>`;
+}
+
 // ─── La lettre complète ──────────────────────────
 function emailHtml(mode) {
     const s = settings(), k = chiffres(), ax = axes(), rdv = prochainRdv();
     const edition = capital(moisAnnee(today));
-    const intro = (opts.intro || INTRO_DEFAUT).trim();
-    const fait = faits().map(x => ({ txt: x.a.name, sub: x.t.name }));
-    const venir = aVenir().map(x => ({ txt: x.name, sub: `${capital(moisAnnee(x.date))} · ${x.theme.name}` }));
+    const intro = introCourante(), usine = opts.version === 'usine';
+    const fait = faits(6).map(x => ({ txt: x.a.name, sub: `${x.t.name} · ${fmtDate(x.d)}` }));
+    const venir = aVenir(5).map(x => ({ txt: x.name, sub: `${capital(fmtDate(x.date))} · ${x.theme.name}` }));
+    const alerte = aSurveiller(4);
     const brevo = mode === 'brevo';
     const jours = rdv ? daysBetween(today, rdv.d) : 0;
 
@@ -261,11 +273,21 @@ ${brevo ? `<tr><td align="center" style="font:11px/16px ${FONT};color:${C.muted}
 </td></tr>
 <tr><td height="5" bgcolor="${C.gold}" style="background:${C.gold};height:5px;font-size:0;line-height:0">&nbsp;</td></tr>
 
-<!-- ══ La frise ══ -->
+${usine ? `<!-- ══ Chantiers (version usine) ══ -->
+<tr><td bgcolor="${C.page2}" style="background:${C.page2};padding:36px 30px 22px" class="px">
+  <div style="padding:0 6px">${sectionTitre('Nos grands chantiers', `${ax.length} chantiers, un seul cap : 2030`)}</div>
+  ${chantiersSimples(ax)}
+</td></tr>` : `<!-- ══ La frise ══ -->
 <tr><td bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 26px" class="px">
   ${sectionTitre('La frise Picard 2030', `Nos ${ax.length} grands chantiers`)}
   ${friseChantiers()}
 </td></tr>
+<!-- ══ Détail par chantier ══ -->
+<tr><td bgcolor="${C.page2}" style="background:${C.page2};padding:36px 30px 22px" class="px">
+  <div style="padding:0 6px">${sectionTitre('Le détail', 'Ce qui avance, chantier par chantier')}</div>
+  ${detailChantiers(ax)}
+  ${alerte.length ? `<div style="padding-top:4px">${surveillerHtml(alerte)}</div>` : ''}
+</td></tr>`}
 
 ${rdv ? `<!-- ══ Rendez-vous ══ -->
 <tr><td bgcolor="${C.dark}" style="background:${C.dark};padding:30px 36px" class="px">
@@ -286,13 +308,17 @@ ${rdv ? `<!-- ══ Rendez-vous ══ -->
   </tr></table>
 </td></tr>` : ''}
 
-<!-- ══ Fait / à venir ══ -->
+${usine ? `<!-- ══ À retenir ══ -->
+<tr><td bgcolor="#ffffff" style="background:#ffffff;padding:34px 36px 20px" class="px">
+  ${sectionTitre('À retenir', 'Picard 2030 en 3 phrases')}
+  ${retenirHtml()}
+</td></tr>` : `<!-- ══ Fait / à venir ══ -->
 <tr><td bgcolor="#ffffff" style="background:#ffffff;padding:34px 30px 18px" class="px">
   ${T('width="100%"')}<tr>
     ${fait.length ? `<td class="col" width="50%" valign="top" style="padding:0 14px 0 6px">${colonneListe('C’est fait', '✓', C.done, fait)}</td>` : ''}
     ${venir.length ? `<td class="col" width="50%" valign="top" style="padding:0 6px 0 14px">${colonneListe('Ça arrive', '→', C.gold, venir)}</td>` : ''}
   </tr></table>
-</td></tr>
+</td></tr>`}
 
 <!-- ══ Idées ══ -->
 <tr><td bgcolor="${C.gold}" align="center" style="background:${C.gold};padding:34px 36px 36px;border-radius:0 0 22px 22px" class="px">
@@ -327,10 +353,10 @@ function render() {
 function telecharger() {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([emailHtml('brevo')], { type: 'text/html' }));
-    a.download = `picard2030-newsletter-${iso(today).slice(0, 7)}.html`;
+    a.download = `picard2030-newsletter-${opts.version}-${iso(today).slice(0, 7)}.html`;
     a.click();
     URL.revokeObjectURL(a.href);
-    toast('Fichier HTML téléchargé : à importer dans Brevo');
+    toast(`Version ${VERSIONS[opts.version].nom} téléchargée : à importer dans Brevo`);
 }
 
 async function copierOutlook() {
@@ -362,13 +388,26 @@ function toast(msg, err) {
 }
 
 loadData();
-try { opts.intro = localStorage.getItem('picard2030_nl_intro') || ''; } catch (e) { /* ignore */ }
-$id('intro').value = opts.intro || INTRO_DEFAUT;
+try {
+    const v = localStorage.getItem('picard2030_nl_version'); if (VERSIONS[v]) opts.version = v;
+    Object.assign(opts.intro, JSON.parse(localStorage.getItem('picard2030_nl_intros')) || {});
+} catch (e) { /* ignore */ }
+function majVersion() {
+    document.querySelectorAll('[data-version]').forEach(b => b.classList.toggle('active', b.dataset.version === opts.version));
+    $id('intro').value = introCourante();
+    $id('version-nom').textContent = VERSIONS[opts.version].nom;
+}
+document.querySelectorAll('[data-version]').forEach(b => b.onclick = () => {
+    opts.version = b.dataset.version;
+    try { localStorage.setItem('picard2030_nl_version', opts.version); } catch (e) { /* ignore */ }
+    majVersion(); render();
+});
 $id('intro').oninput = e => {
-    opts.intro = e.target.value;
-    try { localStorage.setItem('picard2030_nl_intro', opts.intro); } catch (err) { /* ignore */ }
+    opts.intro[opts.version] = e.target.value;
+    try { localStorage.setItem('picard2030_nl_intros', JSON.stringify(opts.intro)); } catch (err) { /* ignore */ }
     clearTimeout(render._t); render._t = setTimeout(render, 300);
 };
+majVersion();
 $id('btn-export').onclick = telecharger;
 $id('btn-outlook').onclick = copierOutlook;
 $id('btn-code').onclick = copierCode;

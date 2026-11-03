@@ -50,12 +50,18 @@ Le bouton **Rapport PDF** produit un rapport A4 dans la même charte, à diffuse
 
 Le sélecteur **Fond noir / Fond clair (impression)** choisit la variante.
 
+**Deux versions**, pour la newsletter comme pour le PDF :
+- **Usine** : l'essentiel, en grand. Le chiffre clé, les 6 chantiers avec leur jauge, le prochain rendez-vous, trois phrases à retenir et l'appel à idées. Le PDF est une affiche A4 d'une page, avec un QR code vers la boîte à idées, à afficher dans les ateliers.
+- **Commerciaux & bureaux** : la version détaillée. Frise des chantiers dans le temps, détail par chantier (thèmes, actions en cours, prochaine échéance), actions à surveiller, ce qui est fait et ce qui arrive. Le PDF est le rapport complet.
+
+On choisit la version en haut de la page Newsletter et dans le menu « Version » du rapport (`rapport.html?version=usine` ouvre directement l'affiche). Les chantiers et leurs libellés sont définis dans `chantiers.js`, partagé par la newsletter et le rapport.
+
 Le bouton **Newsletter** ouvre la lettre Picard 2030, générée automatiquement à partir des données publiées et pensée pour tous les publics : chiffre clé, frise « La route Picard 2030 », grands chantiers en mots simples, prochain rendez-vous, ce qui est fait et ce qui arrive. Seul le mot d'introduction se saisit à la main.
 - **Export HTML** : fichier à importer dans Brevo. Il contient les liens Brevo « Voir dans le navigateur » et « Se désinscrire ».
 - **Copier le code** : même contenu, à coller dans l'éditeur HTML de Brevo.
 - **Copier pour Outlook** : la lettre mise en forme, à coller dans un nouveau message.
 
-Le regroupement des thèmes en grands chantiers et leurs libellés se règlent en haut de `newsletter.js` (liste `AXES`). Un nouveau thème apparaît tout seul, sous son propre nom.
+Le regroupement des thèmes en grands chantiers et leurs libellés se règlent dans `chantiers.js` (liste `AXES`). Un nouveau thème apparaît tout seul, sous son propre nom.
 
 Le bouton « Je partage mon idée » de la lettre ouvre **`idee.html`**, une page dédiée qui contient uniquement le formulaire d'idée. On peut y présélectionner un sujet avec `idee.html?sujet=Nos%20produits`.
 
@@ -117,6 +123,8 @@ Le logo retenu est l'**emblème** : le carré Picard et « 2030 » en blanc, ave
 | `picard2030/cloud.js` | Connexion à Supabase (connexion admin, données partagées, boîte à idées, messages) |
 | `picard2030/rapport.html`, `rapport.js`, `rapport.css` | Rapport A4 / PDF |
 | `picard2030/newsletter.html`, `newsletter.js` | Newsletter (aperçu, export Brevo, copie Outlook) |
+| `picard2030/chantiers.js` | Grands chantiers et chiffres partagés (newsletter, affiche usine) |
+| `picard2030/idee.html` | Page « Votre idée » (lien de la newsletter, QR code de l'affiche) |
 | `picard2030/data/projets.js` | Données de secours (si la base est injoignable) |
 | `picard2030/logo/` | Logos (SVG) |
 

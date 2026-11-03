@@ -19,6 +19,10 @@
         .btn:hover { border-color: #55555e; }
         .btn.gold { background: var(--gold); border-color: var(--gold); color: #1a1206; font-weight: 600; }
         .btn.gold:hover { background: #e7b876; }
+        .seg { display: inline-flex; padding: 3px; border-radius: 12px; background: #0b0b0d; border: 1px solid var(--line-2); }
+        .seg button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 500; padding: 7px 14px; border-radius: 9px; cursor: pointer; }
+        .seg button:hover { color: #fff; }
+        .seg button.active { background: var(--gold); color: #1a1206; font-weight: 600; }
         .layout { display: grid; grid-template-columns: 300px 1fr; gap: 28px; max-width: 1060px; margin: 0 auto; padding: 24px 18px 60px; align-items: start; }
         .side { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 14px; }
         .card { background: #0b0b0d; border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
@@ -43,6 +47,10 @@
     <div class="toolbar">
         <a class="btn" href="index.html"><i class="ri-arrow-left-line"></i> Retour</a>
         <h1><i class="ri-mail-star-line"></i> Newsletter Picard 2030</h1>
+        <div class="seg" role="group" aria-label="Version">
+            <button data-version="usine" title="L'essentiel, en grand : simple à lire et à comprendre"><i class="ri-building-4-line"></i> Usine</button>
+            <button data-version="bureaux" title="Plus détaillée : frise, détail par chantier, points à surveiller"><i class="ri-briefcase-4-line"></i> Commerciaux & bureaux</button>
+        </div>
         <button class="btn" id="btn-outlook" title="Copie la lettre mise en forme, à coller dans un nouveau message Outlook"><i class="ri-microsoft-line"></i> Copier pour Outlook</button>
         <button class="btn" id="btn-code" title="Copie le code HTML, à coller dans Brevo"><i class="ri-code-s-slash-line"></i> Copier le code</button>
         <button class="btn gold" id="btn-export" title="Télécharge le fichier HTML à importer dans Brevo"><i class="ri-download-2-line"></i> Export HTML</button>
@@ -52,6 +60,7 @@
         <aside class="side">
             <div class="card">
                 <h2><i class="ri-quill-pen-line"></i> Mot d'introduction</h2>
+                <p class="hint" style="margin:0 0 8px">Un texte par version : il change quand vous changez de version.</p>
                 <textarea id="intro" aria-label="Mot d'introduction"></textarea>
                 <p class="hint">Le reste de la lettre se remplit tout seul à partir du suivi Picard 2030.</p>
             </div>
@@ -74,7 +83,7 @@
 
         <main>
             <div class="preview-wrap">
-                <div class="preview-bar"><i class="ri-eye-line"></i> Aperçu : <b>ce que recevront les destinataires</b></div>
+                <div class="preview-bar"><i class="ri-eye-line"></i> Aperçu de la version <b id="version-nom"></b> : ce que recevront les destinataires</div>
                 <iframe id="preview" title="Aperçu de la newsletter"></iframe>
             </div>
         </main>
@@ -82,9 +91,10 @@
     <div class="toast" id="toast"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-    <script src="data/projets.js?v=20261029"></script>
-    <script src="core.js?v=20261029"></script>
-    <script src="cloud.js?v=20261029"></script>
-    <script src="newsletter.js?v=20261029"></script>
+    <script src="data/projets.js?v=20261103"></script>
+    <script src="core.js?v=20261103"></script>
+    <script src="cloud.js?v=20261103"></script>
+    <script src="chantiers.js?v=20261103"></script>
+    <script src="newsletter.js?v=20261103"></script>
 </body>
 </html>

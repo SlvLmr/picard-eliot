@@ -6,7 +6,7 @@
    une ligne par thème, 5 étapes horizontales.
    ============================================================ */
 
-const opts = { actions: true, notes: true, rubrique: 'all', paper: 'dark' };
+const opts = { actions: true, notes: true, rubrique: 'all', paper: 'dark', public: 'bureaux' };
 
 const STATUS_ORDER = ['late', 'warn', 'ok', 'upcoming', 'done'];
 
@@ -247,9 +247,64 @@ function rubriquePage(r, n, total) {
     </section>`;
 }
 
+// ─── Version usine : une affiche A4, l'essentiel en grand ──
+function segs(pct, n = 20) {
+    const on = Math.round(clamp(pct, 0, 100) / 100 * n);
+    return `<div class="u-segs">${Array.from({ length: n }, (_, i) => `<span class="${i < on ? 'on' : ''}"></span>`).join('')}</div>`;
+}
+
+function qrSvg(url) {
+    if (!window.qrcode) return '';
+    const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
+    return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+}
+
+function usinePage() {
+    const k = chiffres(), ax = axes(), rdv = prochainRdv();
+    const jours = rdv ? daysBetween(today, rdv.d) : 0;
+    return `<section class="page u-page">
+        ${pageHead('')}
+        <div class="u-hero">
+            <p class="kicker gold">La lettre Picard 2030 · ${capital(moisAnnee(today))}</p>
+            <h1 class="u-title">Cap sur 2030.</h1>
+            <div class="u-kpi">
+                <p class="u-big">${k.prog}<small>%</small></p>
+                <p class="u-kpi-txt">du plan commercial<br><b>déjà réalisé</b></p>
+            </div>
+            ${segs(k.prog)}
+            <div class="u-stats">
+                <div><span class="ok">✓ Fait</span><b>${k.fait}</b>actions terminées</div>
+                <div><span class="gold">▶ En cours</span><b>${k.encours}</b>actions en cours</div>
+                <div><span>◷ À venir</span><b>${k.avenir}</b>actions à venir</div>
+            </div>
+        </div>
+        <h2 class="u-h2">Nos ${ax.length} grands chantiers</h2>
+        <div class="u-grid">${ax.map(a => `<div class="u-card${a.etat === 'fait' ? ' done' : ''}">
+            <div class="u-card-top"><span class="u-emoji">${a.emoji}</span><b class="u-pct">${a.prog}<small>%</small></b></div>
+            <h3>${esc(a.titre)}</h3>
+            ${a.texte ? `<p>${esc(a.texte)}</p>` : ''}
+            ${segs(a.prog, 10)}
+        </div>`).join('')}</div>
+        <div class="u-retenir">${aRetenir().map(x => `<div><span>${x.icone}</span><p>${esc(x.txt)}</p></div>`).join('')}</div>
+        <div class="u-bottom">
+            ${rdv ? `<div class="u-rdv">
+                <div class="u-cal"><span>${MONTHS[rdv.d.getMonth()].replace('.', '')}</span><b>${rdv.d.getDate()}</b><span>${rdv.d.getFullYear()}</span></div>
+                <div><p class="kicker gold">Prochain grand rendez-vous</p><h3>${esc(rdv.a.name)}</h3>${jours > 0 ? `<span class="u-chip">Dans ${jours} jours</span>` : ''}</div>
+            </div>` : ''}
+            <div class="u-idee">
+                <div><p class="u-idee-t">💡 Une idée pour Picard 2030&nbsp;?</p><p>Scannez ce code avec votre téléphone et écrivez-nous en une minute.</p></div>
+                <div class="u-qr">${qrSvg(IDEE_URL)}</div>
+            </div>
+        </div>
+        ${footer(1, 1)}
+    </section>`;
+}
+
 function render() {
-    document.title = `${settings().title} — État d'avancement`;
+    document.title = `${settings().title} — ${opts.public === 'usine' ? 'Affiche' : "État d'avancement"}`;
     document.body.classList.toggle('paper-light', opts.paper === 'light');
+    document.querySelectorAll('.opt-bureaux').forEach(el => { el.hidden = opts.public === 'usine'; });
+    if (opts.public === 'usine') { $id('report').innerHTML = usinePage(); return; }
     const rubs = rubriques(), total = rubs.length + 1;
     $id('report').innerHTML = summaryPage(total) + rubs.map((r, i) => rubriquePage(r, i + 2, total)).join('');
 }
@@ -257,11 +312,14 @@ function render() {
 loadData();
 $id('opt-rubrique').innerHTML = `<option value="all">Toutes les rubriques</option>` +
     publicRubriques().map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
-if (publicRubriques().length <= 1) $id('opt-rubrique').hidden = true;
+// une seule rubrique visible : le sélecteur ne sert à rien, dans aucune version
+if (publicRubriques().length <= 1) { $id('opt-rubrique').classList.remove('opt-bureaux'); $id('opt-rubrique').hidden = true; }
 $id('opt-actions').onchange = e => { opts.actions = e.target.checked; render(); };
 $id('opt-notes').onchange = e => { opts.notes = e.target.checked; render(); };
 $id('opt-rubrique').onchange = e => { opts.rubrique = e.target.value; render(); };
 $id('opt-paper').onchange = e => { opts.paper = e.target.value; render(); };
+$id('opt-public').onchange = e => { opts.public = e.target.value; render(); };
+if (new URLSearchParams(location.search).get('version') === 'usine') { opts.public = 'usine'; $id('opt-public').value = 'usine'; }
 $id('btn-print').onclick = () => window.print();
 render();
 // Version partagée (celle que voient tous les visiteurs), sauf pour un admin qui a des modifications en cours sur ce navigateur
