@@ -39,7 +39,7 @@ function axes() {
         const start = new Date(Math.min(...a.ts.map(t => themeRange(t).start)));
         const end = new Date(Math.max(...a.ts.map(t => themeRange(t).end)));
         const etat = prog >= 100 ? 'fait' : start > today ? 'avenir' : prog > 0 ? 'encours' : 'lance';
-        const encours = a.ts.flatMap(t => t.actions.filter(x => actionCounts(x) && x.progress > 0 && x.progress < 100 && !isMilestone(x)).map(x => ({ a: x, t })))
+        const encours = a.ts.flatMap(t => t.actions.filter(x => actionCounts(x) && x.progress < 100 && !isMilestone(x)).map(x => ({ a: x, t })))
             .sort((x, y) => y.a.progress - x.a.progress);
         const prochaine = upcomingDeadlines(a.ts)[0] || null;
         return { ...a, prog, start, end, etat, encours, prochaine, nDone: acts.filter(x => x.progress >= 100).length, n: acts.length };

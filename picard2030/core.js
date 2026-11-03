@@ -132,9 +132,10 @@ function themeRange(t) {
     return { start: new Date(Math.min(...dates)), end: new Date(Math.max(...dates)) };
 }
 
-// Les actions « à venir » (pas encore commencées, sans avancement saisi) ne comptent pas
-// dans les pourcentages : elles ne pénalisent pas un thème qui démarre.
-function actionCounts(a) { return a.progress > 0 || actionRange(a).start <= today; }
+// Les actions « à venir » (encore à 0 %, même si leur date de début est passée) ne comptent pas
+// dans les pourcentages : seules les actions avec un avancement saisi font la moyenne.
+// Le retard reste signalé à part (météo, points d'attention), sans fausser le pourcentage.
+function actionCounts(a) { return a.progress > 0; }
 function countedActions(t) { return t.actions.filter(actionCounts); }
 function themeStarted(t) { return t.actions.length ? countedActions(t).length > 0 : themeRange(t).start <= today || Number(t.progress) > 0; }
 

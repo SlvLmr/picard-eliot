@@ -274,7 +274,7 @@ function storyActions(t, open = false) {
             ${isMilestone(a)
                 ? `<span class="sn-ams">Jalon · ${r.start.getDate()} ${MONTHS[r.start.getMonth()]}</span>`
                 : !actionCounts(a)
-                    ? `<span class="sn-ams">Débute en ${MONTHS[r.start.getMonth()]} ${r.start.getFullYear()}</span>`
+                    ? `<span class="sn-ams">${r.start > today ? `Débute en ${MONTHS[r.start.getMonth()]} ${r.start.getFullYear()}` : 'À démarrer'}</span>`
                     : `<span class="sn-ap">${bar(a.progress, t.color, 'mini')}<b>${a.progress}%</b></span>`}
         </li>`;
     });

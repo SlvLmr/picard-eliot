@@ -69,7 +69,7 @@ Le bouton « Je partage mon idée » de la lettre ouvre **`idee.html`**, une pag
 
 L'avancement réel est comparé à l'avancement attendu à la date du jour, en supposant une progression linéaire entre la date de début et la date de fin.
 
-Les actions **à venir** (pas encore commencées et sans avancement saisi) ne comptent pas dans les pourcentages : elles ne pénalisent pas un thème qui démarre. Elles affichent « Débute en… » au lieu d'une barre à 0 %. Un thème dont aucune action n'a commencé ne compte pas non plus dans l'avancement de sa rubrique.
+Les actions **à venir**, c'est-à-dire encore à 0 % (même si leur date de début est passée), ne comptent pas dans les pourcentages : seules les actions avec un avancement saisi font la moyenne. Elles affichent « Débute en… » ou « À démarrer » au lieu d'une barre à 0 %. Le retard d'une action qui aurait dû démarrer reste signalé par la météo et les points d'attention. Un thème dont aucune action n'a commencé ne compte pas non plus dans l'avancement de sa rubrique.
 
 - ≥ −5 pts → *Dans les temps*
 - entre −5 et −15 pts → *Vigilance*
