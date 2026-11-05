@@ -61,7 +61,7 @@ Le bouton **Newsletter** ouvre la lettre Picard 2030, générée automatiquement
 - **Copier le code** : même contenu, à coller dans l'éditeur HTML de Brevo.
 - **Copier pour Outlook** : la lettre mise en forme, à coller dans un nouveau message.
 
-Le regroupement des thèmes en grands chantiers et leurs libellés se règlent dans `chantiers.js` (liste `AXES`). Un nouveau thème apparaît tout seul, sous son propre nom.
+Le regroupement des thèmes en grands chantiers et leurs libellés se règlent dans `chantiers.js` (liste `AXES`). Dans l'admin, chaque action a un réglage **Newsletter** : *normale*, *mise en avant* (en tête de « Ça arrive ») ou *masquée* (n'apparaît dans aucune liste de la newsletter, sans changer les pourcentages). Un nouveau thème apparaît tout seul, sous son propre nom.
 
 Le bouton « Je partage mon idée » de la lettre ouvre **`idee.html`**, une page dédiée qui contient uniquement le formulaire d'idée. On peut y présélectionner un sujet avec `idee.html?sujet=Nos%20produits`.
 

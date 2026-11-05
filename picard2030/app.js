@@ -837,7 +837,16 @@ function actionRow(a = {}, t = themeById(state.editingId)) {
             <div class="range ar-range"><input type="range" name="a-progress" min="0" max="100" step="5" value="${prog}" style="--val:${prog}%"><output>${prog}%</output></div>
             <label class="check ar-est" title="Cochez si la date n'est pas encore calée (ex. « fin 2026 »)"><input type="checkbox" name="a-est" ${a.estimated ? 'checked' : ''}> Date estimée</label>
         </div>
-        <input class="note-input" name="a-note" placeholder="Texte affiché au survol (facultatif)" value="${esc(a.note || '')}">
+        <div class="ar-bottom">
+            <input class="note-input" name="a-note" placeholder="Texte affiché au survol (facultatif)" value="${esc(a.note || '')}">
+            <label class="ar-nl" title="Comment cette action apparaît dans la newsletter"><i class="ri-mail-star-line"></i>
+                <select name="a-nl">
+                    <option value="" ${!a.nl ? 'selected' : ''}>Newsletter : normale</option>
+                    <option value="top" ${a.nl === 'top' ? 'selected' : ''}>Newsletter : mise en avant</option>
+                    <option value="hide" ${a.nl === 'hide' ? 'selected' : ''}>Newsletter : masquée</option>
+                </select>
+            </label>
+        </div>
     </div>`;
 }
 
@@ -887,7 +896,9 @@ function readThemeForm(form) {
         const start = q('a-start') || iso(today);
         let end = q('a-end') || start;
         if (parse(end) < parse(start)) end = start;
-        return { name: q('a-name').trim(), start, end, progress: Number(q('a-progress')), note: q('a-note').trim(), estimated: row.querySelector('[name="a-est"]').checked };
+        const act = { name: q('a-name').trim(), start, end, progress: Number(q('a-progress')), note: q('a-note').trim(), estimated: row.querySelector('[name="a-est"]').checked };
+        if (q('a-nl')) act.nl = q('a-nl');
+        return act;
     });
     $('#admin-themes').innerHTML = adminThemeListHtml();
 }
