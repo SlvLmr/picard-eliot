@@ -1453,6 +1453,26 @@ async function doLogin(e) {
     }
 }
 
+// ─── Changement de mot de passe ──────────────────
+function openPwd() {
+    $('#pwd-error').hidden = true; $('#pwd-form').reset();
+    $('#pwd-who').textContent = `${cloud.email} · au moins 10 caractères`;
+    $('#pwd').classList.add('open'); $('#pwd').setAttribute('aria-hidden', 'false');
+    setTimeout(() => $('#pwd-form [name="p1"]').focus(), 50);
+}
+function closePwd() { $('#pwd').classList.remove('open'); $('#pwd').setAttribute('aria-hidden', 'true'); }
+async function doChangePwd(e) {
+    e.preventDefault();
+    const f = new FormData($('#pwd-form')), p1 = String(f.get('p1')), p2 = String(f.get('p2'));
+    const err = m => { $('#pwd-error').textContent = m; $('#pwd-error').hidden = false; };
+    if (p1.length < 10) return err('Le mot de passe doit faire au moins 10 caractères.');
+    if (p1 !== p2) return err('Les deux mots de passe ne sont pas identiques.');
+    const btn = $('#pwd-submit'); btn.disabled = true;
+    try { await changePassword(p1); closePwd(); toast('Mot de passe changé'); }
+    catch (x) { err(x.message.includes('different') ? "Choisissez un mot de passe différent de l'actuel." : x.message); }
+    finally { btn.disabled = false; }
+}
+
 async function doLogout() {
     await signOut();
     state.messages = null;
@@ -1543,7 +1563,7 @@ function bind() {
     document.addEventListener('scroll', hideTip, true);
 
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeDrawer(); closeAdmin(); closeIdea(); closeLogin(); hideTip(); }
+        if (e.key === 'Escape') { if ($('#pwd').classList.contains('open')) return closePwd(); closeDrawer(); closeAdmin(); closeIdea(); closeLogin(); hideTip(); }
         if (e.key === 'Enter' && e.target.matches('.sn-card')) toggleStoryCard(e.target.dataset.id);
         else if (e.key === 'Enter' && e.target.matches('.g-row, .ag-card[data-id]')) openDrawer(e.target.dataset.id);
     });
@@ -1575,6 +1595,9 @@ function bind() {
     $('#login-form').addEventListener('submit', doLogin);
     $('#login').addEventListener('click', e => { if (e.target === $('#login') || e.target.closest('[data-login-close]')) closeLogin(); });
     $('#btn-logout').onclick = doLogout;
+    $('#btn-password').onclick = openPwd;
+    $('#pwd-form').addEventListener('submit', doChangePwd);
+    $('#pwd').addEventListener('click', e => { if (e.target === $('#pwd') || e.target.closest('[data-pwd-close]')) closePwd(); });
     $('#btn-idea').onclick = openIdea;
     $('#data-block').onclick = requestAdmin;
     $('#idea-form').addEventListener('submit', sendIdea);

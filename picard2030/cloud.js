@@ -42,6 +42,12 @@ async function signIn(email, password) {
     }
 }
 
+async function changePassword(password) {
+    if (!cloud.client || !cloud.isAdmin) throw new Error('Connexion admin requise');
+    const { error } = await cloud.client.auth.updateUser({ password });
+    if (error) throw new Error(error.message);
+}
+
 async function signOut() {
     if (cloud.client) await cloud.client.auth.signOut();
     cloud.isAdmin = false; cloud.email = ''; cloud.newCount = 0;

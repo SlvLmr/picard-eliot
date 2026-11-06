@@ -40,7 +40,7 @@ Partout, le **survol** d'une action, d'une barre ou d'un point affiche une info-
 
 **Charte** : fond noir, cartes sombres arrondies à filet fin, police Inter, un seul accent doré (bouton Admin, rubrique active, courbes, repère « aujourd'hui »). Les couleurs de statut (rouge, orange, vert) sont conservées. Le bouton ☀ de l'en-tête passe en mode clair, et le choix est mémorisé dans le navigateur.
 
-Dans la barre des rubriques, le **bloc brun** affiche la date des données et ouvre l'admin pour les mettre à jour. Une rubrique cochée **Exemple** (admin, onglet *Rubriques*) porte une étiquette violette, et un bandeau violet rappelle que ses données sont des exemples. Une rubrique cochée **Masquée** n'apparaît ni sur le site public ni dans le rapport, mais reste modifiable dans l'admin. C'est le cas de Production pour l'instant. Quand il ne reste qu'une rubrique visible, les onglets disparaissent et la page affiche directement cette rubrique.
+Dans la barre des rubriques, le **bloc brun** affiche la date des données et ouvre l'admin pour les mettre à jour. Une rubrique cochée **Exemple** (admin, onglet *Rubriques*) porte une étiquette violette, et un bandeau violet rappelle que ses données sont des exemples. Une rubrique cochée **Masquée** n'apparaît ni sur le site public ni dans le rapport, mais reste modifiable dans l'admin. Une rubrique cochée **Exemple** reste visible sur le site, mais n'entre ni dans la newsletter ni dans l'affiche usine, pour ne pas fausser les chiffres. Quand il ne reste qu'une rubrique visible, les onglets disparaissent et la page affiche directement cette rubrique.
 
 En haut de page, la **boîte à idées** (« Soumettez-nous vos idées, remarques ») ouvre un petit formulaire : type (idée, remarque, question), sujet et message. Le message est enregistré directement dans la base Supabase, sans passer par la messagerie. Il n'est lisible que par les administrateurs, dans l'onglet **Messages** de l'admin.
 
@@ -79,7 +79,7 @@ Ces seuils se règlent dans l'admin, onglet *Réglages*.
 
 ## Administration
 
-L'admin est **protégée par une connexion** (e-mail + mot de passe, via Supabase Auth). Seuls les comptes administrateurs déclarés dans la base y ont accès. La session reste ouverte sur le navigateur jusqu'à « Se déconnecter » (en bas de l'admin). Une pastille rouge sur le bouton Admin signale les nouveaux messages.
+L'admin est **protégée par une connexion** (e-mail + mot de passe, via Supabase Auth). Seuls les comptes administrateurs déclarés dans la base y ont accès. La session reste ouverte sur le navigateur jusqu'à « Se déconnecter » (en bas de l'admin). Le bouton **Changer mon mot de passe**, à côté, permet à chaque administrateur de choisir son propre mot de passe (10 caractères minimum). Une pastille rouge sur le bouton Admin signale les nouveaux messages.
 
 Le bouton **Admin** ouvre quatre onglets. Chaque modification est **enregistrée automatiquement**.
 
@@ -136,5 +136,5 @@ Projet Supabase **picard2030** (organisation Picard Serrures, région Francfort)
 - **Transmission des idées par e-mail** : chaque nouveau message déclenche (via `pg_net`) la fonction `idee-email`, qui l'envoie à l'adresse de l'équipe Picard 2030 par l'API de Brevo. Un message n'est transmis qu'une fois (colonne `transmis_le`). La fonction a besoin du secret **`BREVO_API_KEY`** (Supabase → Edge Functions → Secrets). Le secret facultatif `IDEE_EXPEDITEUR` fixe l'expéditeur, qui doit être un expéditeur validé dans Brevo ; par défaut, c'est l'adresse de l'équipe. Sans clé, les idées restent dans l'admin et aucun e-mail ne part.
 - Table `donnees` : une ligne `plan` avec toutes les données. Lecture publique (données et date seulement, pas l'auteur) ; ajout et modification réservés aux administrateurs. La date et l'auteur de chaque modification sont enregistrés automatiquement.
 - Fonction `is_admin()` : liste des e-mails administrateurs.
-- Comptes : uniquement les deux administrateurs. Toute autre création de compte est refusée par la base (déclencheur `inscriptions_reservees` sur `auth.users`).
+- Comptes : uniquement les trois administrateurs (Gilbert Daillère, Sylvain Lamour, F. Véront). Toute autre création de compte est refusée par la base (déclencheur `inscriptions_reservees` sur `auth.users`). Pour ajouter un administrateur, il faut ajouter son adresse dans `is_admin()` **et** dans `private.refuser_inscriptions()`.
 - La clé utilisée dans `cloud.js` est la **clé publique** du projet. La sécurité repose sur les règles de la base, pas sur le secret de cette clé.

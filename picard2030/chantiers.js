@@ -23,7 +23,12 @@ const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 
 function moisAnnee(d) { return `${MOIS[d.getMonth()]} ${d.getFullYear()}`; }
 function capital(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-function themesPublics() { return publicThemes(); }
+// Newsletter et affiche : uniquement les rubriques visibles et aux vraies données
+// (une rubrique cochée « Exemple » dans l'admin n'y entre pas tant qu'elle n'est pas renseignée)
+function themesPublics() {
+    const ex = new Set(store.data.rubriques.filter(r => r.example).map(r => r.id));
+    return publicThemes().filter(t => !ex.has(t.rubrique));
+}
 
 // Réglage par action dans l'admin : « masquée » (n'apparaît pas dans les listes de la newsletter)
 // ou « mise en avant » (passe en tête de « Ça arrive »). Les pourcentages, eux, ne changent pas.
